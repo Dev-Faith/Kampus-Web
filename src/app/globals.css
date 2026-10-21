@@ -1,0 +1,107 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-geist-mono);
+  --font-heading: var(--font-sans);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+
+  /* Kampus Brand Specific Colors */
+  --color-forest: #0E4D38;
+  --color-forest-dark: #083325;
+  --color-gold: #D49E35;
+  --color-gold-light: #FBBF24;
+  --color-obsidian: #0B130F;
+  --color-obsidian-surface: #121E18;
+  --color-obsidian-border: #22352B;
+}
+
+:root {
+  --background: #0B130F;
+  --foreground: #F2F9F5;
+  --card: #121E18;
+  --card-foreground: #F2F9F5;
+  --popover: #121E18;
+  --popover-foreground: #F2F9F5;
+  --primary: #10B981;
+  --primary-foreground: #0B130F;
+  --secondary: #17261F;
+  --secondary-foreground: #F2F9F5;
+  --muted: #17261F;
+  --muted-foreground: #93A89D;
+  --accent: #0E4D38;
+  --accent-foreground: #F2F9F5;
+  --destructive: #EF4444;
+  --border: #22352B;
+  --input: #17261F;
+  --ring: #10B981;
+  --radius: 0.85rem;
+}
+
+.dark {
+  --background: #0B130F;
+  --foreground: #F2F9F5;
+  --card: #121E18;
+  --card-foreground: #F2F9F5;
+  --popover: #121E18;
+  --popover-foreground: #F2F9F5;
+  --primary: #10B981;
+  --primary-foreground: #0B130F;
+  --secondary: #17261F;
+  --secondary-foreground: #F2F9F5;
+  --muted: #17261F;
+  --muted-foreground: #93A89D;
+  --accent: #0E4D38;
+  --accent-foreground: #F2F9F5;
+  --destructive: #EF4444;
+  --border: #22352B;
+  --input: #17261F;
+  --ring: #10B981;
+}
+
+@layer base {
+  * {
+    border-color: var(--border);
+  }
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+
+  /* Sleek modern dark scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #0B130F;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #22352B;
+    border-radius: 9999px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #344E40;
+  }
+}
