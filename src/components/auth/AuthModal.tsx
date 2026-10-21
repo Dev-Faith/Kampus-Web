@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import Image from "next/image";
 import { motion } from "motion/react";
 import {
   X,
@@ -121,6 +122,16 @@ export function AuthModal({ isOpen, onClose, defaultRole = "STUDENT" }: AuthModa
         <div className="p-6 sm:p-8 space-y-6">
           {/* Header */}
           <div className="text-center space-y-2">
+            <div className="mx-auto relative h-12 w-12 rounded-2xl overflow-hidden border border-emerald-500/40 shadow-[0_0_20px_rgba(16,185,129,0.25)] mb-2">
+              <Image
+                src="/logo.png"
+                alt="Kampus"
+                width={48}
+                height={48}
+                className="h-full w-full object-cover"
+                priority
+              />
+            </div>
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold">
               <ShieldCheck className="h-3.5 w-3.5" />
               <span>Kampus Secure ID & Escrow</span>

@@ -174,9 +174,11 @@ export function backendLodgeToProperty(lodge: BackendLodge): Property {
   };
 }
 
+import { CURATED_FUTMINNA_LODGES } from "@/lib/constants/futminna-lodges";
+
 export const lodgesApi = {
   /**
-   * Fetch paginated lodges from live backend API
+   * Fetch paginated lodges from live backend API with fallback to verified FUTMINNA listings
    */
   async getLodges(params: GetLodgesParams = {}): Promise<{
     items: Property[];
@@ -204,15 +206,27 @@ export const lodgesApi = {
         };
       }
     } catch {
-      // Return empty on network or server error
+      // Backend not running or error, proceed to verified fallback
+    }
+
+    // Graceful fallback to verified curated FUTMINNA lodges so students never see a broken empty screen
+    let filtered = [...CURATED_FUTMINNA_LODGES];
+    if (params.category && params.category !== "all") {
+      filtered = filtered.filter((l) => l.propertyType === params.category);
+    }
+    if (params.priceMax) {
+      filtered = filtered.filter((l) => l.price <= (params.priceMax ?? 10000000));
+    }
+    if (params.priceMin) {
+      filtered = filtered.filter((l) => l.price >= (params.priceMin ?? 0));
     }
 
     return {
-      items: [],
-      total: 0,
+      items: filtered,
+      total: filtered.length,
       page: params.page || 1,
       pageSize: params.pageSize || 20,
-      isFallback: false,
+      isFallback: true,
     };
   },
 
@@ -226,7 +240,12 @@ export const lodgesApi = {
         return backendLodgeToProperty(response.data.data);
       }
     } catch {
-      // Lodge not found or network error
+      // Lodge not found on backend, check curated collection
+    }
+
+    const fallbackMatch = CURATED_FUTMINNA_LODGES.find((l) => l.id === id);
+    if (fallbackMatch) {
+      return fallbackMatch;
     }
 
     return null;

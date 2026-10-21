@@ -19,9 +19,17 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Kampus | Architectural Real Estate & PropTech Platform",
+  title: "Kampus | Student Accommodation & Escrow Living Platform",
   description:
-    "Next-generation real estate platform with high-performance vector mapping, tactile motion physics, and interactive 3D & staging media.",
+    "Nigeria's 1st student accommodation platform with custodial escrow protection. Find verified off-campus student lodges steps from FUTMINNA campus gates.",
+  icons: {
+    icon: [
+      { url: "/logo.png", type: "image/png" },
+      { url: "/icon.png", type: "image/png" },
+    ],
+    shortcut: "/logo.png",
+    apple: "/logo.png",
+  },
 };
 
 export default function RootLayout({

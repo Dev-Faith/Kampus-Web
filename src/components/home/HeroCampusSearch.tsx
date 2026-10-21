@@ -7,11 +7,6 @@ import {
   Building,
   GraduationCap,
   ShieldCheck,
-  ChevronDown,
-  Sparkles,
-  ArrowRight,
-  MapPin,
-  Lock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CAMPUSES } from "@/lib/constants/campuses";

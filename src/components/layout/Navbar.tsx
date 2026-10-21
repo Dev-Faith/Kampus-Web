@@ -55,9 +55,16 @@ export function Navbar() {
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
           {/* Logo & Platform Tag */}
           <div className="flex items-center gap-3 sm:gap-5">
-            <Link href="/" className="flex items-center gap-2 group">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-[#0E4D38] to-[#10B981] text-slate-950 shadow-[0_0_20px_rgba(16,185,129,0.35)] transition-transform group-hover:scale-105">
-                <Building2 className="h-5 w-5 stroke-[2.5]" />
+            <Link href="/" className="flex items-center gap-2.5 group">
+              <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-xl overflow-hidden border border-emerald-500/30 shadow-[0_0_20px_rgba(16,185,129,0.25)] transition-transform duration-200 group-hover:scale-105">
+                <Image
+                  src="/logo.png"
+                  alt="Kampus Logo"
+                  width={40}
+                  height={40}
+                  className="h-full w-full object-cover"
+                  priority
+                />
               </div>
               <div className="flex flex-col">
                 <span className="text-lg font-black tracking-tight text-white flex items-center gap-1.5 leading-none">
@@ -66,7 +73,7 @@ export function Navbar() {
                     NG
                   </span>
                 </span>
-                <span className="text-[10px] text-[#93A89D] font-medium tracking-tight">
+                <span className="text-[10px] text-[#93A89D] font-medium tracking-tight mt-0.5">
                   Student Escrow Living
                 </span>
               </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import Image from "next/image";
 import { motion } from "motion/react";
 import {
   X,
@@ -99,6 +100,16 @@ export function HostRegistrationModal({
         <form onSubmit={handleSubmit} className="space-y-6 relative">
           {/* Header */}
           <div className="text-center space-y-2">
+            <div className="mx-auto relative h-12 w-12 rounded-2xl overflow-hidden border border-amber-500/40 shadow-[0_0_20px_rgba(245,158,11,0.2)] mb-2">
+              <Image
+                src="/logo.png"
+                alt="Kampus"
+                width={48}
+                height={48}
+                className="h-full w-full object-cover"
+                priority
+              />
+            </div>
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-semibold">
               <Building2 className="h-3.5 w-3.5" />
               <span>Landlord & Host Accreditation</span>
