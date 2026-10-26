@@ -3,64 +3,50 @@
 import React, { Suspense } from "react";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
-import { HeroCampusSearch } from "@/components/home/HeroCampusSearch";
+import { HeroArchitecturalShowcase } from "@/components/home/HeroArchitecturalShowcase";
+import { ArchitecturalBentoPurpose } from "@/components/home/ArchitecturalBentoPurpose";
 import { FeaturedAccommodations } from "@/components/home/FeaturedAccommodations";
-import { StreetAgentComparison } from "@/components/home/StreetAgentComparison";
+import { MinnaNeighborhoods } from "@/components/home/MinnaNeighborhoods";
 import { EscrowVisualizer } from "@/components/home/EscrowVisualizer";
-import { DualAudienceSection } from "@/components/home/DualAudienceSection";
-import { StudentTestimonials } from "@/components/home/StudentTestimonials";
 import { HostCtaBanner } from "@/components/home/HostCtaBanner";
 import { LandingFaq } from "@/components/home/LandingFaq";
+import { ScrollReveal } from "@/components/home/ScrollReveal";
 
 function LandingPageContent() {
   return (
-    <div className="min-h-screen flex flex-col bg-[#0B130F] text-[#F2F9F5]">
-      {/* 1. Global Sticky Navigation */}
+    <div className="landing-page min-h-screen flex flex-col bg-background text-foreground transition-colors duration-200">
       <Navbar />
 
-      <main className="flex-1 flex flex-col mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 py-6 space-y-16 sm:space-y-24">
-        {/* 2. Hero Search with Campus Selector & Escrow Trust */}
-        <section>
-          <HeroCampusSearch />
-        </section>
+      <main className="landing-main flex-1">
+        <HeroArchitecturalShowcase />
 
-        {/* 3. Featured Verified Accommodations with Filter Pills */}
-        <section>
+        <ScrollReveal className="landing-block">
+          <ArchitecturalBentoPurpose />
+        </ScrollReveal>
+
+        <ScrollReveal className="landing-block" delay={0.04}>
           <FeaturedAccommodations />
-        </section>
+        </ScrollReveal>
 
-        {/* 6. Street Agent Trap vs The Kampus Standard (Comparison Table) */}
-        <section>
-          <StreetAgentComparison />
-        </section>
+        <ScrollReveal className="landing-block" delay={0.04}>
+          <MinnaNeighborhoods />
+        </ScrollReveal>
 
-        {/* 7. Interactive Custodial Escrow Visualizer */}
-        <section id="escrow">
-          <EscrowVisualizer />
-        </section>
+        <ScrollReveal className="landing-block landing-escrow" delay={0.04}>
+          <section id="escrow" aria-label="How rent protection works">
+            <EscrowVisualizer />
+          </section>
+        </ScrollReveal>
 
-        {/* 8. Verified FUTMINNA Student Testimonials */}
-        <section>
-          <StudentTestimonials />
-        </section>
-
-        {/* 9. Dual Audience Value Proposition (Students vs Hosts) */}
-        <section>
-          <DualAudienceSection />
-        </section>
-
-        {/* 10. Landlord & Hostel Owner Conversion Banner */}
-        <section>
+        <ScrollReveal className="landing-block">
           <HostCtaBanner />
-        </section>
+        </ScrollReveal>
 
-        {/* 11. Frequently Asked Questions Accordion */}
-        <section>
+        <ScrollReveal className="landing-block">
           <LandingFaq />
-        </section>
+        </ScrollReveal>
       </main>
 
-      {/* 12. Industry Standard Multi-Column PropTech Footer */}
       <Footer />
     </div>
   );
@@ -70,8 +56,8 @@ export default function HomePage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-[#0B130F] text-emerald-400">
-          Loading Kampus Platform...
+        <div className="min-h-screen flex items-center justify-center bg-background text-foreground">
+          Loading Kampus...
         </div>
       }
     >

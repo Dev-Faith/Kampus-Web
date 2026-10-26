@@ -134,9 +134,9 @@ export function PropertyMap({
                   type="button"
                   onMouseEnter={() => setHoveredPropertyId(property.id)}
                   onMouseLeave={() => setHoveredPropertyId(null)}
-                  className={`group relative flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-bold transition-all duration-200 cursor-pointer shadow-lg select-none ${
+                  className={`group relative flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-bold transition-all duration-200 cursor-pointer select-none ${
                     isHovered || isSelected
-                      ? "scale-115 -translate-y-1.5 z-40 bg-emerald-400 text-slate-950 ring-4 ring-emerald-500/40 shadow-[0_0_24px_rgba(52,211,153,0.7)]"
+                      ? "scale-105 -translate-y-1 z-40 bg-[#c45b37] text-white border border-white/40"
                       : "bg-slate-900/95 text-white hover:bg-slate-800 hover:scale-105 border border-slate-700/80"
                   }`}
                 >
@@ -148,7 +148,7 @@ export function PropertyMap({
                   <span
                     className={`absolute -bottom-1.5 left-1/2 -translate-x-1/2 h-2 w-2 rotate-45 border-r border-b ${
                       isHovered || isSelected
-                        ? "bg-emerald-400 border-emerald-400"
+                        ? "bg-[#c45b37] border-[#c45b37]"
                         : "bg-slate-900 border-slate-700/80"
                     }`}
                   />

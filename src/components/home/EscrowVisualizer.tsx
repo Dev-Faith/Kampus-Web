@@ -67,31 +67,31 @@ export function EscrowVisualizer() {
   const IconComponent = activeStep.icon;
 
   return (
-    <div className="w-full rounded-3xl border border-emerald-950/60 bg-gradient-to-b from-[#121E18] to-[#0B130F] p-6 sm:p-10 shadow-2xl relative overflow-hidden">
+    <div className="w-full rounded-3xl border border-slate-200 dark:border-emerald-950/60 bg-gradient-to-b from-white to-slate-50 dark:from-[#121E18] dark:to-[#0B130F] p-6 sm:p-10 shadow-xl dark:shadow-2xl relative overflow-hidden transition-colors duration-200">
       {/* Background Subtle Glow */}
       <div className="pointer-events-none absolute -top-24 -right-24 h-96 w-96 rounded-full bg-emerald-600/10 blur-3xl" />
       <div className="pointer-events-none absolute -bottom-24 -left-24 h-96 w-96 rounded-full bg-amber-500/10 blur-3xl" />
 
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-[#22352B] pb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-200 dark:border-[#22352B] pb-6">
         <div>
           <div className="flex items-center gap-2 mb-2">
-            <span className="flex h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="text-[11px] font-bold uppercase tracking-widest text-emerald-400">
+            <span className="flex h-2 w-2 rounded-full bg-emerald-500 dark:bg-emerald-400 animate-pulse" />
+            <span className="text-[11px] font-bold uppercase tracking-widest text-emerald-700 dark:text-emerald-400">
               Licensed Custodial Escrow Protection
             </span>
           </div>
-          <h3 className="text-xl sm:text-2xl font-black tracking-tight text-white">
+          <h3 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900 dark:text-white">
             How Kampus Protects Your Accommodation Funds
           </h3>
-          <p className="text-xs sm:text-sm text-[#93A89D] mt-1 max-w-xl">
+          <p className="text-xs sm:text-sm text-slate-600 dark:text-[#93A89D] mt-1 max-w-xl">
             Never pay rent directly into personal accounts. Experience Nigeria&apos;s
             only student housing platform with physical inspection guarantees.
           </p>
         </div>
 
-        <div className="flex items-center gap-2 rounded-2xl bg-[#083325]/80 border border-emerald-500/30 px-3.5 py-2 text-xs text-emerald-300 shrink-0">
-          <ShieldCheck className="h-4 w-4 text-emerald-400" />
+        <div className="flex items-center gap-2 rounded-2xl bg-emerald-50 dark:bg-[#083325]/80 border border-emerald-600/20 dark:border-emerald-500/30 px-3.5 py-2 text-xs text-emerald-800 dark:text-emerald-300 shrink-0 shadow-sm">
+          <ShieldCheck className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
           <span className="font-semibold">CBN-Licensed Escrow Flow</span>
         </div>
       </div>
@@ -108,25 +108,25 @@ export function EscrowVisualizer() {
               onClick={() => setActiveStepIndex(idx)}
               className={`relative flex items-center gap-3.5 rounded-2xl p-4 text-left transition-all duration-300 cursor-pointer ${
                 isSelected
-                  ? "bg-[#17261F] border-2 border-emerald-500 shadow-[0_0_24px_rgba(16,185,129,0.18)]"
-                  : "bg-[#0B130F]/60 border border-[#22352B] hover:border-[#344E40] opacity-80 hover:opacity-100"
+                  ? "bg-emerald-50/70 dark:bg-[#17261F] border-2 border-emerald-600 dark:border-emerald-500 shadow-sm dark:shadow-[0_0_24px_rgba(16,185,129,0.18)]"
+                  : "bg-white dark:bg-[#0B130F]/60 border border-slate-200 dark:border-[#22352B] hover:border-slate-300 dark:hover:border-[#344E40] opacity-80 hover:opacity-100"
               }`}
             >
               <div
                 className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl transition-colors ${
                   isSelected
-                    ? "bg-emerald-500 text-slate-950 font-bold"
-                    : "bg-[#121E18] text-[#93A89D] border border-[#22352B]"
+                    ? "bg-emerald-600 dark:bg-emerald-500 text-white dark:text-slate-950 font-bold"
+                    : "bg-slate-100 dark:bg-[#121E18] text-slate-500 dark:text-[#93A89D] border border-slate-200 dark:border-[#22352B]"
                 }`}
               >
                 <StepIcon className="h-5 w-5" />
               </div>
 
               <div className="min-w-0">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-400">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
                   Step 0{s.step}
                 </span>
-                <h4 className="text-xs sm:text-sm font-bold text-white truncate">
+                <h4 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white truncate">
                   {s.subtitle}
                 </h4>
               </div>
@@ -143,48 +143,48 @@ export function EscrowVisualizer() {
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -12 }}
           transition={{ duration: 0.25 }}
-          className="rounded-2xl border border-[#22352B] bg-[#0E1A14]/90 p-6 sm:p-8"
+          className="rounded-2xl border border-slate-200 dark:border-[#22352B] bg-white dark:bg-[#0E1A14]/90 p-6 sm:p-8 shadow-sm dark:shadow-none"
         >
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
             <div className="space-y-3 flex-1">
-              <div className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-400 border border-emerald-500/30">
+              <div className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 dark:bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-700 dark:text-emerald-400 border border-emerald-600/20 dark:border-emerald-500/30">
                 <Sparkles className="h-3.5 w-3.5" />
                 <span>{activeStep.badge}</span>
               </div>
 
-              <h4 className="text-lg sm:text-2xl font-bold text-white tracking-tight">
+              <h4 className="text-lg sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
                 {activeStep.headline}
               </h4>
 
-              <p className="text-sm leading-relaxed text-[#93A89D] max-w-2xl">
+              <p className="text-sm leading-relaxed text-slate-600 dark:text-[#93A89D] max-w-2xl">
                 {activeStep.description}
               </p>
             </div>
 
             {/* Visual Security Box */}
-            <div className="w-full lg:w-72 shrink-0 rounded-2xl bg-[#0B130F] border border-[#22352B] p-5 space-y-3 shadow-inner">
-              <div className="flex items-center justify-between text-xs text-[#93A89D]">
+            <div className="w-full lg:w-72 shrink-0 rounded-2xl bg-slate-50 dark:bg-[#0B130F] border border-slate-200 dark:border-[#22352B] p-5 space-y-3 shadow-inner">
+              <div className="flex items-center justify-between text-xs text-slate-500 dark:text-[#93A89D]">
                 <span>Escrow Trust Status</span>
-                <span className="font-bold text-emerald-400">Active</span>
+                <span className="font-bold text-emerald-600 dark:text-emerald-400">Active</span>
               </div>
 
-              <div className="space-y-2 border-t border-[#17261F] pt-3 text-xs">
+              <div className="space-y-2 border-t border-slate-200 dark:border-[#17261F] pt-3 text-xs">
                 <div className="flex items-center justify-between">
-                  <span className="text-[#93A89D]">Inspection Window</span>
-                  <span className="font-bold text-white">24 Hours</span>
+                  <span className="text-slate-500 dark:text-[#93A89D]">Inspection Window</span>
+                  <span className="font-bold text-slate-900 dark:text-white">24 Hours</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-[#93A89D]">Fraud Protection</span>
-                  <span className="font-bold text-emerald-400">100% Guaranteed</span>
+                  <span className="text-slate-500 dark:text-[#93A89D]">Fraud Protection</span>
+                  <span className="font-bold text-emerald-600 dark:text-emerald-400">100% Guaranteed</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-[#93A89D]">Payout Method</span>
-                  <span className="font-bold text-white">Direct Bank (BVN)</span>
+                  <span className="text-slate-500 dark:text-[#93A89D]">Payout Method</span>
+                  <span className="font-bold text-slate-900 dark:text-white">Direct Bank (BVN)</span>
                 </div>
               </div>
 
-              <div className="rounded-xl bg-[#121E18] p-3 text-[11px] text-[#93A89D] flex items-start gap-2 border border-[#22352B]">
-                <ShieldCheck className="h-4 w-4 text-emerald-400 shrink-0 mt-0.5" />
+              <div className="rounded-xl bg-white dark:bg-[#121E18] p-3 text-[11px] text-slate-600 dark:text-[#93A89D] flex items-start gap-2 border border-slate-200 dark:border-[#22352B]">
+                <ShieldCheck className="h-4 w-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
                 <span>
                   Regulated under NDPR Data Privacy & Nigerian Banking Security Standards.
                 </span>

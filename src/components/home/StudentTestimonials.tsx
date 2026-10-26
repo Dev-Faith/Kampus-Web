@@ -61,10 +61,10 @@ export function StudentTestimonials() {
             FUTMINNA Student Experiences
           </span>
         </div>
-        <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+        <h2 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
           Trusted by Students Across Campus
         </h2>
-        <p className="text-xs sm:text-sm text-[#93A89D]">
+        <p className="text-xs sm:text-sm text-slate-600 dark:text-[#93A89D]">
           Read how fellow FUTMINNA students secured safe housing without exploitation.
         </p>
       </div>
@@ -73,7 +73,7 @@ export function StudentTestimonials() {
         {TESTIMONIALS.map((t) => (
           <div
             key={t.id}
-            className="rounded-3xl border border-[#22352B] bg-[#121E18]/80 hover:bg-[#15241C] p-6 flex flex-col justify-between transition-all duration-300 shadow-xl relative overflow-hidden group"
+            className="rounded-3xl border border-slate-200/90 dark:border-[#22352B] bg-white dark:bg-[#121E18]/80 hover:bg-slate-50 dark:hover:bg-[#15241C] p-6 flex flex-col justify-between transition-all duration-300 shadow-md dark:shadow-xl relative overflow-hidden group"
           >
             <div className="space-y-4">
               {/* Stars & Quote Icon */}
@@ -87,13 +87,13 @@ export function StudentTestimonials() {
               </div>
 
               {/* Quote text */}
-              <p className="text-xs sm:text-sm text-[#C4D5CC] leading-relaxed italic">
+              <p className="text-xs sm:text-sm text-slate-700 dark:text-[#C4D5CC] leading-relaxed italic">
                 &ldquo;{t.quote}&rdquo;
               </p>
             </div>
 
             {/* Author info */}
-            <div className="mt-6 pt-4 border-t border-[#22352B] flex items-center gap-3">
+            <div className="mt-6 pt-4 border-t border-slate-200 dark:border-[#22352B] flex items-center gap-3">
               <div className="relative h-11 w-11 rounded-full overflow-hidden border border-emerald-500/40 shrink-0">
                 <Image
                   src={t.avatar}
@@ -106,15 +106,15 @@ export function StudentTestimonials() {
 
               <div className="min-w-0">
                 <div className="flex items-center gap-1.5">
-                  <h4 className="text-xs font-bold text-white truncate">
+                  <h4 className="text-xs font-bold text-slate-900 dark:text-white truncate">
                     {t.name}
                   </h4>
-                  <ShieldCheck className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
+                  <ShieldCheck className="h-3.5 w-3.5 text-emerald-500 dark:text-emerald-400 shrink-0" />
                 </div>
-                <p className="text-[10px] text-emerald-400 font-semibold truncate">
+                <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold truncate">
                   {t.department} • {t.level}
                 </p>
-                <p className="text-[9px] text-[#93A89D] truncate">
+                <p className="text-[9px] text-slate-500 dark:text-[#93A89D] truncate">
                   📍 {t.lodge}
                 </p>
               </div>

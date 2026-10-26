@@ -4,7 +4,7 @@ import React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "motion/react";
-import { MapPin, ArrowRight, Compass, Sparkles, Building, Footprints } from "lucide-react";
+import { ArrowRight, Footprints } from "lucide-react";
 
 interface NeighborhoodCard {
   id: string;
@@ -72,33 +72,28 @@ const NEIGHBORHOODS: NeighborhoodCard[] = [
 
 export function MinnaNeighborhoods() {
   return (
-    <section className="space-y-6">
+    <section className="landing-neighborhoods space-y-6">
       {/* Section Header */}
-      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+      <div className="landing-neighborhoods__header flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2 mb-1.5">
-            <Compass className="h-4 w-4 text-emerald-400" />
-            <span className="text-[11px] font-bold uppercase tracking-widest text-emerald-400">
-              FUTMINNA Campus Zones
-            </span>
-          </div>
-          <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
-            Explore Minna Campus Neighborhoods
+          <p className="landing-eyebrow">A few good places to start</p>
+          <h2 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
+            Find your rhythm around campus.
           </h2>
-          <p className="text-xs sm:text-sm text-[#93A89D] mt-1 max-w-2xl">
-            Choose accommodations by proximity to your faculty, lecture theaters, and lifestyle preferences.
+          <p className="landing-section-heading__aside mt-2 max-w-2xl">
+            Explore the neighborhoods students call home, from the main gate to the quieter streets beyond.
           </p>
         </div>
 
         <Link href="/explore">
-          <span className="text-xs font-bold text-emerald-400 hover:text-emerald-300 transition-colors flex items-center gap-1.5 cursor-pointer">
-            View All Minna Zones on Map <ArrowRight className="h-3.5 w-3.5" />
+          <span className="landing-text-link">
+            View all areas <ArrowRight className="h-3.5 w-3.5" />
           </span>
         </Link>
       </div>
 
       {/* Grid of Neighborhood Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+      <div className="landing-neighborhoods__grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
         {NEIGHBORHOODS.map((hood, index) => (
           <Link
             key={hood.id}
@@ -108,7 +103,7 @@ export function MinnaNeighborhoods() {
             <motion.div
               whileHover={{ y: -6 }}
               transition={{ type: "spring", stiffness: 350, damping: 25 }}
-              className="relative h-[380px] rounded-3xl overflow-hidden border border-[#22352B] bg-[#121E18] flex flex-col justify-end p-5 shadow-xl transition-all duration-300 group-hover:border-emerald-500/70 group-hover:shadow-[0_16px_40px_rgba(16,185,129,0.18)]"
+              className="landing-neighborhoods__card relative h-[380px] rounded-3xl overflow-hidden border border-slate-200 dark:border-[#22352B] bg-slate-900 dark:bg-[#121E18] flex flex-col justify-end p-5 shadow-xl transition-all duration-300 group-hover:border-emerald-500/70 group-hover:shadow-[0_16px_40px_rgba(16,185,129,0.18)]"
             >
               {/* Image & Gradient Backdrop */}
               <div className="absolute inset-0 z-0">
@@ -119,13 +114,12 @@ export function MinnaNeighborhoods() {
                   sizes="(max-width: 768px) 100vw, 25vw"
                   className="object-cover transition-transform duration-700 ease-out group-hover:scale-110"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#0B130F] via-[#0B130F]/75 to-transparent" />
-                <div className="absolute inset-0 bg-emerald-950/20 mix-blend-multiply group-hover:opacity-0 transition-opacity" />
+                <div className="landing-neighborhoods__shade absolute inset-0" />
               </div>
 
               {/* Floating Top Badge */}
               <div className="absolute top-4 left-4 z-10 flex items-center gap-1.5">
-                <span className="rounded-full bg-[#0E4D38]/90 border border-emerald-400/40 px-3 py-1 text-[10px] font-bold text-emerald-300 backdrop-blur-md shadow-md">
+                <span className="landing-neighborhoods__badge rounded-full bg-[#0E4D38]/90 border border-emerald-400/40 px-3 py-1 text-[10px] font-bold text-emerald-300 backdrop-blur-md shadow-md">
                   {hood.badge}
                 </span>
               </div>
@@ -167,7 +161,7 @@ export function MinnaNeighborhoods() {
                     </span>
                   </div>
 
-                  <div className="h-8 w-8 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center group-hover:bg-emerald-500 group-hover:text-slate-950 transition-all">
+                <div className="landing-neighborhoods__arrow h-8 w-8 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center group-hover:bg-emerald-500 group-hover:text-slate-950 transition-all">
                     <ArrowRight className="h-4 w-4" />
                   </div>
                 </div>

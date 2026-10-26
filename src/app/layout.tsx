@@ -6,6 +6,7 @@ import "yet-another-react-lightbox/styles.css";
 import "yet-another-react-lightbox/plugins/thumbnails.css";
 import "@photo-sphere-viewer/core/index.css";
 import { ToastContainer } from "@/components/ui/ToastContainer";
+import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -24,11 +25,11 @@ export const metadata: Metadata = {
     "Nigeria's 1st student accommodation platform with custodial escrow protection. Find verified off-campus student lodges steps from FUTMINNA campus gates.",
   icons: {
     icon: [
-      { url: "/logo.png", type: "image/png" },
+      { url: "/kampus-icon.svg", type: "image/svg+xml" },
       { url: "/icon.png", type: "image/png" },
     ],
-    shortcut: "/logo.png",
-    apple: "/logo.png",
+    shortcut: "/kampus-icon.svg",
+    apple: "/apple-icon.png",
   },
 };
 
@@ -40,11 +41,19 @@ export default function RootLayout({
   return (
     <html
       lang="en"
+      suppressHydrationWarning
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col bg-slate-950 text-slate-100 selection:bg-emerald-500/30 selection:text-emerald-200">
-        <NuqsAdapter>{children}</NuqsAdapter>
-        <ToastContainer />
+      <body className="min-h-full flex flex-col bg-background text-foreground transition-colors duration-200 selection:bg-emerald-500/30 selection:text-emerald-700 dark:selection:text-emerald-200">
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="light"
+          enableSystem
+          disableTransitionOnChange={false}
+        >
+          <NuqsAdapter>{children}</NuqsAdapter>
+          <ToastContainer />
+        </ThemeProvider>
       </body>
     </html>
   );

@@ -98,16 +98,16 @@ export function RoomTypeCategories() {
               Curated Layouts
             </span>
           </div>
-          <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+          <h2 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
             Browse by Accommodation Type
           </h2>
-          <p className="text-xs sm:text-sm text-[#93A89D] mt-1 max-w-xl">
+          <p className="text-xs sm:text-sm text-slate-600 dark:text-[#93A89D] mt-1 max-w-xl">
             Whether you prioritize total privacy, luxury inverter backup, or splitting costs with a coursemate.
           </p>
         </div>
 
         <Link href="/explore">
-          <span className="text-xs font-bold text-emerald-400 hover:text-emerald-300 transition-colors flex items-center gap-1.5 cursor-pointer">
+          <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 transition-colors flex items-center gap-1.5 cursor-pointer">
             Explore All Formats <ArrowRight className="h-3.5 w-3.5" />
           </span>
         </Link>
@@ -125,32 +125,32 @@ export function RoomTypeCategories() {
               <motion.div
                 whileHover={{ y: -5 }}
                 transition={{ type: "spring", stiffness: 350, damping: 25 }}
-                className="h-full rounded-3xl border border-[#22352B] bg-[#121E18]/80 hover:bg-[#15241C] p-6 flex flex-col justify-between transition-all duration-300 group-hover:border-emerald-500/70 group-hover:shadow-[0_12px_32px_rgba(16,185,129,0.15)]"
+                className="h-full rounded-3xl border border-slate-200/90 dark:border-[#22352B] bg-white dark:bg-[#121E18]/80 hover:bg-slate-50 dark:hover:bg-[#15241C] p-6 flex flex-col justify-between transition-all duration-300 shadow-md dark:shadow-xl group-hover:border-emerald-500/70 group-hover:shadow-[0_12px_32px_rgba(16,185,129,0.15)]"
               >
                 <div>
                   {/* Top Bar with Icon and Badge */}
                   <div className="flex items-center justify-between gap-2 mb-4">
-                    <div className="h-11 w-11 rounded-2xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center justify-center group-hover:bg-emerald-500 group-hover:text-slate-950 transition-colors">
+                    <div className="h-11 w-11 rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 flex items-center justify-center group-hover:bg-emerald-500 group-hover:text-slate-950 transition-colors">
                       <Icon className="h-5 w-5" />
                     </div>
-                    <span className="rounded-full bg-[#0B130F] border border-[#22352B] px-3 py-1 text-[10px] font-bold text-emerald-300">
+                    <span className="rounded-full bg-emerald-50 dark:bg-[#0B130F] border border-emerald-200 dark:border-[#22352B] px-3 py-1 text-[10px] font-bold text-emerald-800 dark:text-emerald-300">
                       {cat.badge}
                     </span>
                   </div>
 
-                  <h3 className="text-lg font-black text-white group-hover:text-emerald-300 transition-colors">
+                  <h3 className="text-lg font-black text-slate-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-300 transition-colors">
                     {cat.title}
                   </h3>
 
-                  <p className="text-xs text-[#93A89D] mt-1 leading-relaxed">
+                  <p className="text-xs text-slate-600 dark:text-[#93A89D] mt-1 leading-relaxed">
                     {cat.tagline}
                   </p>
 
                   {/* Feature Checklist */}
-                  <ul className="mt-4 space-y-2 border-t border-[#22352B]/60 pt-4">
+                  <ul className="mt-4 space-y-2 border-t border-slate-200/80 dark:border-[#22352B]/60 pt-4">
                     {cat.amenities.map((item, i) => (
-                      <li key={i} className="flex items-center gap-2 text-[11px] text-[#C4D5CC]">
-                        <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
+                      <li key={i} className="flex items-center gap-2 text-[11px] text-slate-700 dark:text-[#C4D5CC]">
+                        <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 dark:text-emerald-400 shrink-0" />
                         <span>{item}</span>
                       </li>
                     ))}
@@ -158,15 +158,15 @@ export function RoomTypeCategories() {
                 </div>
 
                 {/* Price and CTA */}
-                <div className="mt-6 pt-4 border-t border-[#22352B] flex items-center justify-between text-xs">
+                <div className="mt-6 pt-4 border-t border-slate-200 dark:border-[#22352B] flex items-center justify-between text-xs">
                   <div>
-                    <span className="text-[10px] text-[#93A89D] block">Typical range</span>
-                    <span className="font-extrabold text-white text-xs sm:text-sm">
+                    <span className="text-[10px] text-slate-500 dark:text-[#93A89D] block">Typical range</span>
+                    <span className="font-extrabold text-slate-900 dark:text-white text-xs sm:text-sm">
                       {cat.avgPrice}
                     </span>
                   </div>
 
-                  <div className="h-7 w-7 rounded-full bg-[#0B130F] border border-[#22352B] text-emerald-400 flex items-center justify-center group-hover:border-emerald-500 transition-colors">
+                  <div className="h-7 w-7 rounded-full bg-slate-100 dark:bg-[#0B130F] border border-slate-200 dark:border-[#22352B] text-emerald-600 dark:text-emerald-400 flex items-center justify-center group-hover:border-emerald-500 transition-colors">
                     <ArrowRight className="h-3.5 w-3.5" />
                   </div>
                 </div>

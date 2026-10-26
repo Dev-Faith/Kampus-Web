@@ -142,7 +142,7 @@ export function ImageUploadDropzone({ onImagesChange }: ImageUploadDropzoneProps
   return (
     <div className="w-full space-y-3">
       {/* Upload Drop Area */}
-      <div className="relative group rounded-2xl border-2 border-dashed border-[#22352B] hover:border-emerald-500/60 bg-[#121E18]/60 hover:bg-[#121E18] p-6 transition-all duration-300 text-center flex flex-col items-center justify-center">
+      <div className="group relative flex flex-col items-center justify-center rounded-2xl border border-dashed border-[#d8d2c7] bg-white p-6 text-center transition-colors duration-200 hover:border-[#c45b37] hover:bg-[#f6f3ed] dark:border-[#39443d] dark:bg-[#1c241f] dark:hover:border-[#c45b37] dark:hover:bg-[#202722]">
         <input
           type="file"
           accept="image/*"
@@ -150,45 +150,46 @@ export function ImageUploadDropzone({ onImagesChange }: ImageUploadDropzoneProps
           className="absolute inset-0 z-10 w-full h-full opacity-0 cursor-pointer"
         />
 
-        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 mb-2.5 group-hover:scale-110 transition-transform">
+        <div className="mb-2.5 flex h-12 w-12 items-center justify-center rounded-2xl border border-[#e3ded4] bg-[#eeece6] text-[#c45b37] transition-transform group-hover:scale-[1.03] dark:border-[#39443d] dark:bg-[#252c27]">
           <UploadCloud className="h-6 w-6" />
         </div>
 
-        <h4 className="text-sm font-bold text-white">
+        <h4 className="text-sm font-semibold text-slate-900 dark:text-white">
           Drop Lodge Photos Here, or Browse
         </h4>
-        <p className="text-[11px] text-[#93A89D] mt-0.5 max-w-sm">
+        <p className="mt-0.5 max-w-sm text-[11px] text-slate-600 dark:text-[#a6afa8]">
           Automatic 16:10 aspect ratio crop & WebP retina compression (&le;400KB)
         </p>
 
-        <div className="mt-3 flex items-center gap-2 text-[10px] font-medium text-[#93A89D] bg-[#0B130F] px-3 py-1 rounded-full border border-[#22352B]">
-          <Crop className="h-3 w-3 text-emerald-400" />
+        <div className="mt-3 flex items-center gap-2 rounded-full border border-[#e3ded4] bg-[#f6f3ed] px-3 py-1 text-[10px] font-medium text-slate-600 dark:border-[#39443d] dark:bg-[#171d19] dark:text-[#a6afa8]">
+          <Crop className="h-3 w-3 text-[#c45b37]" />
           <span>16:10 Ratio</span>
           <span className="text-[#3A4D43]">•</span>
-          <Sliders className="h-3 w-3 text-emerald-400" />
+          <Sliders className="h-3 w-3 text-[#c45b37]" />
           <span>Auto WebP Compression</span>
         </div>
       </div>
 
       {/* Interactive Crop Modal */}
       {selectedImageSrc && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-4 animate-in fade-in">
-          <div className="relative flex flex-col w-full max-w-2xl rounded-2xl bg-[#0B130F] border border-[#22352B] shadow-2xl overflow-hidden">
+        <div className="kampus-modal-backdrop fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in">
+          <div className="kampus-modal relative flex max-h-[94vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl" role="dialog" aria-modal="true" aria-labelledby="kampus-crop-title">
             {/* Header */}
-            <div className="flex items-center justify-between border-b border-[#22352B] px-5 py-3.5">
+            <div className="flex items-center justify-between border-b border-slate-200 px-5 py-3.5 dark:border-[#303832]">
               <div>
-                <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                  <Crop className="h-4 w-4 text-emerald-400" />
+                <h3 id="kampus-crop-title" className="flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-white">
+                  <Crop className="h-4 w-4 text-[#c45b37]" />
                   Crop Photo (16:10 Frame)
                 </h3>
-                <p className="text-[11px] text-[#93A89D]">
+                <p className="text-[11px] text-slate-600 dark:text-[#a6afa8]">
                   Drag to frame your room before compression
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => setSelectedImageSrc(null)}
-                className="rounded-lg p-1.5 text-[#93A89D] hover:bg-[#121E18] hover:text-white transition-colors"
+                aria-label="Close image cropper"
+                className="kampus-modal-close rounded-full p-1.5 transition-colors"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -209,10 +210,10 @@ export function ImageUploadDropzone({ onImagesChange }: ImageUploadDropzoneProps
             </div>
 
             {/* Controls Bar */}
-            <div className="border-t border-[#22352B] bg-[#0E1A14] px-5 py-3.5 space-y-3">
+            <div className="space-y-3 border-t border-slate-200 bg-[#eeece6] px-5 py-3.5 dark:border-[#303832] dark:bg-[#171d19]">
               <div className="flex items-center justify-between gap-4">
                 <div className="flex-1 flex items-center gap-2.5">
-                  <ZoomIn className="h-4 w-4 text-[#93A89D]" />
+                  <ZoomIn className="h-4 w-4 text-slate-500 dark:text-[#a6afa8]" />
                   <input
                     type="range"
                     min={1}
@@ -220,17 +221,17 @@ export function ImageUploadDropzone({ onImagesChange }: ImageUploadDropzoneProps
                     step={0.1}
                     value={zoom}
                     onChange={(e) => setZoom(Number(e.target.value))}
-                    className="w-full accent-emerald-500 h-1.5 bg-[#121E18] rounded-lg cursor-pointer"
+                    className="h-1.5 w-full cursor-pointer rounded-lg accent-[#c45b37]"
                   />
-                  <span className="text-[11px] text-[#93A89D] w-7">{zoom.toFixed(1)}x</span>
+                  <span className="w-7 text-[11px] text-slate-600 dark:text-[#a6afa8]">{zoom.toFixed(1)}x</span>
                 </div>
 
                 <button
                   type="button"
                   onClick={() => setRotation((r) => (r + 90) % 360)}
-                  className="flex items-center gap-1.5 rounded-lg border border-[#22352B] bg-[#121E18] px-3 py-1.5 text-xs text-[#F2F9F5] hover:bg-[#17261F] transition-colors"
+                  className="flex items-center gap-1.5 rounded-full border border-slate-300 bg-white px-3 py-1.5 text-xs text-slate-800 transition-colors hover:bg-slate-50 dark:border-[#39443d] dark:bg-[#202722] dark:text-[#f4f1ea] dark:hover:bg-[#29312b]"
                 >
-                  <RotateCw className="h-3.5 w-3.5 text-emerald-400" />
+                  <RotateCw className="h-3.5 w-3.5 text-[#c45b37]" />
                   <span>Rotate</span>
                 </button>
               </div>
@@ -240,14 +241,14 @@ export function ImageUploadDropzone({ onImagesChange }: ImageUploadDropzoneProps
                 <Button
                   variant="outline"
                   onClick={() => setSelectedImageSrc(null)}
-                  className="rounded-full border-[#22352B] text-[#93A89D] hover:text-white text-xs"
+                  className="rounded-full border-slate-300 text-slate-700 hover:text-slate-950 text-xs dark:border-[#39443d] dark:text-[#c1c8c2] dark:hover:text-white"
                 >
                   Cancel
                 </Button>
                 <Button
                   onClick={processAndCompress}
                   disabled={isProcessing}
-                  className="rounded-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs"
+                  className="editorial-action rounded-full text-xs font-semibold"
                 >
                   {isProcessing ? (
                     <span className="flex items-center gap-2">

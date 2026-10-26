@@ -22,11 +22,11 @@ export function PropertyCardCarousel({
   if (!images || images.length === 0) {
     return (
       <div
-        className={`relative w-full overflow-hidden rounded-xl bg-[#14231B] border border-[#22352B] flex flex-col items-center justify-center text-center p-6 text-[#93A89D] ${aspectRatio} ${className}`}
+        className={`relative w-full overflow-hidden rounded-xl bg-slate-100 dark:bg-[#14231B] border border-slate-200 dark:border-[#22352B] flex flex-col items-center justify-center text-center p-6 text-slate-500 dark:text-[#93A89D] ${aspectRatio} ${className}`}
       >
-        <Building2 className="h-10 w-10 text-[#586B61] mb-2 opacity-50" />
-        <span className="text-xs font-semibold text-[#93A89D]">Photos Coming Soon</span>
-        <span className="text-[10px] text-[#586B61]">Kampus Verified Lodge</span>
+        <Building2 className="h-10 w-10 text-slate-400 dark:text-[#586B61] mb-2 opacity-50" />
+        <span className="text-xs font-semibold text-slate-700 dark:text-[#93A89D]">Photos Coming Soon</span>
+        <span className="text-[10px] text-slate-400 dark:text-[#586B61]">Kampus Verified Lodge</span>
       </div>
     );
   }

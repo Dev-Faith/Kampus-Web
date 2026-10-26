@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState } from "react";
-import Image from "next/image";
 import { motion } from "motion/react";
 import {
   X,
@@ -20,6 +19,7 @@ import { useAuthStore } from "@/lib/stores/useAuthStore";
 import { UserRole } from "@/types/api";
 
 import { toast } from "@/lib/stores/useToastStore";
+import { KampusLogo } from "@/components/brand/KampusLogo";
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -100,21 +100,22 @@ export function AuthModal({ isOpen, onClose, defaultRole = "STUDENT" }: AuthModa
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+    <div className="kampus-modal-backdrop fixed inset-0 z-50 flex items-center justify-center p-4">
       <motion.div
-        initial={{ opacity: 0, scale: 0.95, y: 15 }}
+        initial={{ opacity: 0, scale: 0.985, y: 8 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.95, y: 15 }}
-        transition={{ type: "spring", stiffness: 350, damping: 25 }}
-        className="relative w-full max-w-md overflow-hidden rounded-3xl border border-[#22352B] bg-[#0E1A14] text-[#F2F9F5] shadow-2xl"
+        exit={{ opacity: 0, scale: 0.985, y: 8 }}
+        transition={{ duration: 0.18, ease: "easeOut" }}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="kampus-auth-title"
+        className="kampus-modal relative max-h-[92vh] w-full max-w-md overflow-y-auto rounded-3xl"
       >
-        {/* Glow ambient header */}
-        <div className="absolute top-0 inset-x-0 h-28 bg-gradient-to-b from-emerald-500/15 via-emerald-500/5 to-transparent pointer-events-none" />
-
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 z-10 p-2 rounded-full bg-white/5 hover:bg-white/10 text-white/70 hover:text-white transition-colors"
+          aria-label="Close sign in"
+          className="kampus-modal-close absolute top-4 right-4 z-10 p-2 rounded-full transition-colors"
         >
           <X className="h-5 w-5" />
         </button>
@@ -122,30 +123,21 @@ export function AuthModal({ isOpen, onClose, defaultRole = "STUDENT" }: AuthModa
         <div className="p-6 sm:p-8 space-y-6">
           {/* Header */}
           <div className="text-center space-y-2">
-            <div className="mx-auto relative h-12 w-12 rounded-2xl overflow-hidden border border-emerald-500/40 shadow-[0_0_20px_rgba(16,185,129,0.25)] mb-2">
-              <Image
-                src="/logo.png"
-                alt="Kampus"
-                width={48}
-                height={48}
-                className="h-full w-full object-cover"
-                priority
-              />
-            </div>
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold">
-              <ShieldCheck className="h-3.5 w-3.5" />
+            <KampusLogo variant="mark" size={44} className="mx-auto mb-2" markClassName="text-slate-900 dark:text-[#f4f1ea]" />
+            <div className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-[#eeece6] px-3 py-1 text-xs font-medium text-slate-700 dark:border-[#303832] dark:bg-[#202722] dark:text-[#c1c8c2]">
+              <ShieldCheck className="h-3.5 w-3.5 text-[#c45b37]" />
               <span>Kampus Secure ID & Escrow</span>
             </div>
-            <h2 className="text-2xl font-black tracking-tight text-white">
+            <h2 id="kampus-auth-title" className="text-2xl font-semibold tracking-tight text-slate-900 dark:text-white">
               Sign In to Kampus
             </h2>
-            <p className="text-xs text-[#93A89D]">
+            <p className="text-xs text-slate-600 dark:text-[#93A89D]">
               Verified university accommodation backed by licensed custodial escrow.
             </p>
           </div>
 
           {/* Role Switcher Tabs */}
-          <div className="grid grid-cols-2 p-1 rounded-2xl bg-[#14231B] border border-[#22352B]">
+          <div className="grid grid-cols-2 p-1 rounded-2xl bg-slate-100 dark:bg-[#14231B] border border-slate-200 dark:border-[#22352B]">
             <button
               type="button"
               onClick={() => {
@@ -154,8 +146,8 @@ export function AuthModal({ isOpen, onClose, defaultRole = "STUDENT" }: AuthModa
               }}
               className={`flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-bold transition-all ${
                 role === "STUDENT"
-                  ? "bg-emerald-600 text-slate-950 shadow-md"
-                  : "text-[#93A89D] hover:text-white"
+                  ? "bg-[#c45b37] text-white shadow-none"
+                  : "text-slate-600 dark:text-[#93A89D] hover:text-slate-900 dark:hover:text-white"
               }`}
             >
               <GraduationCap className="h-4 w-4" />
@@ -169,8 +161,8 @@ export function AuthModal({ isOpen, onClose, defaultRole = "STUDENT" }: AuthModa
               }}
               className={`flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-bold transition-all ${
                 role === "LANDLORD"
-                  ? "bg-amber-400 text-slate-950 shadow-md"
-                  : "text-[#93A89D] hover:text-white"
+                  ? "bg-[#c45b37] text-white shadow-none"
+                  : "text-slate-600 dark:text-[#93A89D] hover:text-slate-900 dark:hover:text-white"
               }`}
             >
               <Building2 className="h-4 w-4" />
@@ -179,7 +171,7 @@ export function AuthModal({ isOpen, onClose, defaultRole = "STUDENT" }: AuthModa
           </div>
 
           {/* Method Switcher (OTP vs Password) */}
-          <div className="flex border-b border-[#22352B] text-xs font-medium">
+          <div className="flex border-b border-slate-200 dark:border-[#22352B] text-xs font-medium">
             <button
               type="button"
               onClick={() => {
@@ -188,8 +180,8 @@ export function AuthModal({ isOpen, onClose, defaultRole = "STUDENT" }: AuthModa
               }}
               className={`flex-1 pb-2.5 border-b-2 transition-all ${
                 authMethod === "otp"
-                  ? "border-emerald-400 text-emerald-400 font-bold"
-                  : "border-transparent text-[#93A89D] hover:text-white"
+                  ? "border-[#c45b37] text-[#a94c2e] dark:text-[#e58a69] font-semibold"
+                  : "border-transparent text-slate-500 dark:text-[#93A89D] hover:text-slate-900 dark:hover:text-white"
               }`}
             >
               Phone SMS Verification
@@ -202,8 +194,8 @@ export function AuthModal({ isOpen, onClose, defaultRole = "STUDENT" }: AuthModa
               }}
               className={`flex-1 pb-2.5 border-b-2 transition-all ${
                 authMethod === "password"
-                  ? "border-emerald-400 text-emerald-400 font-bold"
-                  : "border-transparent text-[#93A89D] hover:text-white"
+                  ? "border-[#c45b37] text-[#a94c2e] dark:text-[#e58a69] font-semibold"
+                  : "border-transparent text-slate-500 dark:text-[#93A89D] hover:text-slate-900 dark:hover:text-white"
               }`}
             >
               Password Login
@@ -212,7 +204,7 @@ export function AuthModal({ isOpen, onClose, defaultRole = "STUDENT" }: AuthModa
 
           {/* Real Error Message */}
           {error && (
-            <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs flex items-center gap-2">
+            <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 text-rose-700 dark:text-rose-300 text-xs flex items-center gap-2">
               <AlertCircle className="h-4 w-4 shrink-0" />
               <span>{error}</span>
             </div>
@@ -220,7 +212,7 @@ export function AuthModal({ isOpen, onClose, defaultRole = "STUDENT" }: AuthModa
 
           {/* Success Message */}
           {feedbackMsg && (
-            <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-xs flex items-center gap-2">
+            <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 text-emerald-800 dark:text-emerald-300 text-xs flex items-center gap-2">
               <CheckCircle2 className="h-4 w-4 shrink-0" />
               <span>{feedbackMsg}</span>
             </div>
@@ -231,17 +223,17 @@ export function AuthModal({ isOpen, onClose, defaultRole = "STUDENT" }: AuthModa
             !otpSent ? (
               <form onSubmit={handleSendOtp} className="space-y-4">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-[#93A89D]">
+                  <label className="text-xs font-semibold text-slate-700 dark:text-[#93A89D]">
                     Nigerian Mobile Number
                   </label>
                   <div className="relative">
-                    <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#93A89D]" />
+                    <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 dark:text-[#93A89D]" />
                     <input
                       type="tel"
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
                       placeholder="+234 812 345 6789"
-                      className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[#14231B] border border-[#22352B] text-white text-xs placeholder:text-[#93A89D]/50 focus:outline-none focus:border-emerald-500"
+                      className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-50 dark:bg-[#14231B] border border-slate-200 dark:border-[#22352B] text-slate-900 dark:text-white text-xs placeholder:text-slate-400 dark:placeholder:text-[#93A89D]/50 focus:outline-none focus:border-emerald-500"
                       required
                     />
                   </div>
@@ -250,10 +242,10 @@ export function AuthModal({ isOpen, onClose, defaultRole = "STUDENT" }: AuthModa
                 <button
                   type="submit"
                   disabled={isLoading || !phone}
-                  className="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold text-xs flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
+                  className="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white dark:text-slate-950 font-bold text-xs flex items-center justify-center gap-2 transition-colors disabled:opacity-50 shadow-md"
                 >
                   {isLoading ? (
-                    <span className="animate-spin h-4 w-4 border-2 border-slate-950 border-t-transparent rounded-full" />
+                    <span className="animate-spin h-4 w-4 border-2 border-white dark:border-slate-950 border-t-transparent rounded-full" />
                   ) : (
                     <>
                       <span>Send Verification Code</span>
@@ -266,26 +258,26 @@ export function AuthModal({ isOpen, onClose, defaultRole = "STUDENT" }: AuthModa
               <form onSubmit={handleVerifyOtp} className="space-y-4">
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between">
-                    <label className="text-xs font-semibold text-[#93A89D]">
+                    <label className="text-xs font-semibold text-slate-700 dark:text-[#93A89D]">
                       Verification Code
                     </label>
                     <button
                       type="button"
                       onClick={() => setOtpSent(false)}
-                      className="text-[11px] text-emerald-400 hover:underline"
+                      className="text-[11px] text-emerald-600 dark:text-emerald-400 hover:underline font-semibold"
                     >
                       Change number
                     </button>
                   </div>
                   <div className="relative">
-                    <KeyRound className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#93A89D]" />
+                    <KeyRound className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 dark:text-[#93A89D]" />
                     <input
                       type="text"
                       maxLength={6}
                       value={otpCode}
                       onChange={(e) => setOtpCode(e.target.value)}
                       placeholder="Enter 6-digit code"
-                      className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[#14231B] border border-[#22352B] text-white text-center tracking-widest text-lg font-bold focus:outline-none focus:border-emerald-500"
+                      className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-50 dark:bg-[#14231B] border border-slate-200 dark:border-[#22352B] text-slate-900 dark:text-white text-center tracking-widest text-lg font-bold focus:outline-none focus:border-emerald-500"
                       required
                     />
                   </div>
@@ -294,10 +286,10 @@ export function AuthModal({ isOpen, onClose, defaultRole = "STUDENT" }: AuthModa
                 <button
                   type="submit"
                   disabled={isLoading || otpCode.length < 4}
-                  className="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold text-xs flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
+                  className="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white dark:text-slate-950 font-bold text-xs flex items-center justify-center gap-2 transition-colors disabled:opacity-50 shadow-md"
                 >
                   {isLoading ? (
-                    <span className="animate-spin h-4 w-4 border-2 border-slate-950 border-t-transparent rounded-full" />
+                    <span className="animate-spin h-4 w-4 border-2 border-white dark:border-slate-950 border-t-transparent rounded-full" />
                   ) : (
                     <span>Verify & Continue</span>
                   )}
@@ -307,34 +299,34 @@ export function AuthModal({ isOpen, onClose, defaultRole = "STUDENT" }: AuthModa
           ) : (
             <form onSubmit={handlePasswordLogin} className="space-y-4">
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-[#93A89D]">
+                <label className="text-xs font-semibold text-slate-700 dark:text-[#93A89D]">
                   Email or Phone
                 </label>
                 <div className="relative">
-                  <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#93A89D]" />
+                  <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 dark:text-[#93A89D]" />
                   <input
                     type="text"
                     value={emailOrPhone}
                     onChange={(e) => setEmailOrPhone(e.target.value)}
                     placeholder="student@university.edu.ng"
-                    className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[#14231B] border border-[#22352B] text-white text-xs placeholder:text-[#93A89D]/50 focus:outline-none focus:border-emerald-500"
+                    className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-50 dark:bg-[#14231B] border border-slate-200 dark:border-[#22352B] text-slate-900 dark:text-white text-xs placeholder:text-slate-400 dark:placeholder:text-[#93A89D]/50 focus:outline-none focus:border-emerald-500"
                     required
                   />
                 </div>
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-[#93A89D]">
+                <label className="text-xs font-semibold text-slate-700 dark:text-[#93A89D]">
                   Password
                 </label>
                 <div className="relative">
-                  <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#93A89D]" />
+                  <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 dark:text-[#93A89D]" />
                   <input
                     type="password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••••••"
-                    className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[#14231B] border border-[#22352B] text-white text-xs placeholder:text-[#93A89D]/50 focus:outline-none focus:border-emerald-500"
+                    className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-50 dark:bg-[#14231B] border border-slate-200 dark:border-[#22352B] text-slate-900 dark:text-white text-xs placeholder:text-slate-400 dark:placeholder:text-[#93A89D]/50 focus:outline-none focus:border-emerald-500"
                     required
                   />
                 </div>
@@ -343,10 +335,10 @@ export function AuthModal({ isOpen, onClose, defaultRole = "STUDENT" }: AuthModa
               <button
                 type="submit"
                 disabled={isLoading || !emailOrPhone || !password}
-                className="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold text-xs flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
+                className="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white dark:text-slate-950 font-bold text-xs flex items-center justify-center gap-2 transition-colors disabled:opacity-50 shadow-md"
               >
                 {isLoading ? (
-                  <span className="animate-spin h-4 w-4 border-2 border-slate-950 border-t-transparent rounded-full" />
+                  <span className="animate-spin h-4 w-4 border-2 border-white dark:border-slate-950 border-t-transparent rounded-full" />
                 ) : (
                   <>
                     <span>Sign In to {role === "STUDENT" ? "Student" : "Host"} Account</span>

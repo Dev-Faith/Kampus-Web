@@ -92,65 +92,65 @@ function ExplorePlatform() {
   }, [properties, q, sort]);
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#0B130F] text-[#F2F9F5]">
+    <div className="editorial-page explore-page min-h-screen flex flex-col bg-background text-foreground transition-colors">
       <Navbar />
 
-      <main className="flex-1 flex flex-col mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 py-4 sm:py-6 gap-5">
+      <main className="explore-main flex-1">
         {/* Filter and Query Control Bar */}
         <div className="w-full">
           <PropertyFilterBar />
         </div>
 
         {/* Results Counter & Live Indicator */}
-        <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-[#93A89D]">
+        <div className="explore-summary flex flex-wrap items-center justify-between gap-2 text-xs text-slate-600 dark:text-[#93A89D]">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="font-bold text-white">
+            <span className="font-bold text-slate-900 dark:text-white">
               {filteredProperties.length} Student Lodges
             </span>
             <span>available with Custodial Escrow</span>
             {campus !== "all" && (
-              <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 font-bold text-emerald-400 border border-emerald-500/20">
+              <span className="rounded-full bg-[#f4e8e2] dark:bg-[#2a201b] px-2 py-0.5 font-bold text-[#a94c2e] dark:text-[#e08b6a] border border-[#c45b37]/25">
                 {campus}
               </span>
             )}
             {type !== "all" && (
-              <span className="rounded-full bg-[#121E18] px-2 py-0.5 font-medium text-slate-300 border border-[#22352B] capitalize">
+              <span className="rounded-full bg-slate-100 dark:bg-[#121E18] px-2 py-0.5 font-medium text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-[#22352B] capitalize">
                 {type}
               </span>
             )}
 
             {/* Live Gateway Indicator */}
             <span
-              className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold border bg-emerald-500/10 border-emerald-500/30 text-emerald-400"
+              className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold border bg-[#f4e8e2] dark:bg-[#2a201b] border-[#c45b37]/25 text-[#a94c2e] dark:text-[#e08b6a]"
             >
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              <span className="h-1.5 w-1.5 rounded-full bg-[#c45b37]" />
               Kampus Gateway Connected
             </span>
 
             {isFetching && (
-              <Loader2 className="h-3.5 w-3.5 animate-spin text-emerald-400" />
+              <Loader2 className="h-3.5 w-3.5 animate-spin text-emerald-500" />
             )}
           </div>
 
-          <div className="flex items-center gap-2 text-emerald-400 font-semibold">
+          <div className="flex items-center gap-2 text-[#a94c2e] dark:text-[#e08b6a] font-semibold">
             <ShieldCheck className="h-4 w-4" />
             <span className="hidden sm:inline">100% Move-in Inspection Guarantee</span>
           </div>
         </div>
 
         {/* DESKTOP VIEWPORTS (>= 768px) */}
-        <div className="hidden md:block flex-1">
+        <div className="explore-viewports hidden md:block flex-1">
           {view === "split" && (
-            <div className="grid grid-cols-12 gap-6 items-start">
+            <div className="explore-split-grid grid grid-cols-12 gap-6 items-start">
               {/* Left Column: Scrollable Property Feed (7 cols) */}
               <div className="col-span-12 lg:col-span-7 xl:col-span-7 space-y-4">
                 {filteredProperties.length === 0 ? (
-                  <div className="rounded-2xl border border-[#22352B] bg-[#0E1A14] p-12 text-center">
-                    <Inbox className="mx-auto h-10 w-10 text-[#586B61] mb-3" />
-                    <h3 className="text-base font-bold text-white">
+                  <div className="rounded-2xl border border-slate-200 dark:border-[#22352B] bg-white dark:bg-[#0E1A14] p-12 text-center shadow-sm">
+                    <Inbox className="mx-auto h-10 w-10 text-slate-400 dark:text-[#586B61] mb-3" />
+                    <h3 className="text-base font-bold text-slate-900 dark:text-white">
                       No matching student lodges found
                     </h3>
-                    <p className="text-xs text-[#93A89D] mt-1">
+                    <p className="text-xs text-slate-500 dark:text-[#93A89D] mt-1">
                       Try switching campuses or resetting room filters.
                     </p>
                   </div>
@@ -169,7 +169,7 @@ function ExplorePlatform() {
               </div>
 
               {/* Right Column: Sticky Vector Map (5 cols) */}
-              <div className="col-span-12 lg:col-span-5 xl:col-span-5 sticky top-20 h-[calc(100vh-6.5rem)]">
+              <div className="explore-map-frame col-span-12 lg:col-span-5 xl:col-span-5 sticky top-20 h-[calc(100vh-6.5rem)]">
                 <PropertyMap properties={filteredProperties} />
               </div>
             </div>
@@ -191,14 +191,14 @@ function ExplorePlatform() {
           )}
 
           {view === "map" && (
-            <div className="w-full h-[calc(100vh-12rem)]">
+            <div className="explore-map-only w-full h-[calc(100vh-12rem)]">
               <PropertyMap properties={filteredProperties} />
             </div>
           )}
         </div>
 
         {/* MOBILE VIEWPORT (< 768px): Edge-to-Edge Map with Vaul Draggable Sheet */}
-        <div className="block md:hidden relative w-full h-[calc(100vh-14rem)] rounded-2xl overflow-hidden border border-[#22352B]">
+        <div className="explore-mobile-map block md:hidden relative w-full h-[calc(100vh-14rem)] rounded-2xl overflow-hidden border border-[#22352B]">
           <PropertyMap properties={filteredProperties} />
           <MobileListingDrawer properties={filteredProperties} />
         </div>

@@ -58,15 +58,15 @@ export function LandingFaq() {
             Frequently Asked Questions
           </span>
         </div>
-        <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+        <h2 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
           Everything You Need to Know
         </h2>
-        <p className="text-xs sm:text-sm text-[#93A89D]">
+        <p className="text-xs sm:text-sm text-slate-600 dark:text-[#93A89D]">
           Clear answers about escrow protection, move-in codes, and booking student housing in Minna.
         </p>
       </div>
 
-      <div className="max-w-3xl mx-auto divide-y divide-[#22352B] rounded-3xl border border-[#22352B] bg-[#121E18]/80 overflow-hidden shadow-xl">
+      <div className="max-w-3xl mx-auto divide-y divide-slate-200 dark:divide-[#22352B] rounded-3xl border border-slate-200/90 dark:border-[#22352B] bg-white dark:bg-[#121E18]/80 overflow-hidden shadow-md dark:shadow-xl">
         {FAQS.map((faq, idx) => {
           const isOpen = openIndex === idx;
           return (
@@ -74,14 +74,14 @@ export function LandingFaq() {
               <button
                 type="button"
                 onClick={() => toggleFaq(idx)}
-                className="w-full p-5 sm:p-6 text-left flex items-center justify-between gap-4 cursor-pointer hover:bg-[#15241C]"
+                className="w-full p-5 sm:p-6 text-left flex items-center justify-between gap-4 cursor-pointer hover:bg-slate-50 dark:hover:bg-[#15241C]"
               >
-                <span className="text-sm font-bold text-white flex-1 leading-snug">
+                <span className="text-sm font-bold text-slate-900 dark:text-white flex-1 leading-snug">
                   {faq.question}
                 </span>
                 <div
-                  className={`h-7 w-7 rounded-full bg-[#0B130F] border border-[#22352B] text-emerald-400 flex items-center justify-center shrink-0 transition-transform duration-200 ${
-                    isOpen ? "rotate-180 bg-emerald-500 text-slate-950" : ""
+                  className={`h-7 w-7 rounded-full bg-slate-100 dark:bg-[#0B130F] border border-slate-200 dark:border-[#22352B] text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 transition-transform duration-200 ${
+                    isOpen ? "rotate-180 bg-emerald-500 text-slate-950 dark:bg-emerald-500 dark:text-slate-950" : ""
                   }`}
                 >
                   <ChevronDown className="h-4 w-4" />
@@ -97,7 +97,7 @@ export function LandingFaq() {
                     transition={{ duration: 0.2 }}
                     className="overflow-hidden"
                   >
-                    <div className="px-5 pb-5 sm:px-6 sm:pb-6 text-xs text-[#93A89D] leading-relaxed border-t border-[#22352B]/40 pt-3">
+                    <div className="px-5 pb-5 sm:px-6 sm:pb-6 text-xs text-slate-600 dark:text-[#93A89D] leading-relaxed border-t border-slate-200/80 dark:border-[#22352B]/40 pt-3">
                       {faq.answer}
                     </div>
                   </motion.div>

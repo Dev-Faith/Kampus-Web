@@ -25,35 +25,35 @@ function ToastNotification({ toast }: { toast: ToastItem }) {
   const config = {
     success: {
       icon: CheckCircle2,
-      iconColor: "text-emerald-400",
-      bgColor: "bg-[#121E18]/95",
+      iconColor: "text-emerald-600 dark:text-emerald-400",
+      bgColor: "bg-white/95 dark:bg-[#121E18]/95",
       borderColor: "border-emerald-500/40",
-      glowColor: "shadow-[0_8px_30px_rgba(16,185,129,0.18)]",
-      badge: "bg-emerald-500/15 text-emerald-400 border-emerald-500/30",
+      shadow: "shadow-sm",
+      badge: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30",
     },
     error: {
       icon: AlertCircle,
-      iconColor: "text-rose-400",
-      bgColor: "bg-[#1A1114]/95",
+      iconColor: "text-rose-600 dark:text-rose-400",
+      bgColor: "bg-white/95 dark:bg-[#1A1114]/95",
       borderColor: "border-rose-500/40",
-      glowColor: "shadow-[0_8px_30px_rgba(244,63,94,0.18)]",
-      badge: "bg-rose-500/15 text-rose-400 border-rose-500/30",
+      shadow: "shadow-sm",
+      badge: "bg-rose-500/15 text-rose-600 dark:text-rose-400 border-rose-500/30",
     },
     warning: {
       icon: AlertTriangle,
-      iconColor: "text-amber-400",
-      bgColor: "bg-[#1A1610]/95",
+      iconColor: "text-amber-600 dark:text-amber-400",
+      bgColor: "bg-white/95 dark:bg-[#1A1610]/95",
       borderColor: "border-amber-500/40",
-      glowColor: "shadow-[0_8px_30px_rgba(245,158,11,0.18)]",
-      badge: "bg-amber-500/15 text-amber-400 border-amber-500/30",
+      shadow: "shadow-sm",
+      badge: "bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30",
     },
     info: {
       icon: Sparkles,
-      iconColor: "text-cyan-400",
-      bgColor: "bg-[#10171D]/95",
+      iconColor: "text-cyan-600 dark:text-cyan-400",
+      bgColor: "bg-white/95 dark:bg-[#10171D]/95",
       borderColor: "border-cyan-500/40",
-      glowColor: "shadow-[0_8px_30px_rgba(6,182,212,0.18)]",
-      badge: "bg-cyan-500/15 text-cyan-400 border-cyan-500/30",
+      shadow: "shadow-sm",
+      badge: "bg-cyan-500/15 text-cyan-600 dark:text-cyan-400 border-cyan-500/30",
     },
   }[toast.type];
 
@@ -70,20 +70,20 @@ function ToastNotification({ toast }: { toast: ToastItem }) {
         stiffness: 350,
         damping: 25,
       }}
-      className={`pointer-events-auto relative flex w-full sm:max-w-md items-start gap-3 rounded-2xl border p-4 backdrop-blur-xl ${config.bgColor} ${config.borderColor} ${config.glowColor}`}
+      className={`pointer-events-auto relative flex w-full sm:max-w-md items-start gap-3 rounded-2xl border p-4 backdrop-blur-sm ${config.bgColor} ${config.borderColor} ${config.shadow}`}
     >
-      {/* Icon with glowing ring */}
-      <div className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-black/40 border border-white/5 ${config.iconColor}`}>
+      {/* Icon */}
+      <div className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-slate-100 dark:bg-black/40 border border-slate-200 dark:border-white/5 ${config.iconColor}`}>
         <Icon className="h-4 w-4" />
       </div>
 
       {/* Content */}
       <div className="flex-1 min-w-0 pr-2">
-        <h5 className="text-xs font-bold text-white tracking-tight leading-snug">
+        <h5 className="text-xs font-bold text-slate-900 dark:text-white tracking-tight leading-snug">
           {toast.title}
         </h5>
         {toast.description && (
-          <p className="mt-0.5 text-[11px] text-[#93A89D] leading-relaxed">
+          <p className="mt-0.5 text-[11px] text-slate-600 dark:text-[#93A89D] leading-relaxed">
             {toast.description}
           </p>
         )}
@@ -94,7 +94,7 @@ function ToastNotification({ toast }: { toast: ToastItem }) {
               toast.action?.onClick();
               dismissToast(toast.id);
             }}
-            className="mt-2 text-[11px] font-bold text-emerald-400 hover:text-emerald-300 underline underline-offset-2"
+            className="mt-2 text-[11px] font-bold text-emerald-600 dark:text-emerald-400 hover:text-emerald-500 underline underline-offset-2"
           >
             {toast.action.label}
           </button>
@@ -106,7 +106,7 @@ function ToastNotification({ toast }: { toast: ToastItem }) {
         type="button"
         onClick={() => dismissToast(toast.id)}
         aria-label="Dismiss notification"
-        className="shrink-0 rounded-lg p-1 text-[#93A89D] hover:bg-white/10 hover:text-white transition-colors"
+        className="shrink-0 rounded-lg p-1 text-slate-400 dark:text-[#93A89D] hover:bg-slate-100 dark:hover:bg-white/10 hover:text-slate-900 dark:hover:text-white transition-colors"
       >
         <X className="h-3.5 w-3.5" />
       </button>
