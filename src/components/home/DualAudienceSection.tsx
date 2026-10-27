@@ -81,11 +81,11 @@ export function DualAudienceSection() {
               <KeyRound className="h-5 w-5" />
             </div>
             <h4 className="text-base font-bold text-slate-900 dark:text-white">
-              24-Hour Move-in Protection
+              Move-in Inspection Tracking
             </h4>
             <p className="text-xs text-slate-600 dark:text-[#93A89D] leading-relaxed">
-              Funds are held in custodial trust. Inspect light, water, security, and
-              room state before authorizing final payout to the landlord.
+              Inspect the room, utilities, and keys before sharing your code with the host.
+              Your booking displays the inspection deadline and dispute status.
             </p>
           </div>
 
@@ -112,11 +112,11 @@ export function DualAudienceSection() {
               <Banknote className="h-5 w-5" />
             </div>
             <h4 className="text-base font-bold text-slate-900 dark:text-white">
-              Guaranteed Rent Payouts
+              Payout Status Tracking
             </h4>
             <p className="text-xs text-slate-600 dark:text-[#93A89D] leading-relaxed">
               Eliminate defaulted payments and tenant chasing. Students prepay their
-              entire academic session directly into custodial escrow prior to move-in.
+              payment status and inspection approval in Kampus before payout processing.
             </p>
           </div>
 
@@ -142,7 +142,7 @@ export function DualAudienceSection() {
             </h4>
             <p className="text-xs text-slate-600 dark:text-[#93A89D] leading-relaxed">
               Manage your hostel portfolio with 1-click status dropdowns (Available,
-              Booked, Maintenance). Direct automated bank payouts to your BVN-linked account.
+              Booked, Maintenance). Track payment and inspection status before payout processing.
             </p>
           </div>
         </div>
@@ -151,7 +151,7 @@ export function DualAudienceSection() {
       {/* CTA Footer Row */}
       <div className="mt-8 flex flex-col sm:flex-row items-center justify-between border-t border-slate-200 dark:border-[#22352B] pt-6 gap-4">
         <p className="text-xs text-slate-600 dark:text-[#93A89D] text-center sm:text-left">
-          Are you a property manager or landlord with student hostels in Akoka, Akure, Ibadan, or Benin?
+          Are you a property manager or landlord with student accommodation near FUTMINNA? Other campuses are coming soon.
         </p>
 
         <Link href="/host/dashboard">

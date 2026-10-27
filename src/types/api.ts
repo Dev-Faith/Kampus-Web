@@ -1,7 +1,7 @@
 export type UserRole = "STUDENT" | "LANDLORD" | "ADMIN";
 export type ProfileStatus = "UNCOMPLETED" | "COMPLETED" | "PENDING";
 export type KycStatus = "PENDING" | "APPROVED" | "REJECTED";
-export type EscrowStatus = "PENDING" | "HELD" | "RELEASED" | "REFUNDED";
+export type EscrowStatus = "PENDING" | "HELD" | "DISPUTED" | "PAYOUT_PENDING" | "RELEASED" | "REFUND_PENDING" | "REFUND_FAILED" | "REFUNDED";
 export type DisputeStatus = "OPEN" | "UNDER_REVIEW" | "RESOLVED" | "CLOSED";
 
 export interface ApiResponse<T> {
@@ -87,32 +87,50 @@ export interface LodgeAmenity {
   category?: string | null;
 }
 
+export interface LodgeBuildingSummary {
+  id: string;
+  name: string | null;
+  city: string;
+  state: string | null;
+  university: string | null;
+  campusArea: string | null;
+  address: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  unitCount?: number;
+}
+
 export interface BackendLodge {
   id: string;
+  buildingId?: string | null;
+  building?: LodgeBuildingSummary | null;
   title: string;
+  unitLabel?: string | null;
   description: string;
   address: string;
   city: string;
   state: string;
+  university?: string | null;
+  campusArea?: string | null;
   latitude: number | null;
   longitude: number | null;
-  rent: number;
+  rent: number | null;
   serviceFee: number | null;
-  numberOfRooms: number;
-  capacity: number;
-  category: "single" | "self_con" | "flat" | "hostel" | "premium" | "lodge" | string;
+  numberOfRooms: number | null;
+  capacity: number | null;
+  category: string | null;
   status: "available" | "booked" | "maintenance" | "occupied" | "AVAILABLE" | "BOOKED" | "MAINTENANCE";
   distanceToCampus: number | null;
   saved?: boolean;
   primaryImage?: LodgeImage | null;
   images: LodgeImage[];
   amenities: LodgeAmenity[];
-  landlord: {
+  landlord?: {
     id: string;
-    fullName: string;
-    isVerified: boolean;
-    rating: number;
-    reviewCount: number;
+    fullName?: string | null;
+    isVerified?: boolean;
+    rating?: number;
+    reviewCount?: number;
     profilePicture?: string | null;
     phone?: string;
     email?: string;
@@ -162,6 +180,23 @@ export interface Booking {
   amount: number;
   escrowStatus?: EscrowStatus | "pending" | "held" | "released" | "disputed" | "refunded";
   escrow?: EscrowTransaction;
+  inspectionExtension?: {
+    status: "PENDING" | "PAID" | "FAILED" | "REFUND_PENDING" | "REFUND_FAILED" | "REFUNDED" | null;
+    amount: number | null;
+    extensionNumber: number | null;
+    extendedDeadline: string | null;
+    paidCount: number;
+    totalPaidAmount: number;
+  };
+  inspectionExtensionFee?: number | null;
+  escrowCheckoutEnabled?: boolean;
+  canExtendInspection?: boolean;
+  canResumeInspectionExtension?: boolean;
+  dispute?: {
+    id?: string;
+    status?: DisputeStatus | "open" | "under_review";
+    reason?: string;
+  } | null;
   lodge?: BackendLodge;
   createdAt: string;
 }

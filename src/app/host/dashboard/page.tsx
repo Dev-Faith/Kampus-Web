@@ -32,10 +32,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { CampusCode, LodgeStatus, Property, RoomType } from "@/types/property";
+import { CampusCode, LodgeStatus, Property } from "@/types/property";
+import { ACCOMMODATION_TYPE_OPTIONS, AccommodationType } from "@/lib/constants/accommodation-types";
+import { CAMPUS_AREA_OPTIONS, getCampusAreaLabel } from "@/lib/constants/campus-areas";
 import { landlordApi } from "@/api/landlord";
 import { backendLodgeToProperty } from "@/api/lodges";
-import { LandlordProfile, LandlordStats } from "@/types/api";
+import { LandlordProfile, LandlordStats, LodgeBuildingSummary } from "@/types/api";
 import { ImageUploadDropzone } from "@/components/media/ImageUploadDropzone";
 import { useAuthStore } from "@/lib/stores/useAuthStore";
 import { AuthModal } from "@/components/auth/AuthModal";
@@ -60,6 +62,11 @@ export default function HostDashboardPage() {
   // Modals
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isBankModalOpen, setIsBankModalOpen] = useState(false);
+  const [isBuildingModalOpen, setIsBuildingModalOpen] = useState(false);
+  const [buildingProperty, setBuildingProperty] = useState<Property | null>(null);
+  const [targetBuildingId, setTargetBuildingId] = useState("");
+  const [targetBuildingName, setTargetBuildingName] = useState("");
+  const [isSavingBuilding, setIsSavingBuilding] = useState(false);
 
   // Bank Form State (Initialized empty, populated strictly from live profile)
   const [bankName, setBankName] = useState("");
@@ -69,9 +76,15 @@ export default function HostDashboardPage() {
 
   // New Listing Form State
   const [newTitle, setNewTitle] = useState("");
+  const [newBuildingId, setNewBuildingId] = useState("");
+  const [newBuildingName, setNewBuildingName] = useState("");
+  const [newUnitLabel, setNewUnitLabel] = useState("");
+  const [buildings, setBuildings] = useState<LodgeBuildingSummary[]>([]);
   const [newCampus, setNewCampus] = useState<CampusCode>("FUTMINNA");
   const [newRent, setNewRent] = useState<number | "">("");
-  const [newCategory, setNewCategory] = useState<RoomType>("self-con");
+  const [newCategory, setNewCategory] = useState<AccommodationType>("self_contained");
+  const [newArea, setNewArea] = useState("");
+  const [newNumberOfRooms, setNewNumberOfRooms] = useState<number | "">("");
   const [newAddress, setNewAddress] = useState("");
   const [newDescription, setNewDescription] = useState("");
   const [uploadedUrls, setUploadedUrls] = useState<string[]>([]);
@@ -95,6 +108,8 @@ export default function HostDashboardPage() {
       setProperties(myProps);
     });
 
+    landlordApi.getBuildings().then(setBuildings).catch(() => setBuildings([]));
+
     landlordApi.getStats().then((s) => setStats(s));
   }, [isAuthenticated]);
 
@@ -102,12 +117,12 @@ export default function HostDashboardPage() {
     toast.success(msg);
   };
 
-  // Dynamic financial metrics computed directly from active properties
-  const totalRevenue = properties.reduce((acc, p) => acc + (p.price || 0), 0);
-  const inEscrowBalance = properties
+  // Listing values are estimates from property prices, not payment balances.
+  const totalListedRent = properties.reduce((acc, p) => acc + (p.price || 0), 0);
+  const occupiedListingRent = properties
     .filter((p) => p.status === "occupied")
     .reduce((acc, p) => acc + (p.price || 0), 0);
-  const clearedPayouts = Math.max(0, totalRevenue - inEscrowBalance);
+  const otherListingRent = Math.max(0, totalListedRent - occupiedListingRent);
 
   const totalLodges = properties.length;
   const occupiedCount = properties.filter((p) => p.status === "occupied").length;
@@ -140,37 +155,101 @@ export default function HostDashboardPage() {
 
   const handleCreateProperty = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newTitle) return;
+    const selectedBuilding = buildings.find((building) => building.id === newBuildingId);
+    const buildingAddress = selectedBuilding?.address ?? newAddress.trim();
+    const buildingArea = selectedBuilding?.campusArea ?? newArea;
+    if (!newTitle.trim() || !buildingAddress || !buildingArea || !newRent || newNumberOfRooms === "") return;
 
     const lodgeImages = uploadedUrls.length > 0
       ? uploadedUrls.map((url, i) => ({ url, isPrimary: i === 0 }))
       : [];
 
     const created = await landlordApi.createProperty({
+      ...(selectedBuilding ? { buildingId: selectedBuilding.id } : { buildingName: newBuildingName.trim() || undefined }),
       title: newTitle,
-      description: newDescription || "Newly listed verified student lodge with custodial escrow.",
-      category: newCategory === "self-con" ? "self_con" : "hostel",
-      address: newAddress || "University Road",
-      city: "Campus Environs",
-      state: "Campus District",
+      unitLabel: newUnitLabel.trim() || undefined,
+      description: newDescription,
+      category: newCategory,
+      university: selectedBuilding?.university || newCampus,
+      address: buildingAddress,
+      area: buildingArea,
+      city: selectedBuilding?.city || "Minna",
+      state: selectedBuilding?.state || "Niger State",
       rent: Number(newRent),
       serviceFee: Math.round(Number(newRent) * 0.05),
-      numberOfRooms: 1,
-      capacity: 2,
-      distanceToCampus: 0.6,
-      amenities: ["Borehole Water", "Prepaid Meter", "Night Security"],
+      numberOfRooms: Number(newNumberOfRooms),
       images: lodgeImages,
     });
 
     const newProp = backendLodgeToProperty(created);
 
     setProperties([newProp, ...properties]);
+    if (created.building) {
+      setBuildings((current) => {
+        const existingIndex = current.findIndex((building) => building.id === created.buildingId);
+        if (existingIndex >= 0) {
+          return current.map((building) => building.id === created.buildingId
+            ? { ...building, unitCount: (building.unitCount ?? 0) + 1 }
+            : building);
+        }
+        return [{ ...created.building, unitCount: 1 }, ...current];
+      });
+    }
     setIsCreateOpen(false);
     setNewTitle("");
+    setNewBuildingId("");
+    setNewBuildingName("");
+    setNewUnitLabel("");
     setNewAddress("");
+    setNewArea("");
+    setNewNumberOfRooms("");
     setNewDescription("");
     setUploadedUrls([]);
     showToast(`New lodge "${created.title}" published with 1-click availability!`);
+  };
+
+  const openBuildingManager = (property: Property) => {
+    setBuildingProperty(property);
+    setTargetBuildingId(property.buildingId ?? "");
+    setTargetBuildingName(property.building?.name ?? "");
+    setIsBuildingModalOpen(true);
+  };
+
+  const handleSaveBuildingAssignment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!buildingProperty || (!targetBuildingId && buildingProperty.buildingId)) return;
+
+    setIsSavingBuilding(true);
+    try {
+      const updated = await landlordApi.updateProperty(
+        buildingProperty.id,
+        targetBuildingId
+          ? {
+              buildingId: targetBuildingId,
+              city: buildingProperty.address.city,
+              ...(buildingProperty.address.state ? { state: buildingProperty.address.state } : {}),
+              ...(buildingProperty.university ? { university: buildingProperty.university } : {}),
+              ...(buildingProperty.campusArea ? { area: buildingProperty.campusArea } : {}),
+              ...(buildingProperty.address.street ? { address: buildingProperty.address.street } : {}),
+              ...(buildingProperty.address.coordinates
+                ? {
+                    latitude: buildingProperty.address.coordinates.lat,
+                    longitude: buildingProperty.address.coordinates.lng,
+                  }
+                : {}),
+            }
+          : { createBuilding: true, buildingName: targetBuildingName.trim() || undefined },
+      );
+      const mapped = backendLodgeToProperty(updated);
+      setProperties((current) => current.map((item) => item.id === mapped.id ? mapped : item));
+      landlordApi.getBuildings().then(setBuildings).catch(() => undefined);
+      setIsBuildingModalOpen(false);
+      showToast(targetBuildingId ? "Listing attached to the selected building." : "Parent building created from this listing.");
+    } catch {
+      toast.error("Could not update the parent building", { description: "Please try again. Your listing has not been changed." });
+    } finally {
+      setIsSavingBuilding(false);
+    }
   };
 
   const filteredListings = properties.filter((p) => {
@@ -249,8 +328,8 @@ export default function HostDashboardPage() {
               </h2>
               <p className="text-xs sm:text-sm text-slate-600 dark:text-[#93A89D] leading-relaxed">
                 {isHost
-                  ? "You are currently viewing Kampus in Student Mode. Switch your interface to Landlord Mode to manage your listings and escrow tenancies."
-                  : "You are currently signed in with a Student account. To list student hostels, inspect tenant move-in codes, and withdraw escrow payouts, you must complete your landlord accreditation."}
+                  ? "You are currently viewing Kampus in Student Mode. Switch to Landlord Mode to manage your listings and bookings."
+                  : "You are currently signed in with a Student account. To list student hostels and manage bookings, complete your landlord accreditation."}
               </p>
             </div>
 
@@ -317,7 +396,7 @@ export default function HostDashboardPage() {
               Your lodges, at a glance.
             </h1>
             <p className="text-xs sm:text-sm text-slate-600 dark:text-[#93A89D] mt-1">
-              Track occupancy, rent in escrow and upcoming payouts from one place.
+              Track occupancy, booking payment status and inspection decisions from one place.
             </p>
           </div>
 
@@ -341,7 +420,7 @@ export default function HostDashboardPage() {
           </div>
         </div>
 
-        {/* 1. Balance & Escrow Metrics Card (With Privacy Eye Toggle) */}
+        {/* 1. Listing Value Summary (With Privacy Eye Toggle) */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
           {/* Main Balance Card */}
           <div className="editorial-card md:col-span-2 rounded-3xl border border-slate-200 dark:border-[#22352B] bg-white dark:bg-gradient-to-br dark:from-[#121E18] dark:to-[#0E1A14] p-6 sm:p-8 space-y-5 shadow-sm dark:shadow-2xl relative overflow-hidden">
@@ -373,38 +452,38 @@ export default function HostDashboardPage() {
 
             <div className="space-y-1">
               <div className="text-4xl sm:text-5xl font-black text-slate-900 dark:text-white tracking-tight tabular-nums">
-                {isPrivacyActive ? "₦ •••••••••" : `₦${totalRevenue.toLocaleString()}`}
+                {isPrivacyActive ? "₦ •••••••••" : `₦${totalListedRent.toLocaleString()}`}
               </div>
               <p className="text-xs text-slate-500 dark:text-[#93A89D]">
-                Collected across {properties.length} off-campus student accommodations
+                Listed rent value across {properties.length} off-campus student accommodations
               </p>
             </div>
 
-            {/* Split Escrow vs Cleared Disbursals */}
+            {/* Booking payment status */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 border-t border-slate-100 dark:border-[#22352B] pt-4">
               <div className="rounded-2xl bg-slate-50 dark:bg-[#0B130F] p-4 border border-slate-200 dark:border-[#22352B] space-y-1">
                 <span className="text-[10px] font-bold uppercase text-amber-600 dark:text-amber-400 flex items-center gap-1">
                   <Clock className="h-3 w-3" />
-                  Held in Custodial Escrow
+                  Occupied Listing Rent
                 </span>
                 <p className="text-lg font-black text-slate-900 dark:text-white tabular-nums">
-                  {isPrivacyActive ? "₦ ••••••" : `₦${inEscrowBalance.toLocaleString()}`}
+                  {isPrivacyActive ? "₦ ••••••" : `₦${occupiedListingRent.toLocaleString()}`}
                 </p>
                 <p className="text-[11px] text-slate-500 dark:text-[#93A89D]">
-                  Awaiting student physical arrival inspection
+                  Estimated from current listed rent for occupied properties
                 </p>
               </div>
 
               <div className="rounded-2xl bg-slate-50 dark:bg-[#0B130F] p-4 border border-slate-200 dark:border-[#22352B] space-y-1">
                 <span className="text-[10px] font-bold uppercase text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
                   <CheckCircle2 className="h-3 w-3" />
-                  Cleared & Disbursed
+                  Other Listing Rent Value
                 </span>
                 <p className="text-lg font-black text-emerald-600 dark:text-emerald-400 tabular-nums">
-                  {isPrivacyActive ? "₦ ••••••" : `₦${clearedPayouts.toLocaleString()}`}
+                  {isPrivacyActive ? "₦ ••••••" : `₦${otherListingRent.toLocaleString()}`}
                 </p>
                 <p className="text-[11px] text-slate-500 dark:text-[#93A89D]">
-                  Settled directly into {bankName} account
+                  Estimated value for available or other listings; no transfer is recorded here
                 </p>
               </div>
             </div>
@@ -540,7 +619,7 @@ export default function HostDashboardPage() {
               <div className="max-w-md mx-auto space-y-1.5">
                 <h3 className="text-xl font-bold text-slate-900 dark:text-white">No Listings Published Yet</h3>
                 <p className="text-xs sm:text-sm text-slate-600 dark:text-[#93A89D] leading-relaxed">
-                  You have not published any student accommodations on Kampus yet. Click below to add your first verified listing and start accepting custodial escrow deposits.
+                  You have not published any student accommodations on Kampus yet. Click below to add your first verified listing and accept booking requests.
                 </p>
               </div>
               <div className="pt-2">
@@ -618,7 +697,7 @@ export default function HostDashboardPage() {
                     </h3>
                     <p className="text-xs text-slate-500 dark:text-[#93A89D] mt-0.5 flex items-center gap-1">
                       <GraduationCap className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
-                      <span>{property.distanceToCampus}</span>
+                      <span>{[property.building?.name, property.unitLabel, getCampusAreaLabel(property.campusArea) ?? "Area not provided"].filter(Boolean).join(" · ")}</span>
                     </p>
                   </div>
 
@@ -644,6 +723,13 @@ export default function HostDashboardPage() {
                     <span>Inspect</span>
                     <ArrowUpRight className="h-3.5 w-3.5" />
                   </Link>
+                  <button
+                    type="button"
+                    onClick={() => openBuildingManager(property)}
+                    className="text-slate-600 dark:text-[#B5C5BC] hover:text-emerald-600 dark:hover:text-emerald-400 font-bold"
+                  >
+                    {property.buildingId ? "Change building" : "Group under building"}
+                  </button>
                 </div>
               </div>
             ))}
@@ -663,7 +749,7 @@ export default function HostDashboardPage() {
           </DialogHeader>
 
           <p className="text-xs text-slate-600 dark:text-[#93A89D] -mt-2">
-            Automated student rent disbursements are transferred to this account once student key inspection is verified.
+            These details are saved for payout setup. Transfer eligibility and timing depend on the configured payment provider.
           </p>
 
           <form onSubmit={handleSaveBank} className="space-y-4 mt-2">
@@ -750,16 +836,50 @@ export default function HostDashboardPage() {
           </DialogHeader>
 
           <p className="text-xs text-slate-600 dark:text-[#93A89D] -mt-2">
-            Create a verified listing with automatic custodial escrow protection for students.
+            Create one listing for each room or flat a student can book. Add other rentable units as separate listings.
           </p>
 
           <form onSubmit={handleCreateProperty} className="space-y-4 mt-2">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1.5 sm:col-span-2">
-                <label className="text-xs font-semibold text-slate-700 dark:text-[#93A89D]">Lodge Title</label>
+                <label className="text-xs font-semibold text-slate-700 dark:text-[#93A89D]">Parent building</label>
+                <select
+                  value={newBuildingId}
+                  onChange={(event) => {
+                    const id = event.target.value;
+                    setNewBuildingId(id);
+                    const building = buildings.find((item) => item.id === id);
+                    if (building) {
+                      setNewArea(building.campusArea ?? "");
+                      setNewAddress(building.address ?? "");
+                    }
+                  }}
+                  className="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-[#14231B] border border-slate-200 dark:border-[#22352B] text-slate-900 dark:text-white text-xs"
+                >
+                  <option value="">Create a new building</option>
+                  {buildings.map((building) => (
+                    <option key={building.id} value={building.id}>
+                      {[building.name, building.address, getCampusAreaLabel(building.campusArea)].filter(Boolean).join(" · ")} ({building.unitCount ?? 0} units)
+                    </option>
+                  ))}
+                </select>
+                {newBuildingId ? (
+                  <p className="text-[11px] text-slate-500 dark:text-[#93A89D]">This unit will share its building’s address and campus area.</p>
+                ) : (
+                  <input
+                    value={newBuildingName}
+                    onChange={(event) => setNewBuildingName(event.target.value)}
+                    placeholder="Building name (optional)"
+                    className="mt-2 w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-[#14231B] border border-slate-200 dark:border-[#22352B] text-slate-900 dark:text-white text-xs"
+                  />
+                )}
+              </div>
+
+              <div className="space-y-1.5 sm:col-span-2">
+                <label className="text-xs font-semibold text-slate-700 dark:text-[#93A89D]">Accommodation Unit Title</label>
                 <input
                   type="text"
-                  placeholder="e.g. Royal Emerald Lodge (Flat 4B)"
+                  placeholder="e.g. Royal Emerald Lodge — Room 4"
                   value={newTitle}
                   onChange={(e) => setNewTitle(e.target.value)}
                   className="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-[#14231B] border border-slate-200 dark:border-[#22352B] text-slate-900 dark:text-white text-xs focus:outline-none focus:border-emerald-500 placeholder:text-slate-400 dark:placeholder:text-slate-500"
@@ -768,45 +888,72 @@ export default function HostDashboardPage() {
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-700 dark:text-[#93A89D]">Campus Proximity</label>
+                <label className="text-xs font-semibold text-slate-700 dark:text-[#93A89D]">Campus</label>
                 <select
                   value={newCampus}
                   onChange={(e) => setNewCampus(e.target.value as CampusCode)}
                   className="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-[#14231B] border border-slate-200 dark:border-[#22352B] text-slate-900 dark:text-white text-xs focus:outline-none focus:border-emerald-500"
                 >
                   <option value="FUTMINNA" className="text-emerald-600 dark:text-emerald-400 font-bold">
-                    FUTMINNA (Gidan Kwano & Bosso) — Active
+                    FUTMINNA (Gidankwano & Bosso) — Active
                   </option>
                   <option value="UNILAG" disabled className="text-slate-400 dark:text-[#586B61]">
-                    UNILAG (Akoka / Yaba) — Coming Soon
+                    UNILAG — Coming Soon
                   </option>
                   <option value="FUTA" disabled className="text-slate-400 dark:text-[#586B61]">
-                    FUTA (South Gate / North Gate) — Coming Soon
+                    FUTA — Coming Soon
                   </option>
                   <option value="UI" disabled className="text-slate-400 dark:text-[#586B61]">
-                    UI (Agbowo / Bodija) — Coming Soon
+                    UI — Coming Soon
                   </option>
                   <option value="UNIBEN" disabled className="text-slate-400 dark:text-[#586B61]">
-                    UNIBEN (Ugbowo / Ekosodin) — Coming Soon
+                    UNIBEN — Coming Soon
                   </option>
                   <option value="OAU" disabled className="text-slate-400 dark:text-[#586B61]">
-                    OAU (Ife / Campus Gate) — Coming Soon
+                    OAU — Coming Soon
                   </option>
                 </select>
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-700 dark:text-[#93A89D]">Room Category</label>
+                <label className="text-xs font-semibold text-slate-700 dark:text-[#93A89D]">Bookable Unit Type</label>
                 <select
                   value={newCategory}
-                  onChange={(e) => setNewCategory(e.target.value as RoomType)}
+                  onChange={(e) => setNewCategory(e.target.value as AccommodationType)}
                   className="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-[#14231B] border border-slate-200 dark:border-[#22352B] text-slate-900 dark:text-white text-xs focus:outline-none focus:border-emerald-500"
                 >
-                  <option value="self-con">Self-Contained (Private En-suite)</option>
-                  <option value="single-room">Single Room (Shared Bath)</option>
-                  <option value="flatshare">Flatshare (2-3 Bed Apartment)</option>
-                  <option value="studio">Premium Studio</option>
+                  {ACCOMMODATION_TYPE_OPTIONS.map((type) => (
+                    <option key={type.id} value={type.id}>{type.label}</option>
+                  ))}
                 </select>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-slate-700 dark:text-[#93A89D]">Campus Area</label>
+                <select
+                  value={newArea}
+                  onChange={(e) => setNewArea(e.target.value)}
+                  disabled={Boolean(selectedBuilding?.campusArea)}
+                  className="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-[#14231B] border border-slate-200 dark:border-[#22352B] text-slate-900 dark:text-white text-xs focus:outline-none focus:border-emerald-500"
+                  required
+                >
+                  <option value="">Select a FUTMINNA area</option>
+                  {CAMPUS_AREA_OPTIONS.filter((area) => area.id !== "all").map((area) => (
+                    <option key={area.id} value={area.id}>{area.campus} · {area.label}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-slate-700 dark:text-[#93A89D]">Total rooms in this unit</label>
+                <input
+                  type="number"
+                  min={1}
+                  value={newNumberOfRooms}
+                  onChange={(event) => setNewNumberOfRooms(event.target.value === "" ? "" : Number(event.target.value))}
+                  className="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-[#14231B] border border-slate-200 dark:border-[#22352B] text-slate-900 dark:text-white text-xs focus:outline-none focus:border-emerald-500"
+                  required
+                />
               </div>
 
               <div className="space-y-1.5">
@@ -821,13 +968,26 @@ export default function HostDashboardPage() {
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-700 dark:text-[#93A89D]">Street Address</label>
+                <label className="text-xs font-semibold text-slate-700 dark:text-[#93A89D]">Building Street Address</label>
                 <input
                   type="text"
-                  placeholder="e.g. 12 St. Finbarr's Road, Akoka"
+                  placeholder="Street or compound address"
                   value={newAddress}
                   onChange={(e) => setNewAddress(e.target.value)}
+                  readOnly={Boolean(selectedBuilding?.address)}
                   className="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-[#14231B] border border-slate-200 dark:border-[#22352B] text-slate-900 dark:text-white text-xs focus:outline-none focus:border-emerald-500 placeholder:text-slate-400 dark:placeholder:text-slate-500"
+                  required
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-slate-700 dark:text-[#93A89D]">Unit label (optional)</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Room 4 or Flat B"
+                  value={newUnitLabel}
+                  onChange={(e) => setNewUnitLabel(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-[#14231B] border border-slate-200 dark:border-[#22352B] text-slate-900 dark:text-white text-xs focus:outline-none focus:border-emerald-500"
                 />
               </div>
 
@@ -866,6 +1026,56 @@ export default function HostDashboardPage() {
                 className="editorial-action rounded-full bg-emerald-600 hover:bg-emerald-500 text-white dark:text-slate-950 font-bold text-xs"
               >
                 Publish Lodge
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isBuildingModalOpen} onOpenChange={setIsBuildingModalOpen}>
+        <DialogContent className="editorial-dialog max-w-lg bg-white dark:bg-[#0B130F] border border-slate-200 dark:border-[#22352B] text-slate-900 dark:text-slate-100 p-6 rounded-3xl shadow-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-xl font-bold text-slate-900 dark:text-white">
+              <Building2 className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+              Parent building
+            </DialogTitle>
+          </DialogHeader>
+          <p className="text-xs text-slate-600 dark:text-[#93A89D]">
+            {buildingProperty?.title} remains a separately bookable room or flat. This only groups it under a building.
+          </p>
+          <form onSubmit={handleSaveBuildingAssignment} className="space-y-4">
+            <label className="block space-y-1.5">
+              <span className="text-xs font-semibold text-slate-700 dark:text-[#93A89D]">Building</span>
+              <select
+                value={targetBuildingId}
+                onChange={(event) => setTargetBuildingId(event.target.value)}
+                required={Boolean(buildingProperty?.buildingId)}
+                className="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-[#14231B] border border-slate-200 dark:border-[#22352B] text-slate-900 dark:text-white text-xs"
+              >
+                {!buildingProperty?.buildingId && <option value="">Create a new building from this listing</option>}
+                {buildings.map((building) => (
+                  <option key={building.id} value={building.id}>
+                    {[building.name, building.address, getCampusAreaLabel(building.campusArea)].filter(Boolean).join(" · ")}
+                  </option>
+                ))}
+              </select>
+            </label>
+            {buildingProperty && !targetBuildingId && !buildingProperty.buildingId && (
+              <label className="block space-y-1.5">
+                <span className="text-xs font-semibold text-slate-700 dark:text-[#93A89D]">Building name (optional)</span>
+                <input
+                  value={targetBuildingName}
+                  onChange={(event) => setTargetBuildingName(event.target.value)}
+                  placeholder="e.g. Royal Emerald Lodge"
+                  className="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-[#14231B] border border-slate-200 dark:border-[#22352B] text-slate-900 dark:text-white text-xs"
+                />
+                <span className="text-[11px] text-slate-500 dark:text-[#93A89D]">The building will inherit this listing’s current address and campus area.</span>
+              </label>
+            )}
+            <div className="flex justify-end gap-2 pt-2">
+              <Button type="button" variant="outline" onClick={() => setIsBuildingModalOpen(false)} className="rounded-full text-xs">Cancel</Button>
+              <Button type="submit" disabled={isSavingBuilding || (!targetBuildingId && Boolean(buildingProperty?.buildingId))} className="rounded-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs">
+                {isSavingBuilding ? "Saving…" : "Save building"}
               </Button>
             </div>
           </form>

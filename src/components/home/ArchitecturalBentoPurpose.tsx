@@ -15,9 +15,9 @@ const BENEFITS = [
   },
   {
     number: "02",
-    title: "Your rent waits for your keys",
-    copy: "Payment is held securely while you inspect the room. You confirm move-in before funds are released.",
-    points: ["No viewing fees", "24-hour inspection window"],
+    title: "Inspect before sharing your code",
+    copy: "Your booking tracks payment and inspection status. Share your code only after you have the keys.",
+    points: ["No viewing fees", "Inspection deadline shown in booking"],
     icon: KeyRound,
     tone: "blue",
   },

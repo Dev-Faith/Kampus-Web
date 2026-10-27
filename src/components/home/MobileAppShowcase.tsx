@@ -44,7 +44,7 @@ export function MobileAppShowcase() {
             </h2>
 
             <p className="text-xs sm:text-sm text-[#93A89D] max-w-xl leading-relaxed">
-              Never get stuck without service at campus gate. Download our mobile app to receive instant push alerts, offline move-in inspection PINs, and turn-by-turn navigation to verified lodges in Minna.
+              Download our mobile app for booking updates, move-in inspection details, and turn-by-turn navigation to verified lodges in Minna.
             </p>
 
             {/* Feature Checklist */}
@@ -54,7 +54,7 @@ export function MobileAppShowcase() {
                   <KeyRound className="h-3.5 w-3.5" />
                 </div>
                 <div>
-                  <h4 className="text-xs font-bold text-white">6-Digit Move-In PIN</h4>
+                  <h4 className="text-xs font-bold text-white">Move-In Inspection Code</h4>
                   <p className="text-[11px] text-[#93A89D]">Accessible offline when you arrive at Gidan Kwano or Bosso.</p>
                 </div>
               </div>
@@ -65,7 +65,7 @@ export function MobileAppShowcase() {
                 </div>
                 <div>
                   <h4 className="text-xs font-bold text-white">Live Push Notifications</h4>
-                  <p className="text-[11px] text-[#93A89D]">Real-time updates on escrow payouts and roommate chats.</p>
+                  <p className="text-[11px] text-[#93A89D]">Booking and inspection updates with roommate chats.</p>
                 </div>
               </div>
 
@@ -84,8 +84,8 @@ export function MobileAppShowcase() {
                   <Zap className="h-3.5 w-3.5" />
                 </div>
                 <div>
-                  <h4 className="text-xs font-bold text-white">1-Tap Escrow Settlement</h4>
-                  <p className="text-[11px] text-[#93A89D]">Confirm keys and authorize landlord disbursement in seconds.</p>
+                  <h4 className="text-xs font-bold text-white">Inspection Code Verification</h4>
+                  <p className="text-[11px] text-[#93A89D]">The host verifies your code to queue payout processing.</p>
                 </div>
               </div>
             </div>
@@ -160,7 +160,7 @@ export function MobileAppShowcase() {
                       Active Reservation
                     </span>
                     <span className="text-emerald-400 font-bold bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">
-                      Escrow Held
+                      Payment Confirmed
                     </span>
                   </div>
 
@@ -171,10 +171,10 @@ export function MobileAppShowcase() {
                     3 min walk to Main Campus Gate • ₦220,000 / yr
                   </p>
 
-                  {/* 6-Digit PIN Highlight */}
+                  {/* Inspection code highlight */}
                   <div className="mt-2 rounded-xl bg-[#08100C] border border-[#22352B] p-2 text-center">
                     <span className="text-[9px] uppercase tracking-widest text-[#93A89D] block">
-                      Physical Move-in PIN
+                      Physical Move-in Code
                     </span>
                     <span className="text-lg font-black tracking-widest text-emerald-400 font-mono">
                       839 - 204

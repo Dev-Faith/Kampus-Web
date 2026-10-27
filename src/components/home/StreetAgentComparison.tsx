@@ -22,7 +22,7 @@ const COMPARISON_ROWS: ComparisonRow[] = [
   {
     feature: "Rent Payment Safety",
     streetAgent: "Direct bank transfer to roadside agent's personal account (Extreme scam risk)",
-    kampusWay: "100% Custodial Escrow held in licensed bank trust until you move in",
+    kampusWay: "Payment and inspection status tracked on your booking",
     isImportant: true,
   },
   {
@@ -33,13 +33,13 @@ const COMPARISON_ROWS: ComparisonRow[] = [
   {
     feature: "Dispute & Refund Rights",
     streetAgent: "Zero refund policy. Agent switches phone off if room is defective",
-    kampusWay: "24-Hour Move-In Inspection Window with 1-tap instant refund dispute",
+    kampusWay: "Open a dispute from your booking for support review",
     isImportant: true,
   },
   {
     feature: "Key Handover Guarantee",
     streetAgent: "Tenants often find rooms already occupied by someone else",
-    kampusWay: "Unique 6-digit move-in PIN. Landlord gets paid only after PIN confirmation",
+    kampusWay: "Unique inspection code records approval before payout processing is queued",
   },
   {
     feature: "Roommate Matching",
@@ -123,7 +123,7 @@ export function StreetAgentComparison() {
                 Never hand cash to unregistered agents in Minna
               </p>
               <p className="text-xs text-slate-600 dark:text-[#93A89D]">
-                Search, book, and move in safely with certified custodial protection.
+                Search verified listings and track payment, inspection, and dispute status in your booking.
               </p>
             </div>
           </div>

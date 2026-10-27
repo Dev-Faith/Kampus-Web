@@ -1,6 +1,6 @@
-export type CampusCode = "FUTMINNA" | "UNILAG" | "FUTA" | "UNIBEN" | "UI" | "OAU";
+export type CampusCode = string;
 
-export type RoomType = "self-con" | "single-room" | "flatshare" | "studio";
+export type RoomType = string;
 
 export type LodgeStatus = "available" | "occupied" | "maintenance" | "offline";
 
@@ -33,55 +33,47 @@ export interface PropertyPanorama {
 
 export interface Property {
   id: string;
+  buildingId?: string | null;
+  building?: {
+    id: string;
+    name: string | null;
+    address: string | null;
+    campusArea: string | null;
+  } | null;
   title: string;
-  tagline: string;
+  unitLabel?: string | null;
   description: string;
   price: number; // in NGN (Nigerian Naira)
   currency: string; // "₦"
   period?: "session" | "year" | "month";
   propertyType: RoomType;
   status: LodgeStatus;
-  campus: CampusCode;
-  campusName: string;
-  distanceToCampus: string;
-  proximityMinutes: number;
-  bedrooms: number;
-  bathrooms: number;
-  sqft: number;
-  yearBuilt: number;
-  cautionDeposit: number;
-  serviceFee: number;
-  escrowProtected: boolean;
-  verifiedHost: boolean;
-  powerSchedule: string;
-  waterSupply: string;
-  roommateMatchAvailable: boolean;
+  campus: string;
+  university?: string | null;
+  campusArea?: string | null;
+  distanceToCampus: number | null;
+  numberOfRooms: number | null;
+  serviceFee: number | null;
+  verifiedHost: boolean | null;
   address: {
     street: string;
-    neighborhood: string;
     city: string;
     state: string;
-    zipCode?: string;
     coordinates: {
       lat: number;
       lng: number;
-    };
+    } | null;
   };
-  featured: boolean;
-  isNew: boolean;
+  saved?: boolean;
   images: PropertyMedia[];
-  virtualStaging?: PropertyVirtualStaging;
-  floorPlan?: PropertyFloorPlan;
-  panorama?: PropertyPanorama;
   amenities: string[];
-  host: {
+  host?: {
     name: string;
-    title: string;
     phone: string;
     email: string;
     avatar: string;
     rating: number;
-    responseTime: string;
-    verifiedId: boolean;
+    reviewCount: number;
+    verified: boolean;
   };
 }

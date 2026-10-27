@@ -3,172 +3,67 @@
 import React from "react";
 import Link from "next/link";
 import { motion } from "motion/react";
-import {
-  Building2,
-  DoorClosed,
-  Users2,
-  Sparkles,
-  ArrowRight,
-  ShieldCheck,
-  CheckCircle2,
-} from "lucide-react";
+import { ArrowRight, Building2, DoorClosed, Sparkles, Users2 } from "lucide-react";
+import { ACCOMMODATION_TYPE_OPTIONS } from "@/lib/constants/accommodation-types";
+import type { AccommodationType } from "@/lib/constants/accommodation-types";
 
-interface RoomCategory {
-  id: string;
-  typeQuery: string;
-  title: string;
-  tagline: string;
-  avgPrice: string;
-  badge: string;
-  icon: React.ElementType;
-  amenities: string[];
-}
-
-const ROOM_CATEGORIES: RoomCategory[] = [
-  {
-    id: "self-con",
-    typeQuery: "self-con",
-    title: "Self-Con (En-Suite)",
-    tagline: "Private bathroom, private kitchenette & dedicated meter",
-    avgPrice: "₦200,000 – ₦350,000",
-    badge: "Most Popular",
-    icon: DoorClosed,
-    amenities: [
-      "100% Personal Privacy",
-      "Private Kitchenette & Sink",
-      "En-Suite Toilet & Shower",
-      "Dedicated Prepaid Sub-Meter",
-    ],
-  },
-  {
-    id: "single-room",
-    typeQuery: "single-room",
-    title: "Single Room",
-    tagline: "Economical private room in a gated student compound",
-    avgPrice: "₦120,000 – ₦180,000",
-    badge: "Budget Friendly",
-    icon: Building2,
-    amenities: [
-      "Low Annual Cost",
-      "Shared Kitchen Facility",
-      "Running Borehole Water",
-      "Gated Security Perimeter",
-    ],
-  },
-  {
-    id: "flatshare",
-    typeQuery: "flatshare",
-    title: "2-Bed Flatshare",
-    tagline: "Share a spacious 2-bedroom flat with a verified roommate",
-    avgPrice: "₦150,000 – ₦220,000 / student",
-    badge: "Cost Saver",
-    icon: Users2,
-    amenities: [
-      "Separate Private Bedrooms",
-      "Shared Parlour & Balcony",
-      "Split Utility Bills & Rent",
-      "Roommate Match Integrated",
-    ],
-  },
-  {
-    id: "studio",
-    typeQuery: "studio",
-    title: "Executive Studio",
-    tagline: "Serviced luxury unit with 24/7 solar inverter backup",
-    avgPrice: "₦280,000 – ₦450,000",
-    badge: "High Comfort",
-    icon: Sparkles,
-    amenities: [
-      "24/7 Solar Inverter Power",
-      "Modern POP Finishing & Tile",
-      "Water Heater & Filter",
-      "Compound Night Guard",
-    ],
-  },
-];
+const CATEGORY_ICONS: Record<AccommodationType, React.ElementType> = {
+  single_room_shared: DoorClosed,
+  self_contained: Building2,
+  one_bedroom_flat: Users2,
+  two_bedroom_flat: Sparkles,
+};
 
 export function RoomTypeCategories() {
   return (
-    <section className="space-y-6">
+    <section className="space-y-6" aria-labelledby="room-types-title">
       <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1.5">
             <span className="h-2 w-2 rounded-full bg-emerald-400" />
-            <span className="text-[11px] font-bold uppercase tracking-widest text-emerald-400">
-              Curated Layouts
+            <span className="text-[11px] font-bold uppercase tracking-widest text-emerald-700 dark:text-emerald-400">
+              FUTMINNA accommodation
             </span>
           </div>
-          <h2 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
-            Browse by Accommodation Type
+          <h2 id="room-types-title" className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
+            Browse by unit type
           </h2>
           <p className="text-xs sm:text-sm text-slate-600 dark:text-[#93A89D] mt-1 max-w-xl">
-            Whether you prioritize total privacy, luxury inverter backup, or splitting costs with a coursemate.
+            Choose the kind of room or flat you want to rent.
           </p>
         </div>
 
         <Link href="/explore">
-          <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 transition-colors flex items-center gap-1.5 cursor-pointer">
-            Explore All Formats <ArrowRight className="h-3.5 w-3.5" />
+          <span className="text-xs font-bold text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300 transition-colors flex items-center gap-1.5">
+            Explore all listings <ArrowRight className="h-3.5 w-3.5" />
           </span>
         </Link>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        {ROOM_CATEGORIES.map((cat) => {
-          const Icon = cat.icon;
+        {ACCOMMODATION_TYPE_OPTIONS.map((type) => {
+          const Icon = CATEGORY_ICONS[type.id];
           return (
             <Link
-              key={cat.id}
-              href={`/explore?type=${encodeURIComponent(cat.typeQuery)}`}
+              key={type.id}
+              href={`/explore?type=${encodeURIComponent(type.id)}`}
               className="group block"
             >
               <motion.div
-                whileHover={{ y: -5 }}
+                whileHover={{ y: -4 }}
                 transition={{ type: "spring", stiffness: 350, damping: 25 }}
-                className="h-full rounded-3xl border border-slate-200/90 dark:border-[#22352B] bg-white dark:bg-[#121E18]/80 hover:bg-slate-50 dark:hover:bg-[#15241C] p-6 flex flex-col justify-between transition-all duration-300 shadow-md dark:shadow-xl group-hover:border-emerald-500/70 group-hover:shadow-[0_12px_32px_rgba(16,185,129,0.15)]"
+                className="h-full min-h-52 rounded-3xl border border-slate-200 dark:border-[#22352B] bg-white dark:bg-[#121E18]/80 hover:bg-slate-50 dark:hover:bg-[#15241C] p-6 flex flex-col justify-between transition-colors shadow-sm dark:shadow-xl group-hover:border-emerald-500/70"
               >
-                <div>
-                  {/* Top Bar with Icon and Badge */}
-                  <div className="flex items-center justify-between gap-2 mb-4">
-                    <div className="h-11 w-11 rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 flex items-center justify-center group-hover:bg-emerald-500 group-hover:text-slate-950 transition-colors">
-                      <Icon className="h-5 w-5" />
-                    </div>
-                    <span className="rounded-full bg-emerald-50 dark:bg-[#0B130F] border border-emerald-200 dark:border-[#22352B] px-3 py-1 text-[10px] font-bold text-emerald-800 dark:text-emerald-300">
-                      {cat.badge}
-                    </span>
-                  </div>
-
-                  <h3 className="text-lg font-black text-slate-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-300 transition-colors">
-                    {cat.title}
-                  </h3>
-
-                  <p className="text-xs text-slate-600 dark:text-[#93A89D] mt-1 leading-relaxed">
-                    {cat.tagline}
-                  </p>
-
-                  {/* Feature Checklist */}
-                  <ul className="mt-4 space-y-2 border-t border-slate-200/80 dark:border-[#22352B]/60 pt-4">
-                    {cat.amenities.map((item, i) => (
-                      <li key={i} className="flex items-center gap-2 text-[11px] text-slate-700 dark:text-[#C4D5CC]">
-                        <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 dark:text-emerald-400 shrink-0" />
-                        <span>{item}</span>
-                      </li>
-                    ))}
-                  </ul>
+                <div className="h-11 w-11 rounded-2xl bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20 flex items-center justify-center group-hover:bg-emerald-500 group-hover:text-slate-950 transition-colors">
+                  <Icon className="h-5 w-5" />
                 </div>
-
-                {/* Price and CTA */}
-                <div className="mt-6 pt-4 border-t border-slate-200 dark:border-[#22352B] flex items-center justify-between text-xs">
-                  <div>
-                    <span className="text-[10px] text-slate-500 dark:text-[#93A89D] block">Typical range</span>
-                    <span className="font-extrabold text-slate-900 dark:text-white text-xs sm:text-sm">
-                      {cat.avgPrice}
-                    </span>
-                  </div>
-
-                  <div className="h-7 w-7 rounded-full bg-slate-100 dark:bg-[#0B130F] border border-slate-200 dark:border-[#22352B] text-emerald-600 dark:text-emerald-400 flex items-center justify-center group-hover:border-emerald-500 transition-colors">
-                    <ArrowRight className="h-3.5 w-3.5" />
-                  </div>
+                <div className="mt-6">
+                  <h3 className="text-base font-bold text-slate-900 dark:text-white group-hover:text-emerald-700 dark:group-hover:text-emerald-300 transition-colors">
+                    {type.label}
+                  </h3>
+                  <span className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-emerald-700 dark:text-emerald-400">
+                    Browse listings <ArrowRight className="h-3.5 w-3.5" />
+                  </span>
                 </div>
               </motion.div>
             </Link>

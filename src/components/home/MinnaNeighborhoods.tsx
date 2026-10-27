@@ -4,170 +4,100 @@ import React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "motion/react";
-import { ArrowRight, Footprints } from "lucide-react";
+import { ArrowRight, MapPin } from "lucide-react";
+import { CAMPUS_AREA_OPTIONS } from "@/lib/constants/campus-areas";
 
-interface NeighborhoodCard {
-  id: string;
-  name: string;
-  subTitle: string;
-  badge: string;
-  walkTime: string;
-  startPrice: string;
-  queryParam: string;
-  bgImage: string;
-  description: string;
-  highlights: string[];
-}
-
-const NEIGHBORHOODS: NeighborhoodCard[] = [
+const CAMPUS_AREAS = [
   {
-    id: "gidan-kwano",
-    name: "Gidan Kwano (Main Campus Gate)",
-    subTitle: "Engineering, Agriculture & Sciences Hub",
-    badge: "Top Student Pick",
-    walkTime: "3 – 8 mins walk",
-    startPrice: "₦180k",
-    queryParam: "Gidan Kwano",
-    bgImage: "https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&w=800&q=80",
-    description: "Closest off-campus zone to SEET, SAAT, and SICT lecture theatres. Abundant food markets and campus shuttles.",
-    highlights: ["SEET & SAAT Walkable", "24/7 Campus Shuttles", "Student Cafes & Markets"],
+    id: "gidankwano-campus",
+    name: "Gidankwano Campus",
+    areas: ["gidankwano", "gidanpainti", "gidanmangoro", "dama"],
+    image:
+      "https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&w=1200&q=80",
   },
   {
-    id: "bosso-campus",
-    name: "Bosso Town Campus",
-    subTitle: "Historic Campus & Commercial Heart",
-    badge: "Vibrant Town Life",
-    walkTime: "4 – 10 mins walk",
-    startPrice: "₦150k",
-    queryParam: "Bosso",
-    bgImage: "https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=800&q=80",
-    description: "Central Minna location. Immediate access to commercial banks, Bosso Market, sports complex, and PG school.",
-    highlights: ["Close to Commercial Banks", "Bosso Market Access", "Sports Arena & Gyms"],
-  },
-  {
-    id: "campus-road",
-    name: "Campus Road / Maikunkele",
-    subTitle: "Quiet Residential Compounds",
-    badge: "Spacious & Budget-Friendly",
-    walkTime: "5 – 10 mins ride",
-    startPrice: "₦135k",
-    queryParam: "Maikunkele",
-    bgImage: "https://images.unsplash.com/photo-1519643381401-22c77e60520e?auto=format&fit=crop&w=800&q=80",
-    description: "Serene compounds with larger floor plans, private balconies, and perimeter fencing. Ideal for focused study.",
-    highlights: ["Larger Room Sizes", "Quiet Study Atmosphere", "Fenced Compounds"],
-  },
-  {
-    id: "chanchaga",
-    name: "Chanchaga Corridor",
-    subTitle: "Executive Serviced Accommodations",
-    badge: "Premium Living",
-    walkTime: "12 mins transit",
-    startPrice: "₦250k",
-    queryParam: "Chanchaga",
-    bgImage: "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=800&q=80",
-    description: "Gated luxury apartments equipped with hybrid solar inverters, dedicated borehole treatment, and security.",
-    highlights: ["24/7 Solar Inverter Power", "Treated Water Supply", "Private Security Patrols"],
+    id: "bosso",
+    name: "Bosso Campus",
+    areas: ["bosso_front", "bosso_back"],
+    image:
+      "https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=1200&q=80",
   },
 ];
 
 export function MinnaNeighborhoods() {
   return (
-    <section className="landing-neighborhoods space-y-6">
-      {/* Section Header */}
+    <section className="landing-neighborhoods space-y-6" aria-labelledby="campus-areas-title">
       <div className="landing-neighborhoods__header flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
         <div>
-          <p className="landing-eyebrow">A few good places to start</p>
-          <h2 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
-            Find your rhythm around campus.
+          <p className="landing-eyebrow">Currently serving FUTMINNA</p>
+          <h2
+            id="campus-areas-title"
+            className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight"
+          >
+            Browse by campus area.
           </h2>
           <p className="landing-section-heading__aside mt-2 max-w-2xl">
-            Explore the neighborhoods students call home, from the main gate to the quieter streets beyond.
+            Search accommodation around the Gidankwano and Bosso campuses.
           </p>
         </div>
 
-        <Link href="/explore">
+        <Link href="/explore?campus=FUTMINNA">
           <span className="landing-text-link">
-            View all areas <ArrowRight className="h-3.5 w-3.5" />
+            View FUTMINNA listings <ArrowRight className="h-3.5 w-3.5" />
           </span>
         </Link>
       </div>
 
-      {/* Grid of Neighborhood Cards */}
-      <div className="landing-neighborhoods__grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        {NEIGHBORHOODS.map((hood, index) => (
-          <Link
-            key={hood.id}
-            href={`/explore?q=${encodeURIComponent(hood.queryParam)}`}
-            className="group block"
+      <div className="landing-neighborhoods__grid grid grid-cols-1 sm:grid-cols-2 gap-5">
+        {CAMPUS_AREAS.map((campusArea) => (
+          <motion.div
+            key={campusArea.id}
+            whileHover={{ y: -4 }}
+            transition={{ type: "spring", stiffness: 350, damping: 25 }}
+            className="landing-neighborhoods__card relative min-h-[300px] rounded-3xl overflow-hidden border border-slate-200 dark:border-[#22352B] bg-slate-900 dark:bg-[#121E18] flex flex-col justify-end p-5 shadow-xl"
           >
-            <motion.div
-              whileHover={{ y: -6 }}
-              transition={{ type: "spring", stiffness: 350, damping: 25 }}
-              className="landing-neighborhoods__card relative h-[380px] rounded-3xl overflow-hidden border border-slate-200 dark:border-[#22352B] bg-slate-900 dark:bg-[#121E18] flex flex-col justify-end p-5 shadow-xl transition-all duration-300 group-hover:border-emerald-500/70 group-hover:shadow-[0_16px_40px_rgba(16,185,129,0.18)]"
-            >
-              {/* Image & Gradient Backdrop */}
-              <div className="absolute inset-0 z-0">
-                <Image
-                  src={hood.bgImage}
-                  alt={hood.name}
-                  fill
-                  sizes="(max-width: 768px) 100vw, 25vw"
-                  className="object-cover transition-transform duration-700 ease-out group-hover:scale-110"
-                />
-                <div className="landing-neighborhoods__shade absolute inset-0" />
+            <div className="absolute inset-0 z-0">
+              <Image
+                src={campusArea.image}
+                alt=""
+                fill
+                sizes="(max-width: 768px) 100vw, 50vw"
+                className="object-cover"
+              />
+              <div className="landing-neighborhoods__shade absolute inset-0" />
+            </div>
+
+            <div className="relative z-10 space-y-4">
+              <div className="flex items-center gap-2 text-xs font-semibold text-emerald-300">
+                <MapPin className="h-4 w-4" />
+                <span>FUTMINNA</span>
               </div>
 
-              {/* Floating Top Badge */}
-              <div className="absolute top-4 left-4 z-10 flex items-center gap-1.5">
-                <span className="landing-neighborhoods__badge rounded-full bg-[#0E4D38]/90 border border-emerald-400/40 px-3 py-1 text-[10px] font-bold text-emerald-300 backdrop-blur-md shadow-md">
-                  {hood.badge}
-                </span>
-              </div>
-
-              {/* Card Bottom Content */}
-              <div className="relative z-10 space-y-2.5">
-                <div className="flex items-center gap-2 text-[11px] font-semibold text-emerald-400">
-                  <Footprints className="h-3.5 w-3.5" />
-                  <span>{hood.walkTime}</span>
-                </div>
-
-                <h3 className="text-lg font-black text-white leading-tight group-hover:text-emerald-300 transition-colors">
-                  {hood.name}
-                </h3>
-
-                <p className="text-[11px] text-[#C4D5CC] line-clamp-2 leading-relaxed">
-                  {hood.description}
+              <div>
+                <h3 className="text-xl font-black text-white">{campusArea.name}</h3>
+                <p className="mt-1 text-sm text-[#C4D5CC]">
+                  Areas currently covered around this campus
                 </p>
-
-                {/* Highlights Pills */}
-                <div className="flex flex-wrap gap-1.5 pt-1">
-                  {hood.highlights.slice(0, 2).map((item, idx) => (
-                    <span
-                      key={idx}
-                      className="rounded-md bg-[#0B130F]/80 border border-[#22352B] px-2 py-0.5 text-[9px] font-medium text-[#93A89D]"
-                    >
-                      {item}
-                    </span>
-                  ))}
-                </div>
-
-                {/* Price and CTA Footer */}
-                <div className="flex items-center justify-between border-t border-[#22352B]/80 pt-3 text-xs">
-                  <div>
-                    <span className="text-[10px] text-[#93A89D] block">Starting from</span>
-                    <span className="font-extrabold text-white text-sm">
-                      {hood.startPrice}
-                      <span className="text-[10px] font-normal text-[#93A89D]"> / session</span>
-                    </span>
-                  </div>
-
-                <div className="landing-neighborhoods__arrow h-8 w-8 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center group-hover:bg-emerald-500 group-hover:text-slate-950 transition-all">
-                    <ArrowRight className="h-4 w-4" />
-                  </div>
-                </div>
               </div>
-            </motion.div>
-          </Link>
+
+              <div className="flex flex-wrap gap-2">
+                {campusArea.areas.map((areaCode) => {
+                  const area = CAMPUS_AREA_OPTIONS.find((option) => option.id === areaCode);
+                  if (!area) return null;
+                  return (
+                    <Link
+                      key={area.id}
+                      href={`/explore?campus=FUTMINNA&area=${area.id}`}
+                      aria-label={`Search accommodation in ${area.label}`}
+                      className="rounded-full border border-white/25 bg-[#0B130F]/75 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:border-emerald-300 hover:bg-emerald-900/80"
+                    >
+                      {area.label}
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          </motion.div>
         ))}
       </div>
     </section>

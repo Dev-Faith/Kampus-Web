@@ -50,7 +50,7 @@ export function AppDownloadModal({ isOpen, onClose }: AppDownloadModalProps) {
           </div>
 
           <p className="text-xs text-slate-600 dark:text-[#93A89D] leading-relaxed max-w-[280px]">
-            Search verified lodges, get offline move-in inspection PINs, and manage your rent escrow on the go.
+            Search verified lodges, keep your inspection details handy, and manage booking updates on the go.
           </p>
 
           {/* Actions */}

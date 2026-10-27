@@ -110,7 +110,7 @@ export function HostRegistrationModal({
               Register as Property Host
             </h2>
             <p className="text-xs text-slate-600 dark:text-[#93A89D] max-w-sm mx-auto">
-              Set up your settlement bank details and business profile to list lodges and receive automated escrow disbursements.
+              Set up your payout bank details and business profile to list lodges. Transfers depend on the configured payment provider.
             </p>
           </div>
 
@@ -207,7 +207,7 @@ export function HostRegistrationModal({
                 <label className="font-bold text-slate-700 dark:text-[#93A89D]">11-Digit BVN (Identity Verification)</label>
                 <span className="text-[10px] text-amber-600 dark:text-amber-400 font-semibold flex items-center gap-1">
                   <Lock className="h-3 w-3" />
-                  CBN Encrypted
+                  Bank details
                 </span>
               </div>
               <input
@@ -226,10 +226,10 @@ export function HostRegistrationModal({
           <div className="p-3.5 rounded-2xl bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 text-[11px] text-amber-900 dark:text-amber-300 space-y-1">
             <div className="font-bold flex items-center gap-1.5 text-amber-700 dark:text-amber-400">
               <ShieldCheck className="h-4 w-4" />
-              <span>Escrow Payout Guarantee:</span>
+              <span>Payout account details:</span>
             </div>
             <p className="text-slate-600 dark:text-slate-300">
-              Student rent is held in licensed custodial trust and released directly into this bank account upon room inspection.
+              These details are saved for payout setup. Payment custody, eligibility, and settlement timing depend on the configured payment provider.
             </p>
           </div>
 

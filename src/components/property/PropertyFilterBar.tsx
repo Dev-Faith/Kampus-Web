@@ -18,34 +18,37 @@ import {
 import {
   propertyTypes,
   campusCodes,
+  campusAreaCodes,
 } from "@/lib/search-params";
-import { CAMPUSES } from "@/lib/constants/campuses";
+import { CAMPUS_AREA_OPTIONS } from "@/lib/constants/campus-areas";
 import { toast } from "@/lib/stores/useToastStore";
 
 const ROOM_TYPE_CONFIG: Record<
   string,
   { label: string; icon: React.ElementType }
 > = {
-  all: { label: "All Lodges", icon: Home },
-  "self-con": { label: "Self-Con", icon: Building },
-  "single-room": { label: "Single Room", icon: Home },
-  flatshare: { label: "Flatshares", icon: Users },
-  studio: { label: "Executive Studio", icon: Sparkles },
+  all: { label: "All accommodation", icon: Home },
+  single_room_shared: { label: "Single room (toilet outside the room, no kitchen)", icon: Home },
+  self_contained: { label: "Self-contained apartment", icon: Building },
+  one_bedroom_flat: { label: "One-bedroom flat (room and parlour)", icon: Users },
+  two_bedroom_flat: { label: "Two-bedroom flat", icon: Sparkles },
 };
 
 export function PropertyFilterBar() {
   const [q, setQ] = useQueryState("q", { defaultValue: "" });
   const [campus, setCampus] = useQueryState("campus", { defaultValue: "FUTMINNA" });
+  const [area, setArea] = useQueryState("area", { defaultValue: "all" });
   const [type, setType] = useQueryState("type", { defaultValue: "all" });
   const [view, setView] = useQueryState("view", { defaultValue: "split" });
   const [sort, setSort] = useQueryState("sort", { defaultValue: "featured" });
 
   const hasActiveFilters =
-    q || campus !== "FUTMINNA" || type !== "all" || sort !== "featured";
+    q || campus !== "FUTMINNA" || area !== "all" || type !== "all" || sort !== "featured";
 
   const resetFilters = () => {
     setQ("");
     setCampus("FUTMINNA");
+    setArea("all");
     setType("all");
     setSort("featured");
   };
@@ -62,7 +65,7 @@ export function PropertyFilterBar() {
             type="text"
             value={q}
             onChange={(e) => setQ(e.target.value || null)}
-            placeholder="Search lodge name, area, or campus (e.g. FUTMINNA, Gidan Kwano, Bosso)..."
+          placeholder="Search lodge name, area, or campus (e.g. FUTMINNA, Gidankwano, Bosso)..."
             className="explore-filter-search w-full rounded-full border border-slate-200 dark:border-[#22352B] bg-white dark:bg-[#0E1A14] py-2.5 pl-10 pr-10 text-xs sm:text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-[#586B61] focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all shadow-inner"
           />
           {q && (
@@ -148,8 +151,7 @@ export function PropertyFilterBar() {
         {campusCodes.map((campusCode) => {
           const isSelected = campus === campusCode;
           const isFutminna = campusCode === "FUTMINNA";
-          const isAll = campusCode === "all";
-          const isDisabled = !isFutminna && !isAll;
+          const isDisabled = !isFutminna;
 
           if (isDisabled) {
             return (
@@ -185,7 +187,7 @@ export function PropertyFilterBar() {
               }`}
             >
               <GraduationCap className="h-3.5 w-3.5" />
-              <span>{isAll ? "All Universities" : `${campusCode} (Active)`}</span>
+              <span>{`${campusCode} (Active)`}</span>
               {isFutminna && !isSelected && (
                 <span className="h-1.5 w-1.5 rounded-full bg-[#c45b37]" />
               )}
@@ -194,10 +196,34 @@ export function PropertyFilterBar() {
         })}
       </div>
 
+      <div className="explore-filter-row explore-area-row flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+        <span className="shrink-0 pl-1 text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-[#93A89D]">
+          Area:
+        </span>
+        {campusAreaCodes.map((areaCode) => {
+          const option = CAMPUS_AREA_OPTIONS.find((item) => item.id === areaCode);
+          const isSelected = area === areaCode;
+          return (
+            <button
+              key={areaCode}
+              type="button"
+              onClick={() => setArea(areaCode)}
+              aria-pressed={isSelected}
+              className={`shrink-0 rounded-full border px-3 py-1 text-xs font-semibold transition-colors ${isSelected
+                ? "border-[#c45b37]/35 bg-[#f4e8e2] text-[#a94c2e] dark:bg-[#2a201b] dark:text-[#e08b6a]"
+                : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 dark:border-[#22352B] dark:bg-[#0E1A14] dark:text-[#93A89D]"
+              }`}
+            >
+              {option?.label ?? areaCode}
+            </button>
+          );
+        })}
+      </div>
+
       {/* Room Type Filter Pills Row */}
       <div className="explore-filter-row explore-room-row flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
         <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-[#93A89D] shrink-0 pl-1">
-          Room:
+          Type:
         </span>
         {propertyTypes.map((typeKey) => {
           const config = ROOM_TYPE_CONFIG[typeKey] || {

@@ -28,12 +28,12 @@ interface EscrowStep {
 const ESCROW_STEPS: EscrowStep[] = [
   {
     step: 1,
-    title: "1. Student Reserves & Locks Funds",
-    subtitle: "Rent in Custodial Trust",
-    headline: "Your Rent Never Goes Directly to Unknown Agents",
+    title: "1. Book & Confirm Payment",
+    subtitle: "Payment Status Tracking",
+    headline: "See Your Booking Payment Status in Kampus",
     description:
-      "When you book a verified lodge, your payment is held in a licensed custodial escrow account. The landlord cannot touch a single kobo until you travel to campus, inspect the room, and confirm that the lodge matches the listing.",
-    badge: "100% Funds Protected",
+      "After the payment provider confirms a charge, Kampus records the payment against your booking. How funds are held and settled depends on the provider's arrangement.",
+    badge: "Payment Recorded",
     icon: Lock,
     accentColor: "emerald",
   },
@@ -41,21 +41,21 @@ const ESCROW_STEPS: EscrowStep[] = [
     step: 2,
     title: "2. Physical Move-in Inspection",
     subtitle: "Verify Room on Arrival",
-    headline: "24-Hour Inspection Guarantee Window",
+    headline: "Inspect Before Sharing Your Code",
     description:
-      "Arrive at your campus hostel with complete peace of mind. Check the running water, verify the solar inverter or power schedule, test the bathroom fittings, and inspect the room security. If anything is amiss, file a 1-tap dispute for an immediate refund.",
+      "Check the room, utilities, and keys before sharing your inspection code with the host. Your booking shows its inspection deadline. If something is wrong, open a dispute for Kampus support to review before the payout decision.",
     badge: "Student Inspection Protection",
     icon: Eye,
     accentColor: "gold",
   },
   {
     step: 3,
-    title: "3. Confirmed Key Handover & Release",
-    subtitle: "You Authorize Payout",
-    headline: "Funds Released Only After Satisfied Inspection",
+    title: "3. Confirmed Key Handover",
+    subtitle: "Inspection Approval",
+    headline: "Inspection Approval Queues Payout Processing",
     description:
-      "Once you receive your keys and confirm satisfaction via the Kampus web portal, the custodial escrow releases the rent to the verified landlord's verified Nigerian bank account. Zero extortion, zero fake agents, zero disputes.",
-    badge: "Secure Settlement",
+      "After you receive your keys, share the code with the host. Their verification records the inspection and marks the booking ready for payout processing. The booking page shows its current payment and dispute status.",
+    badge: "Inspection Status Recorded",
     icon: Key,
     accentColor: "emerald",
   },
@@ -78,21 +78,20 @@ export function EscrowVisualizer() {
           <div className="flex items-center gap-2 mb-2">
             <span className="flex h-2 w-2 rounded-full bg-emerald-500 dark:bg-emerald-400 animate-pulse" />
             <span className="text-[11px] font-bold uppercase tracking-widest text-emerald-700 dark:text-emerald-400">
-              Licensed Custodial Escrow Protection
+              Payment & Inspection Tracking
             </span>
           </div>
           <h3 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900 dark:text-white">
-            How Kampus Protects Your Accommodation Funds
+            How Kampus Tracks Your Booking
           </h3>
           <p className="text-xs sm:text-sm text-slate-600 dark:text-[#93A89D] mt-1 max-w-xl">
-            Never pay rent directly into personal accounts. Experience Nigeria&apos;s
-            only student housing platform with physical inspection guarantees.
+            Review payment, inspection, and dispute status for your student accommodation in one place.
           </p>
         </div>
 
         <div className="flex items-center gap-2 rounded-2xl bg-emerald-50 dark:bg-[#083325]/80 border border-emerald-600/20 dark:border-emerald-500/30 px-3.5 py-2 text-xs text-emerald-800 dark:text-emerald-300 shrink-0 shadow-sm">
           <ShieldCheck className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-          <span className="font-semibold">CBN-Licensed Escrow Flow</span>
+          <span className="font-semibold">Payment Status Tracking</span>
         </div>
       </div>
 
@@ -164,22 +163,22 @@ export function EscrowVisualizer() {
             {/* Visual Security Box */}
             <div className="w-full lg:w-72 shrink-0 rounded-2xl bg-slate-50 dark:bg-[#0B130F] border border-slate-200 dark:border-[#22352B] p-5 space-y-3 shadow-inner">
               <div className="flex items-center justify-between text-xs text-slate-500 dark:text-[#93A89D]">
-                <span>Escrow Trust Status</span>
+                <span>Booking Status</span>
                 <span className="font-bold text-emerald-600 dark:text-emerald-400">Active</span>
               </div>
 
               <div className="space-y-2 border-t border-slate-200 dark:border-[#17261F] pt-3 text-xs">
                 <div className="flex items-center justify-between">
                   <span className="text-slate-500 dark:text-[#93A89D]">Inspection Window</span>
-                  <span className="font-bold text-slate-900 dark:text-white">24 Hours</span>
+                  <span className="font-bold text-slate-900 dark:text-white">Your booking deadline</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-slate-500 dark:text-[#93A89D]">Fraud Protection</span>
-                  <span className="font-bold text-emerald-600 dark:text-emerald-400">100% Guaranteed</span>
+                  <span className="font-bold text-emerald-600 dark:text-emerald-400">Support Review</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-slate-500 dark:text-[#93A89D]">Payout Method</span>
-                  <span className="font-bold text-slate-900 dark:text-white">Direct Bank (BVN)</span>
+                  <span className="font-bold text-slate-900 dark:text-white">Provider dependent</span>
                 </div>
               </div>
 

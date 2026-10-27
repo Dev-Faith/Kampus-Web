@@ -126,13 +126,13 @@ export function AuthModal({ isOpen, onClose, defaultRole = "STUDENT" }: AuthModa
             <KampusLogo variant="mark" size={44} className="mx-auto mb-2" markClassName="text-slate-900 dark:text-[#f4f1ea]" />
             <div className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-[#eeece6] px-3 py-1 text-xs font-medium text-slate-700 dark:border-[#303832] dark:bg-[#202722] dark:text-[#c1c8c2]">
               <ShieldCheck className="h-3.5 w-3.5 text-[#c45b37]" />
-              <span>Kampus Secure ID & Escrow</span>
+              <span>Kampus Secure ID</span>
             </div>
             <h2 id="kampus-auth-title" className="text-2xl font-semibold tracking-tight text-slate-900 dark:text-white">
               Sign In to Kampus
             </h2>
             <p className="text-xs text-slate-600 dark:text-[#93A89D]">
-              Verified university accommodation backed by licensed custodial escrow.
+              Find verified university accommodation and manage your booking in Kampus.
             </p>
           </div>
 

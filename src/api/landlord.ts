@@ -2,10 +2,12 @@ import { apiClient } from "@/api/client";
 import {
   ApiResponse,
   BackendLodge,
+  LodgeBuildingSummary,
   LandlordProfile,
   LandlordStats,
   PaginatedData,
 } from "@/types/api";
+import type { AccommodationType } from "@/lib/constants/accommodation-types";
 
 export interface UpdateLandlordBankPayload {
   bankName: string;
@@ -15,18 +17,24 @@ export interface UpdateLandlordBankPayload {
 }
 
 export interface CreateLodgeListingPayload {
+  buildingId?: string;
+  buildingName?: string;
+  createBuilding?: boolean;
   title: string;
+  unitLabel?: string;
   description: string;
-  category: "single" | "self_con" | "flat" | "hostel" | "premium" | "lodge";
+  category: AccommodationType;
+  university: string;
+  area: string;
   address: string;
   city: string;
   state: string;
   rent: number;
   serviceFee: number;
   numberOfRooms: number;
-  capacity: number;
-  distanceToCampus: number;
-  amenities: string[];
+  capacity?: number;
+  distanceToCampus?: number;
+  amenities?: string[];
   images: { url: string; isPrimary: boolean }[];
 }
 
@@ -105,6 +113,11 @@ export const landlordApi = {
         pageSize: params.pageSize || 20,
       };
     }
+  },
+
+  async getBuildings(): Promise<LodgeBuildingSummary[]> {
+    const response = await apiClient.get<ApiResponse<LodgeBuildingSummary[]>>('/landlords/buildings');
+    return response.data?.data ?? [];
   },
 
   /**

@@ -99,7 +99,7 @@ export function ArchitecturalHotspotSection() {
         >
           <p className="text-slate-600 dark:text-[#93A89D] text-sm sm:text-base leading-relaxed">
             Kampus transforms university student accommodation with precision, physical inspection,
-            and licensed escrow security. We curate sustainable developments that connect student
+            and clear booking payment status. We curate sustainable developments that connect student
             communities and protect your rent until move-in day.
           </p>
         </motion.div>

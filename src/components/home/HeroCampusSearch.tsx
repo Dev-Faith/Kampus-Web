@@ -13,11 +13,11 @@ import { CAMPUSES } from "@/lib/constants/campuses";
 import { toast } from "@/lib/stores/useToastStore";
 
 const ROOM_TYPES = [
-  { id: "all", label: "Any Room Type" },
-  { id: "self-con", label: "Self-Con (En-Suite)" },
-  { id: "single-room", label: "Single Room" },
-  { id: "flatshare", label: "2-Bed Flatshare" },
-  { id: "studio", label: "Executive Studio" },
+  { id: "all", label: "Any Accommodation Type" },
+  { id: "single_room_shared", label: "Single room (toilet outside the room, no kitchen)" },
+  { id: "self_contained", label: "Self-Contained Apartment" },
+  { id: "one_bedroom_flat", label: "One-Bedroom Flat (Room and Parlour)" },
+  { id: "two_bedroom_flat", label: "Two-Bedroom Flat" },
 ];
 
 const BUDGET_RANGES = [
@@ -37,7 +37,7 @@ export function HeroCampusSearch() {
     e.preventDefault();
     const params = new URLSearchParams();
     if (selectedCampus && selectedCampus !== "ALL") {
-      params.set("q", selectedCampus);
+      params.set("campus", selectedCampus);
     }
     if (selectedRoomType && selectedRoomType !== "all") {
       params.set("type", selectedRoomType);
@@ -59,21 +59,21 @@ export function HeroCampusSearch() {
         {/* Trust Pill */}
         <div className="inline-flex items-center gap-2 rounded-full bg-emerald-50 dark:bg-[#083325] border border-emerald-600/20 dark:border-emerald-500/30 px-4 py-1.5 text-xs font-semibold text-emerald-800 dark:text-emerald-300 shadow-sm dark:shadow-lg">
           <ShieldCheck className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-          <span>Nigeria&apos;s 1st Student Accommodation Escrow Platform</span>
+          <span>Student Accommodation Near Your Campus</span>
         </div>
 
         {/* Headline */}
         <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight text-slate-900 dark:text-white leading-[1.1]">
           Off-Campus Living, <br />
           <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 via-teal-600 to-amber-600 dark:from-emerald-400 dark:via-emerald-200 dark:to-amber-300">
-            Zero Fraud. Guaranteed.
+            Find your next room with confidence.
           </span>
         </h1>
 
         {/* Subtitle */}
         <p className="text-sm sm:text-base text-slate-600 dark:text-[#93A89D] max-w-xl mx-auto leading-relaxed">
-          Discover verified student lodges near your university campus. Your rent is safely held
-          in licensed custodial escrow until you inspect the room and collect your keys.
+          Discover verified student lodges near your university campus. Track payment and
+          move-in inspection status from your booking.
         </p>
 
         {/* Dynamic Campus Search Form */}

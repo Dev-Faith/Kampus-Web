@@ -5,7 +5,6 @@ import Image from "next/image";
 import Link from "next/link";
 import {
   ShieldCheck,
-  Key,
   CheckCircle2,
   AlertCircle,
   Clock,
@@ -43,8 +42,15 @@ interface EscrowBooking {
   currency: string;
   bookingDate: string;
   inspectionDeadline: string;
+  extensionStatus: string | null;
+  extensionDeadline: string | null;
+  extensionFee: number;
+  extensionPaidCount: number;
+  extensionTotalPaid: number;
+  canExtendInspection: boolean;
+  canResumeInspectionExtension: boolean;
   moveInKeyCode: string;
-  status: "held_in_escrow" | "inspected_released" | "disputed";
+  status: "payment_pending" | "held_in_escrow" | "payout_pending" | "inspected_released" | "disputed" | "refund_pending" | "refund_failed" | "refunded";
   imageUrl: string;
 }
 
@@ -56,9 +62,6 @@ export default function BookingsPage() {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   // Inspection Modal
-  const [inspectingBookingId, setInspectingBookingId] = useState<string | null>(null);
-  const [inputCode, setInputCode] = useState("");
-
   // Dispute Modal
   const [disputeBookingId, setDisputeBookingId] = useState<string | null>(null);
   const [disputeReason, setDisputeReason] = useState("");
@@ -72,34 +75,53 @@ export default function BookingsPage() {
     }
     bookingsApi.getBookings().then((res) => {
       const liveBookings: EscrowBooking[] = (res.items || []).map((b) => {
-        const isDisputed = b.escrowStatus === "disputed";
-        const isReleased = b.escrowStatus === "released" || b.status === "completed";
-        const status: "held_in_escrow" | "inspected_released" | "disputed" = isDisputed
+        const escrowStatus = String(b.escrow?.status ?? b.escrowStatus ?? "").toUpperCase();
+        const isDisputed = escrowStatus === "DISPUTED" || ["OPEN", "UNDER_REVIEW"].includes(b.dispute?.status);
+        const status: EscrowBooking["status"] = isDisputed
           ? "disputed"
-          : isReleased
+          : escrowStatus === "RELEASED"
           ? "inspected_released"
-          : "held_in_escrow";
+          : escrowStatus === "PAYOUT_PENDING"
+          ? "payout_pending"
+          : escrowStatus === "REFUND_PENDING"
+          ? "refund_pending"
+          : escrowStatus === "REFUND_FAILED"
+          ? "refund_failed"
+          : escrowStatus === "REFUNDED"
+          ? "refunded"
+          : escrowStatus === "HELD"
+          ? "held_in_escrow"
+          : "payment_pending";
 
         const bookingDate = b.createdAt
           ? new Date(b.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
           : "Confirmed Booking";
 
-        const deadline = b.moveInDate
-          ? new Date(b.moveInDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
-          : "24h arrival window";
+        const deadline = b.escrow?.inspectionDeadline
+          ? new Date(b.escrow.inspectionDeadline).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+          : "To be confirmed";
 
         return {
           id: b.id,
           lodgeTitle: b.lodge?.title || "Verified Student Accommodation",
-          campus: b.lodge?.address || "Campus Environs",
+          campus: [b.lodge?.building?.name, b.lodge?.unitLabel, b.lodge?.building?.address, b.lodge?.address]
+            .filter(Boolean)
+            .join(" · ") || "Campus Environs",
           roomType: b.lodge?.category || "Student Room",
           hostName: b.lodge?.landlord?.fullName || "Verified Campus Host",
           hostPhone: b.lodge?.landlord?.phone || "",
-          amountHeld: b.amount || 0,
+          amountHeld: Number(b.escrow?.amount ?? b.totalAmount ?? b.amount ?? 0),
           currency: "₦",
           bookingDate,
-          inspectionDeadline: `${deadline} (24h arrival window)`,
-          moveInKeyCode: `KMP-${b.id.slice(0, 6).toUpperCase()}-KEY`,
+          inspectionDeadline: deadline,
+          extensionStatus: b.inspectionExtension?.status ?? null,
+          extensionDeadline: b.inspectionExtension?.extendedDeadline ?? null,
+          extensionFee: Number(b.inspectionExtensionFee ?? 1000),
+          extensionPaidCount: Number(b.inspectionExtension?.paidCount ?? 0),
+          extensionTotalPaid: Number(b.inspectionExtension?.totalPaidAmount ?? 0),
+          canExtendInspection: Boolean(b.canExtendInspection),
+          canResumeInspectionExtension: Boolean(b.canResumeInspectionExtension),
+          moveInKeyCode: b.escrow?.inspectionCode || "",
           status,
           imageUrl: b.lodge?.images?.[0]?.url || "",
         };
@@ -116,27 +138,18 @@ export default function BookingsPage() {
     toast.success(msg);
   };
 
-  const handleOpenInspection = (booking: EscrowBooking) => {
-    setInspectingBookingId(booking.id);
-    setInputCode(booking.moveInKeyCode);
-  };
-
-  const handleSubmitInspection = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!inspectingBookingId) return;
-
-    await bookingsApi.approveInspection(inspectingBookingId, inputCode);
-
-    setBookings((prev) =>
-      prev.map((b) =>
-        b.id === inspectingBookingId ? { ...b, status: "inspected_released" } : b
-      )
-    );
-
-    setInspectingBookingId(null);
-    showToast(
-      "Physical inspection confirmed! Escrow funds have been authorized for release to the host."
-    );
+  const handleExtendInspection = async (bookingId: string) => {
+    try {
+      const result = await bookingsApi.initInspectionExtension({ bookingId });
+      if (result.paymentUrl) {
+        window.location.assign(result.paymentUrl);
+      } else {
+        showToast("Your inspection extension is already active.");
+        window.location.reload();
+      }
+    } catch (error: any) {
+      setToastMessage(error?.response?.data?.message || "We couldn't start the extension payment. Refresh and try again.");
+    }
   };
 
   const handleOpenDispute = (bookingId: string) => {
@@ -160,7 +173,7 @@ export default function BookingsPage() {
 
     setDisputeBookingId(null);
     showToast(
-      "Dispute registered. Escrow payout is strictly frozen in custodial trust pending arbitration."
+      "Dispute registered. Kampus recorded the case and paused the payout decision pending review."
     );
   };
 
@@ -241,7 +254,7 @@ export default function BookingsPage() {
               Your bookings
             </h1>
             <p className="text-xs sm:text-sm text-slate-600 dark:text-[#93A89D] mt-1">
-              Your rent stays protected while you inspect the room and get ready to move in.
+              Track payment, move-in inspection, and any open disputes for your bookings.
             </p>
           </div>
 
@@ -271,9 +284,9 @@ export default function BookingsPage() {
               <ShieldCheck className="h-8 w-8" />
             </div>
             <div className="max-w-md mx-auto space-y-1.5">
-              <h3 className="text-xl font-bold text-slate-900 dark:text-white">No Active Escrow Bookings</h3>
+              <h3 className="text-xl font-bold text-slate-900 dark:text-white">No Active Bookings</h3>
               <p className="text-xs sm:text-sm text-slate-600 dark:text-[#93A89D] leading-relaxed">
-                When you reserve a student lodge on Kampus, your rent is safely held in our licensed custodial escrow trust until you physically inspect your room and confirm move-in.
+                Once payment is confirmed, your booking status and inspection code appear here. Inspect the room and collect the keys before sharing the code with your host. Open a dispute if the lodge does not match what you booked.
               </p>
             </div>
             <div className="pt-2">
@@ -288,6 +301,8 @@ export default function BookingsPage() {
           <div className="space-y-6">
             {bookings.map((booking) => {
               const isHeld = booking.status === "held_in_escrow";
+              const isPaymentPending = booking.status === "payment_pending";
+              const isPayoutPending = booking.status === "payout_pending";
               const isReleased = booking.status === "inspected_released";
               const isDisputed = booking.status === "disputed";
 
@@ -348,16 +363,26 @@ export default function BookingsPage() {
                         )}
                         <span>
                           {isHeld
-                            ? "Funds in Escrow (Inspection Pending)"
+                            ? "Inspection Pending"
                             : isReleased
                             ? "Settled to Landlord"
-                            : "Funds Frozen (Dispute Active)"}
+                            : isPayoutPending
+                            ? "Inspection Verified · Payout Pending"
+                            : booking.status === "refund_pending"
+                            ? "Refund Processing"
+                            : booking.status === "refund_failed"
+                            ? "Refund Failed · Support Needed"
+                            : booking.status === "refunded"
+                            ? "Refund Confirmed"
+                            : isPaymentPending
+                            ? "Payment Pending"
+                            : "Dispute Open · Payout Paused"}
                         </span>
                       </span>
 
                       <p className="text-lg font-black text-slate-900 dark:text-white mt-1 tabular-nums">
                         {booking.currency}
-                        {booking.amountHeld.toLocaleString()} Held
+                        {booking.amountHeld.toLocaleString()}
                       </p>
                     </div>
                   </div>
@@ -370,12 +395,12 @@ export default function BookingsPage() {
                           Move-in Verification Secret Code
                         </span>
                         <p className="text-xs text-slate-600 dark:text-[#93A89D]">
-                          Show this to the caretaker upon arrival to access your room for inspection:
+                          After inspecting the room and receiving the keys, share this code with your host to record your approval:
                         </p>
                       </div>
 
                       <div className="rounded-xl bg-white dark:bg-[#0B130F] border border-[#c45b37]/35 px-5 py-2 font-mono text-base font-black tracking-widest text-[#a94c2e] dark:text-[#e08b6a]">
-                        {booking.moveInKeyCode}
+                        {booking.moveInKeyCode || "Available after payment confirmation"}
                       </div>
                     </div>
                   )}
@@ -384,9 +409,11 @@ export default function BookingsPage() {
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-3 border-t border-slate-200 dark:border-[#22352B] pt-5">
                     <div className="rounded-xl bg-slate-50 dark:bg-[#0E1A14] p-3 text-xs border border-slate-200 dark:border-[#22352B]">
                       <span className="text-[10px] font-bold uppercase text-emerald-600 dark:text-emerald-400 block mb-1">
-                        1. Payment Secured
+                        1. Payment Status
                       </span>
-                      <p className="font-semibold text-slate-900 dark:text-white">Funds in Custodial Trust</p>
+                      <p className="font-semibold text-slate-900 dark:text-white">
+                        {isPaymentPending ? "Awaiting payment" : "Payment confirmed by Kampus"}
+                      </p>
                       <span className="text-[11px] text-slate-500 dark:text-[#93A89D]">
                         Locked on {booking.bookingDate}
                       </span>
@@ -413,8 +440,45 @@ export default function BookingsPage() {
                     </div>
                   </div>
 
+                  {(booking.canExtendInspection || booking.canResumeInspectionExtension || ["PAID", "PENDING", "REFUND_PENDING", "REFUND_FAILED", "REFUNDED"].includes(booking.extensionStatus || "")) && (
+                    <div className="rounded-2xl border border-amber-500/25 bg-amber-50/70 dark:bg-amber-500/5 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div className="space-y-1">
+                        <p className="text-sm font-bold text-slate-900 dark:text-white">
+                          {booking.extensionStatus === "PAID" ? "Inspection deadline extended" : "Need more time to inspect?"}
+                        </p>
+                        <p className="text-xs text-slate-600 dark:text-[#93A89D]">
+                          {booking.extensionStatus === "PAID"
+                            ? `Deferral ${booking.extensionPaidCount || 1} of 4 is active through ${booking.extensionDeadline ? new Date(booking.extensionDeadline).toLocaleDateString("en-NG", { timeZone: "Africa/Lagos", month: "short", day: "numeric", year: "numeric" }) : booking.inspectionDeadline}. You have paid ₦${booking.extensionTotalPaid.toLocaleString()} in extension fees.`
+                            : booking.extensionStatus === "REFUND_PENDING"
+                            ? "Your extension fee refund is being processed by the payment provider."
+                            : booking.extensionStatus === "REFUND_FAILED"
+                            ? "The provider could not complete the extension fee refund. Please contact Kampus support."
+                            : booking.extensionStatus === "REFUNDED"
+                            ? "Your extension fee has been refunded."
+                            : booking.extensionStatus === "PENDING"
+                            ? `Deferral ${booking.extensionPaidCount + 1} of 4 is awaiting payment confirmation. Complete checkout today to add one calendar day.`
+                            : `Each deferral adds one calendar day for ₦${booking.extensionFee.toLocaleString()}. You can defer up to four times (₦${(booking.extensionFee * 4).toLocaleString()} total), with each payment due on the day after your current deadline.`}
+                        </p>
+                      </div>
+                      {(booking.canExtendInspection || booking.canResumeInspectionExtension) && (
+                        <Button
+                          variant="outline"
+                          onClick={() => handleExtendInspection(booking.id)}
+                          className="shrink-0 border-amber-600/40 bg-white dark:bg-[#17261F] text-slate-900 dark:text-white text-xs font-bold"
+                        >
+                          {booking.extensionStatus === "PENDING" ? "Resume today’s deferral payment" : `Defer one day · ₦${booking.extensionFee.toLocaleString()}`}
+                        </Button>
+                      )}
+                      {booking.extensionStatus === "PENDING" && (
+                        <button type="button" onClick={() => window.location.reload()} className="text-xs font-semibold text-amber-800 dark:text-amber-300 underline">
+                          Refresh payment status
+                        </button>
+                      )}
+                    </div>
+                  )}
+
                   {/* Action Buttons */}
-                  {isHeld && (
+                  {(isHeld || isPayoutPending) && (
                     <div className="flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-slate-200 dark:border-[#22352B] pt-4">
                       <button
                         type="button"
@@ -441,13 +505,6 @@ export default function BookingsPage() {
                           Call Landlord
                         </Button>
 
-                        <Button
-                          onClick={() => handleOpenInspection(booking)}
-                          className="editorial-action flex-1 sm:flex-none bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-lg"
-                        >
-                          <CheckCircle2 className="h-4 w-4 mr-1.5" />
-                          Confirm Room & Release Escrow
-                        </Button>
                       </div>
                     </div>
                   )}
@@ -457,64 +514,6 @@ export default function BookingsPage() {
           </div>
         )}
       </main>
-
-      {/* Physical Inspection Confirmation Dialog */}
-      <Dialog open={!!inspectingBookingId} onOpenChange={(open) => !open && setInspectingBookingId(null)}>
-        <DialogContent className="editorial-dialog max-w-md bg-white dark:bg-[#0B130F] border border-slate-200 dark:border-[#22352B] text-slate-900 dark:text-slate-100 p-6 rounded-3xl shadow-2xl">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-xl font-bold text-slate-900 dark:text-white">
-              <ShieldCheck className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
-              Confirm Inspection & Release Escrow
-            </DialogTitle>
-          </DialogHeader>
-
-          <p className="text-xs text-slate-600 dark:text-[#93A89D] -mt-2">
-            Confirming that you have physically visited the room, tested electricity, water, and verified keys. Once authorized, the custodial trust will disburse funds to the host.
-          </p>
-
-          <form onSubmit={handleSubmitInspection} className="space-y-4 mt-2">
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-700 dark:text-[#93A89D]">
-                Enter Move-in Verification Code
-              </label>
-              <input
-                type="text"
-                value={inputCode}
-                onChange={(e) => setInputCode(e.target.value)}
-                className="w-full px-4 py-2.5 rounded-xl bg-slate-50 dark:bg-[#14231B] border border-slate-200 dark:border-[#22352B] text-center font-mono font-bold tracking-widest text-emerald-600 dark:text-emerald-400 text-base focus:outline-none focus:border-emerald-500"
-                required
-              />
-            </div>
-
-            <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 text-[11px] text-emerald-800 dark:text-emerald-300 space-y-1">
-              <p className="font-bold flex items-center gap-1">
-                <CheckCircle2 className="h-3.5 w-3.5" />
-                Student Escrow Guarantee:
-              </p>
-              <p>
-                By clicking Confirm, you acknowledge receipt of key handover and satisfactory room conditions.
-              </p>
-            </div>
-
-            <div className="flex justify-end gap-2 pt-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setInspectingBookingId(null)}
-                className="rounded-full border-slate-200 dark:border-[#22352B] text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-[#14231B] text-xs"
-              >
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                className="editorial-action rounded-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs"
-              >
-                Release Payout
-              </Button>
-            </div>
-          </form>
-        </DialogContent>
-      </Dialog>
 
       {/* Escrow Dispute Modal */}
       <Dialog open={!!disputeBookingId} onOpenChange={(open) => !open && setDisputeBookingId(null)}>
@@ -527,7 +526,7 @@ export default function BookingsPage() {
           </DialogHeader>
 
           <p className="text-xs text-slate-600 dark:text-[#93A89D] -mt-2">
-            Disputing immediately freezes funds in licensed custodial trust. The landlord cannot withdraw funds until a Kampus field officer investigates.
+            Opening a dispute marks this booking as disputed so Kampus support can review it before the payout decision.
           </p>
 
           <form onSubmit={handleSubmitDispute} className="space-y-4 mt-2">

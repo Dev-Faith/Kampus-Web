@@ -70,6 +70,7 @@ export function Navbar() {
     { label: "About", href: "/#about" },
     { label: "Lodges", href: "/explore" },
     { label: "Roommates", href: "/roommates" },
+    ...(user?.role === "ADMIN" ? [{ label: "Dispute review", href: "/admin/disputes" }] : []),
   ];
 
   return (
@@ -241,7 +242,7 @@ export function Navbar() {
                     }}
                     className="text-xs hover:bg-emerald-500/10 cursor-pointer rounded-xl flex items-center justify-between"
                   >
-                    <span>{isHost && role === "LANDLORD" ? "Host Dashboard" : "My Bookings & Escrow"}</span>
+                    <span>{isHost && role === "LANDLORD" ? "Host Dashboard" : "My Bookings"}</span>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator className="bg-slate-200 dark:bg-[#22352B]" />
                   <DropdownMenuItem

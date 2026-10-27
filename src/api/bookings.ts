@@ -15,9 +15,6 @@ export interface CreateBookingPayload {
 
 export interface InitPaymentPayload {
   bookingId: string;
-  amount: number;
-  email: string;
-  phone: string;
 }
 
 export interface InitPaymentResponse {
@@ -28,19 +25,31 @@ export interface InitPaymentResponse {
 }
 
 export interface VerifyPaymentPayload {
+  transactionId: string;
   reference: string;
-  amount: number;
-}
-
-export interface SubmitInspectionPayload {
-  inspectionCode: string;
-  evidence?: { imageUri: string }[];
 }
 
 export interface OpenDisputePayload {
   bookingId: string;
   reason: string;
   evidence?: { type: string; url: string }[];
+}
+
+export interface AdminDispute {
+  id: string;
+  bookingId: string;
+  reason: string;
+  evidence: unknown[];
+  status: "OPEN" | "UNDER_REVIEW";
+  createdAt: string;
+  booking: {
+    id: string;
+    moveInDate: string;
+    totalAmount: number;
+    student: { name: string; email: string | null; phone: string };
+    lodge: { id: string; title: string; landlord: string };
+    escrow: { status: string; amount: number } | null;
+  };
 }
 
 export const bookingsApi = {
@@ -57,7 +66,7 @@ export const bookingsApi = {
   },
 
   /**
-   * Initialize Paystack or Flutterwave payment session
+   * Initialize a provider checkout using the booking amount and student identity from the server.
    */
   async initPayment(payload: InitPaymentPayload): Promise<InitPaymentResponse> {
     const response = await apiClient.post<ApiResponse<InitPaymentResponse>>(
@@ -67,15 +76,23 @@ export const bookingsApi = {
     return response.data.data;
   },
 
+  async initInspectionExtension(payload: InitPaymentPayload): Promise<InitPaymentResponse & { status?: string; extendedDeadline?: string }> {
+    const response = await apiClient.post<ApiResponse<InitPaymentResponse & { status?: string; extendedDeadline?: string }>>(
+      "/payments/inspection-extension/init",
+      payload
+    );
+    return response.data.data;
+  },
+
   /**
    * Verify completed payment
    */
-  async verifyPayment(payload: VerifyPaymentPayload): Promise<{ success: boolean; status: string }> {
-    const response = await apiClient.post<ApiResponse<Booking>>(
+  async verifyPayment(payload: VerifyPaymentPayload): Promise<{ success: boolean; message?: string; bookingId?: string; escrowStatus?: string; status?: string }> {
+    const response = await apiClient.post<ApiResponse<{ bookingId?: string; escrowStatus?: string; status?: string; message?: string }>>(
       "/payments/verify",
       payload
     );
-    return { success: response.data.success, status: response.data.data.status };
+    return { success: response.data.success, message: response.data.message, ...response.data.data };
   },
 
   /**
@@ -97,9 +114,9 @@ export const bookingsApi = {
         const rawItems = response.data.data.items || (response.data.data as any).bookings || [];
         return {
           items: rawItems,
-          total: response.data.data.total || rawItems.length,
-          page: response.data.data.page || page,
-          pageSize: response.data.data.pageSize || pageSize,
+          total: response.data.data.total ?? rawItems.length,
+          page: response.data.data.page ?? page,
+          pageSize: response.data.data.pageSize ?? pageSize,
         };
       }
     } catch {
@@ -146,34 +163,6 @@ export const bookingsApi = {
   },
 
   /**
-   * Submit inspection code to release escrow to landlord
-   * POST /api/bookings/:id/approve-inspection
-   */
-  async approveInspection(
-    bookingId: string,
-    inspectionCode: string
-  ): Promise<{ success: boolean; message: string }> {
-    const response = await apiClient.post<ApiResponse<{ message?: string }>>(
-      `/bookings/${bookingId}/approve-inspection`,
-      { inspectionCode }
-    );
-    return {
-      success: response.data?.success ?? true,
-      message: response.data?.message || "Inspection verified and escrow released to landlord.",
-    };
-  },
-
-  /**
-   * Backward-compatible alias for approveInspection
-   */
-  async submitInspection(
-    bookingId: string,
-    payload: SubmitInspectionPayload
-  ): Promise<{ success: boolean; message: string }> {
-    return this.approveInspection(bookingId, payload.inspectionCode);
-  },
-
-  /**
    * Open a dispute on booking (POST /api/bookings/:id/dispute)
    */
   async openDispute(
@@ -215,6 +204,40 @@ export const bookingsApi = {
     } catch {
       return null;
     }
+  },
+
+  async getDisputeById(id: string) {
+    const response = await apiClient.get<ApiResponse<any>>(`/disputes/${id}`);
+    return response.data?.data ?? null;
+  },
+
+  async getAdminDisputes(): Promise<AdminDispute[]> {
+    const response = await apiClient.get<ApiResponse<AdminDispute[]>>("/admin/disputes");
+    return response.data?.data ?? [];
+  },
+
+  async resolveAdminDispute(
+    disputeId: string,
+    resolution: "student_refund" | "landlord_release",
+    note: string,
+  ): Promise<ApiResponse<{ disputeId: string; status: string; escrowStatus: string; resolution: string }>> {
+    const response = await apiClient.post<ApiResponse<{
+      disputeId: string;
+      status: string;
+      escrowStatus: string;
+      resolution: string;
+    }>>(`/admin/disputes/${disputeId}/resolve`, { resolution, note });
+    return response.data;
+  },
+
+  async reconcileAdminRefund(bookingId: string) {
+    const response = await apiClient.post<any>(`/payments/admin/bookings/${bookingId}/refund/reconcile`);
+    return response.data;
+  },
+
+  async retryAdminRefund(bookingId: string) {
+    const response = await apiClient.post<any>(`/payments/admin/bookings/${bookingId}/refund/retry`);
+    return response.data;
   },
 };
 

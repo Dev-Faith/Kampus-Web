@@ -11,19 +11,19 @@ interface FaqItem {
 
 const FAQS: FaqItem[] = [
   {
-    question: "How does the Kampus Escrow guarantee protect my accommodation rent?",
+    question: "How do payment and move-in inspection work on Kampus?",
     answer:
-      "When you book an accommodation on Kampus, your rent payment is held securely in a licensed custodial escrow bank trust. The landlord does not receive payout until you physically arrive on campus, inspect the room (light, running water, room condition), and confirm key collection.",
+      "After the payment provider confirms your charge, Kampus records it against your booking and shows an inspection code and deadline. Inspect the room and collect your keys before sharing the code with the host. Code verification records inspection approval and queues payout processing. Fund custody and settlement follow the payment provider's arrangement.",
   },
   {
     question: "What happens if the room does not match the photos or has broken amenities?",
     answer:
-      "You have a 24-hour Move-In Inspection Window upon physical arrival. If the room is defective, lacks running water, or doesn't match the listing, you can submit a 1-tap dispute through your dashboard. Our Minna inspection team will verify the claim, and if unresolved, your rent is refunded in full.",
+      "Your booking shows its inspection deadline. If the room has a problem, open a dispute from your dashboard so Kampus can review it before payout processing. Any approved refund is sent to the payment provider for processing; completion time depends on the provider.",
   },
   {
-    question: "How does the 6-digit move-in inspection code work?",
+    question: "How does the move-in inspection code work?",
     answer:
-      "When your booking is confirmed, Kampus issues a unique 6-digit verification code to your student portal. You only give this code to the landlord after you have inspected the room and received physical keys. Once the landlord submits your code, the escrow system processes the payment.",
+      "Kampus displays a unique inspection code in your booking after payment is confirmed. Share it with the host only after inspecting the room and receiving the keys. The host enters the code to record inspection approval and queue payout processing.",
   },
   {
     question: "Do I have to pay any agent or inspection fee before seeing a lodge?",
@@ -33,7 +33,7 @@ const FAQS: FaqItem[] = [
   {
     question: "How does roommate matching work for flatshares in Minna?",
     answer:
-      "You can filter potential roommates by FUTMINNA department, academic level, sleeping habits, study preferences, and budget. Once you connect and both agree on a 2-bedroom flat, you can split rent payments equally through our escrow split-billing system.",
+      "You can filter potential roommates by FUTMINNA department, academic level, sleeping habits, study preferences, and budget. Once you connect and both agree on a 2-bedroom flat, you can coordinate rent payments between yourselves.",
   },
   {
     question: "Can parents pay directly on behalf of their children?",
@@ -62,7 +62,7 @@ export function LandingFaq() {
           Everything You Need to Know
         </h2>
         <p className="text-xs sm:text-sm text-slate-600 dark:text-[#93A89D]">
-          Clear answers about escrow protection, move-in codes, and booking student housing in Minna.
+          Clear answers about payment status, move-in codes, and booking student housing in Minna.
         </p>
       </div>
 

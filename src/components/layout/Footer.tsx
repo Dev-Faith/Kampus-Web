@@ -26,8 +26,8 @@ export function Footer() {
             </Link>
 
             <p className="text-xs text-slate-600 dark:text-[#93A89D] leading-relaxed max-w-sm">
-              Nigeria&apos;s licensed student off-campus accommodation marketplace.
-              Protecting student rent through CBN-compliant custodial escrow, zero viewing fees, and 24-hour move-in inspection guarantees.
+              Student off-campus accommodation marketplace with verified listings,
+              zero viewing fees, and payment and inspection tracking.
             </p>
 
             {/* NDPR & Escrow Trust Badges */}
@@ -38,7 +38,7 @@ export function Footer() {
               </div>
               <div className="inline-flex items-center gap-1.5 rounded-full bg-white dark:bg-[#121E18] border border-slate-200 dark:border-[#22352B] px-3 py-1 text-[10px] text-amber-700 dark:text-amber-300 shadow-sm">
                 <span className="h-1.5 w-1.5 rounded-full bg-amber-500 dark:bg-amber-400" />
-                <span>Custodial Escrow Settlement</span>
+                <span>Payment Status Tracking</span>
               </div>
             </div>
           </div>
@@ -61,12 +61,12 @@ export function Footer() {
               </li>
               <li>
                 <Link href="/bookings" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
-                  My Bookings & Escrow
+                  My Bookings
                 </Link>
               </li>
               <li>
                 <Link href="/#escrow" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
-                  How Escrow Works
+                  Payment & Inspection Workflow
                 </Link>
               </li>
               <li>
@@ -93,34 +93,43 @@ export function Footer() {
           {/* Column 2: Campus Locations */}
           <div className="space-y-3">
             <h4 className="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-white">
-              FUTMINNA Zones
+              FUTMINNA Areas
             </h4>
             <ul className="space-y-2">
               <li>
-                <Link href="/explore?q=Gidan+Kwano" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors flex items-center justify-between">
-                  <span>Gidan Kwano Gate</span>
-                  <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold">Active</span>
+                <Link href="/explore?campus=FUTMINNA&area=gidankwano" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
+                  Gidankwano
                 </Link>
               </li>
               <li>
-                <Link href="/explore?q=Bosso" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors flex items-center justify-between">
-                  <span>Bosso Campus Hub</span>
-                  <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold">Active</span>
+                <Link href="/explore?campus=FUTMINNA&area=gidanpainti" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
+                  Gidanpainti
                 </Link>
               </li>
               <li>
-                <Link href="/explore?q=Maikunkele" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors flex items-center justify-between">
-                  <span>Maikunkele Corridor</span>
-                  <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold">Active</span>
+                <Link href="/explore?campus=FUTMINNA&area=gidanmangoro" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
+                  Gidanmangoro
                 </Link>
               </li>
               <li className="text-slate-400 dark:text-[#586B61] flex items-center justify-between">
-                <span>UNILAG (Akoka)</span>
-                <span className="text-[9px] bg-slate-200 dark:bg-[#121E18] px-1.5 py-0.5 rounded">Soon</span>
+                <Link href="/explore?campus=FUTMINNA&area=dama" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
+                  Dama
+                </Link>
               </li>
-              <li className="text-slate-400 dark:text-[#586B61] flex items-center justify-between">
-                <span>FUTA (Akure)</span>
-                <span className="text-[9px] bg-slate-200 dark:bg-[#121E18] px-1.5 py-0.5 rounded">Soon</span>
+              <li className="pt-1 text-slate-500 dark:text-[#71867A]">Bosso Campus</li>
+              <li>
+                <Link href="/explore?campus=FUTMINNA&area=bosso_front" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
+                  Front of school
+                </Link>
+              </li>
+              <li>
+                <Link href="/explore?campus=FUTMINNA&area=bosso_back" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
+                  Back of school
+                </Link>
+              </li>
+              <li className="flex items-center justify-between pt-1 text-slate-400 dark:text-[#586B61]">
+                <span>Other campuses</span>
+                <span className="text-[9px] bg-slate-200 dark:bg-[#121E18] px-1.5 py-0.5 rounded">Coming soon</span>
               </li>
             </ul>
           </div>

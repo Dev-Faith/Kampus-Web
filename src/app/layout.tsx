@@ -20,9 +20,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Kampus | Student Accommodation & Escrow Living Platform",
+  title: "Kampus | Student Accommodation Platform",
   description:
-    "Nigeria's 1st student accommodation platform with custodial escrow protection. Find verified off-campus student lodges steps from FUTMINNA campus gates.",
+    "Find verified off-campus student lodges near FUTMINNA and track your booking, payment, and move-in inspection in Kampus.",
   icons: {
     icon: [
       { url: "/kampus-icon.svg", type: "image/svg+xml" },

@@ -9,8 +9,9 @@ import Map, {
 } from "react-map-gl/maplibre";
 import * as maplibregl from "maplibre-gl";
 import Image from "next/image";
-import { Bed, Bath, Maximize, ArrowUpRight, Sparkles } from "lucide-react";
+import { ArrowUpRight } from "lucide-react";
 import { Property } from "@/types/property";
+import { getCampusAreaLabel } from "@/lib/constants/campus-areas";
 import { usePropertyInteractionStore } from "@/lib/stores/usePropertyInteractionStore";
 import { PropertyQuickViewDialog } from "@/components/property/PropertyQuickViewDialog";
 
@@ -22,6 +23,12 @@ if (typeof window !== "undefined") {
   } catch {
     maplibregl.setWorkerUrl("/workers/maplibre-gl-worker.mjs");
   }
+}
+
+function hasCoordinates(property: Property): property is Property & {
+  address: Property["address"] & { coordinates: { lat: number; lng: number } };
+} {
+  return property.address.coordinates !== null;
 }
 
 interface PropertyMapProps {
@@ -48,6 +55,7 @@ export function PropertyMap({
   const [quickViewProperty, setQuickViewProperty] = useState<Property | null>(
     null
   );
+  const mappedProperties = properties.filter(hasCoordinates);
 
   const formatShortPrice = (price: number) => {
     if (price >= 1000000) {
@@ -60,6 +68,8 @@ export function PropertyMap({
   };
 
   const handleMarkerClick = (property: Property, e: any) => {
+    const coordinates = property.address.coordinates;
+    if (!coordinates) return;
     e.originalEvent?.stopPropagation();
     setActivePopupProperty(property);
     setSelectedPropertyId(property.id);
@@ -68,8 +78,8 @@ export function PropertyMap({
     if (mapRef.current) {
       mapRef.current.flyTo({
         center: [
-          property.address.coordinates.lng,
-          property.address.coordinates.lat,
+          coordinates.lng,
+          coordinates.lat,
         ],
         zoom: 13.5,
         duration: 900,
@@ -104,9 +114,9 @@ export function PropertyMap({
           ref={mapRef}
           mapLib={maplibregl}
           initialViewState={{
-            longitude: properties[0]?.address.coordinates.lng ?? 6.5463,
-            latitude: properties[0]?.address.coordinates.lat ?? 9.5836,
-            zoom: 13,
+            longitude: mappedProperties[0]?.address.coordinates.lng ?? 8.6753,
+            latitude: mappedProperties[0]?.address.coordinates.lat ?? 9.082,
+            zoom: mappedProperties.length ? 13 : 5,
           }}
           style={{ width: "100%", height: "100%" }}
           mapStyle="https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json"
@@ -116,7 +126,7 @@ export function PropertyMap({
           <NavigationControl position="top-right" showCompass={false} />
 
           {/* Interactive Property Markers */}
-          {properties.map((property) => {
+          {mappedProperties.map((property) => {
             const isHovered = hoveredPropertyId === property.id;
             const isSelected =
               selectedPropertyId === property.id ||
@@ -158,7 +168,7 @@ export function PropertyMap({
           })}
 
           {/* Active Property Popup Preview */}
-          {activePopupProperty && (
+          {activePopupProperty?.address.coordinates && (
             <Popup
               longitude={activePopupProperty.address.coordinates.lng}
               latitude={activePopupProperty.address.coordinates.lat}
@@ -170,12 +180,9 @@ export function PropertyMap({
             >
               <div className="w-64 overflow-hidden rounded-2xl bg-slate-900 text-slate-100">
                 <div className="relative aspect-[16/10] w-full">
-                  <Image
-                    src={activePopupProperty.images[0]?.url || ""}
-                    alt={activePopupProperty.title}
-                    fill
-                    className="object-cover"
-                  />
+                  {activePopupProperty.images[0]?.url ? (
+                    <Image src={activePopupProperty.images[0].url} alt={activePopupProperty.title} fill className="object-cover" />
+                  ) : <div className="grid h-full place-items-center text-xs text-slate-400">No photos</div>}
                   <div className="absolute top-2 left-2 rounded-md bg-emerald-500/90 px-2 py-0.5 text-[10px] font-bold text-slate-950 uppercase">
                     {activePopupProperty.propertyType}
                   </div>
@@ -188,7 +195,7 @@ export function PropertyMap({
                       {activePopupProperty.price.toLocaleString()}
                     </span>
                     <span className="text-[11px] text-slate-400">
-                      {activePopupProperty.sqft.toLocaleString()} sqft
+                      {activePopupProperty.propertyType}
                     </span>
                   </div>
 
@@ -196,15 +203,10 @@ export function PropertyMap({
                     {activePopupProperty.title}
                   </h4>
 
-                  <p className="text-[11px] text-slate-400 line-clamp-1">
-                    {activePopupProperty.address.neighborhood},{" "}
-                    {activePopupProperty.address.city}
-                  </p>
+                  <p className="text-[11px] text-slate-400 line-clamp-1">{[activePopupProperty.building?.name, activePopupProperty.unitLabel, getCampusAreaLabel(activePopupProperty.campusArea), activePopupProperty.address.city, activePopupProperty.address.state].filter(Boolean).join(", ")}</p>
 
                   <div className="flex items-center justify-between border-t border-slate-800/80 pt-2 text-[11px] text-slate-300">
-                    <span>{activePopupProperty.bedrooms} Beds</span>
-                    <span>•</span>
-                    <span>{activePopupProperty.bathrooms} Baths</span>
+                    <span>{activePopupProperty.numberOfRooms == null ? "Rooms not specified" : `${activePopupProperty.numberOfRooms} rooms`}</span>
                     <button
                       type="button"
                       onClick={() => {
@@ -229,7 +231,7 @@ export function PropertyMap({
             <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
           </span>
           <span>
-            {properties.length} Vector Pins Live • Hover card to highlight
+            {mappedProperties.length} listings with map coordinates
           </span>
         </div>
       </div>

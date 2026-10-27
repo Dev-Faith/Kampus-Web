@@ -9,11 +9,11 @@ import { ArrowRight, Building2, GraduationCap, MapPin, Search } from "lucide-rea
 import { CAMPUSES } from "@/lib/constants/campuses";
 
 const ROOM_TYPES = [
-  { id: "all", label: "Any room type" },
-  { id: "self-con", label: "Self-con" },
-  { id: "single-room", label: "Single room" },
-  { id: "flatshare", label: "Flatshare" },
-  { id: "studio", label: "Studio" },
+  { id: "all", label: "Any accommodation type" },
+  { id: "single_room_shared", label: "Single room (toilet outside the room, no kitchen)" },
+  { id: "self_contained", label: "Self-contained apartment" },
+  { id: "one_bedroom_flat", label: "One-bedroom flat (room and parlour)" },
+  { id: "two_bedroom_flat", label: "Two-bedroom flat" },
 ];
 
 const BUDGET_RANGES = [
@@ -33,7 +33,7 @@ export function HeroArchitecturalShowcase() {
   const handleSearch = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const params = new URLSearchParams();
-    if (selectedCampus && selectedCampus !== "ALL") params.set("q", selectedCampus);
+    if (selectedCampus && selectedCampus !== "ALL") params.set("campus", selectedCampus);
     if (selectedRoomType !== "all") params.set("type", selectedRoomType);
 
     const budget = BUDGET_RANGES[selectedBudgetIdx];
@@ -90,9 +90,9 @@ export function HeroArchitecturalShowcase() {
           className="landing-hero__photo"
         />
         <div className="landing-hero__image-shade" />
-        <Link href="/explore?q=Gidan+Kwano" className="landing-hero__location">
+        <Link href="/explore?campus=FUTMINNA" className="landing-hero__location">
           <span className="landing-hero__location-mark"><MapPin aria-hidden="true" /></span>
-          <span><strong>Find your corner of Minna</strong><small>Gidan Kwano / Bosso / Maikunkele</small></span>
+          <span><strong>Find your corner of Minna</strong><small>Gidankwano Campus / Bosso Campus</small></span>
           <span className="landing-hero__location-arrow"><ArrowRight aria-hidden="true" /></span>
         </Link>
         <span className="landing-hero__image-caption">A better start begins with a place of your own.</span>
@@ -140,7 +140,7 @@ export function HeroArchitecturalShowcase() {
       </form>
 
       <div className="landing-hero__footnote">
-        <span>Homes around the places that matter</span>
+        <span>Accommodation around FUTMINNA campuses</span>
         <span>FUTMINNA / Minna, Nigeria</span>
       </div>
     </section>
