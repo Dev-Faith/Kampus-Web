@@ -81,7 +81,7 @@ export default function AdminDisputesPage() {
       toast.success(result.message || "Dispute decision recorded", {
         description: resolution === "student_refund"
           ? `Refund status: ${result.data.escrowStatus}. Provider processing may still be required.`
-          : "Payout is queued for processing; this decision does not transfer funds.",
+          : "Payout is approved and may now be transferred after settlement and balance checks. Check the payment queue for its final status.",
       });
     } catch (error: any) {
       toast.error("Could not resolve dispute", {
@@ -125,6 +125,7 @@ export default function AdminDisputesPage() {
           <ArrowLeft className="h-4 w-4" /> Back to Kampus
         </Link>
 
+        <Link href="/admin/payments" className="mb-4 inline-block text-sm underline">Manage payments and pending transfers</Link>
         <div className="mb-8 flex items-start gap-4">
           <div className="rounded-2xl bg-amber-100 p-3 text-amber-800 dark:bg-amber-500/15 dark:text-amber-300">
             <ShieldCheck className="h-6 w-6" />

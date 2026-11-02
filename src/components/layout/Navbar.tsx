@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
@@ -42,7 +42,7 @@ import { KampusLogo } from "@/components/brand/KampusLogo";
 
 function KampusBrandMark() {
   return (
-    <Link href="/" className="group flex items-center justify-center" aria-label="Kampus Home">
+    <Link href="/" className="group flex h-11 w-11 shrink-0 items-center justify-center" aria-label="Kampus Home">
       <KampusLogo variant="mark" size={36} className="transition-transform duration-200 group-hover:scale-[1.04]" markClassName="text-slate-900 dark:text-white" />
     </Link>
   );
@@ -55,6 +55,7 @@ export function Navbar() {
   const [isHostRegistrationOpen, setIsHostRegistrationOpen] = useState(false);
   const [isAppDownloadOpen, setIsAppDownloadOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const mobileMenuTrigger = useRef<HTMLButtonElement>(null);
 
   const { user, role, isAuthenticated, logout, switchRole, checkAuth } = useAuthStore();
   const isHost = user?.role === "LANDLORD" || Boolean(user?.landlord);
@@ -62,6 +63,29 @@ export function Navbar() {
   useEffect(() => {
     checkAuth();
   }, [checkAuth]);
+
+  useEffect(() => {
+    if (!isMobileMenuOpen) return;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setIsMobileMenuOpen(false);
+        mobileMenuTrigger.current?.focus();
+      }
+    };
+    window.addEventListener("keydown", closeOnEscape);
+    return () => window.removeEventListener("keydown", closeOnEscape);
+  }, [isMobileMenuOpen]);
+
+  const handleListLodge = () => {
+    setIsMobileMenuOpen(false);
+    if (!isAuthenticated) {
+      setIsAuthOpen(true);
+    } else if (!isHost) {
+      setIsHostRegistrationOpen(true);
+    } else {
+      window.location.href = "/host/dashboard";
+    }
+  };
 
   const isHostView = pathname.startsWith("/host");
 
@@ -76,21 +100,23 @@ export function Navbar() {
   return (
     <>
       <header className="landing-nav sticky top-0 z-40 w-full border-b border-slate-200/80 dark:border-[#22352B] bg-white/95 dark:bg-[#0B130F]/95 backdrop-blur-xl transition-colors duration-200">
-        <div className="landing-nav__inner mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-          {/* Left Column: Minimal Typographic Nav Links (Image 1 & 2 Style) */}
-          <div className="flex items-center gap-6">
+        <div className="landing-nav__inner mx-auto items-center px-4 sm:px-6 lg:px-8">
+          <div className="min-w-0 flex items-center">
             {/* Mobile menu trigger */}
             <button
               type="button"
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="lg:hidden p-1.5 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-[#121E18]"
-              aria-label="Toggle navigation"
+              ref={mobileMenuTrigger}
+              onClick={() => setIsMobileMenuOpen((open) => !open)}
+              className="xl:hidden flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-[#121E18]"
+              aria-label={isMobileMenuOpen ? "Close navigation" : "Open navigation"}
+              aria-expanded={isMobileMenuOpen}
+              aria-controls="kampus-mobile-navigation"
             >
               {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </button>
 
             {/* Desktop Navigation Links */}
-            <nav className="hidden lg:flex items-center gap-7 text-[13px] font-medium tracking-tight">
+            <nav aria-label="Primary navigation" className="hidden xl:flex items-center gap-7 text-[13px] font-medium tracking-tight whitespace-nowrap">
               {NAV_LINKS.map((link) => {
                 const isActive = pathname === link.href;
                 return (
@@ -115,30 +141,29 @@ export function Navbar() {
           </div>
 
           {/* Center Brand Mark */}
-          <div className="absolute left-1/2 -translate-x-1/2 flex items-center justify-center">
+          <div className="landing-nav__brand flex items-center justify-center">
             <KampusBrandMark />
           </div>
 
-          {/* Right Column: Clean Pill Controls (Book a call / Invest / Sign in) */}
-          <div className="flex items-center gap-3">
+          <div className="landing-nav__actions flex min-w-0 items-center justify-end">
             {/* Get Mobile App Link / Pill */}
             <Button
               variant="ghost"
               size="sm"
               onClick={() => setIsAppDownloadOpen(true)}
-              className="hidden md:inline-flex text-[13px] font-medium text-slate-700 dark:text-[#93A89D] hover:text-slate-900 dark:hover:text-white px-2 cursor-pointer"
+              className="landing-nav__app hidden xl:inline-flex shrink-0 text-[13px] font-medium text-slate-700 dark:text-[#93A89D] hover:text-slate-900 dark:hover:text-white px-2 cursor-pointer"
             >
               Get the app
             </Button>
 
             {/* Theme Toggle */}
-            <div className="landing-nav__theme">
+            <div className="landing-nav__theme hidden sm:block shrink-0">
               <ThemeToggle />
             </div>
 
             {/* Host / Student Role Switcher */}
             {isHostView ? (
-              <Link href="/explore" className="hidden sm:inline-block">
+              <Link href="/explore" className="hidden xl:inline-block shrink-0">
                 <Button
                   variant="outline"
                   size="sm"
@@ -148,7 +173,7 @@ export function Navbar() {
                 </Button>
               </Link>
             ) : (
-              <Link href="/host/dashboard" className="hidden sm:inline-block">
+              <Link href="/host/dashboard" className="hidden xl:inline-block shrink-0">
                 <Button
                   variant="outline"
                   size="sm"
@@ -161,20 +186,8 @@ export function Navbar() {
 
             {/* Solid Pill CTA ("Invest" / "Post Lodge") */}
             <Button
-              onClick={() => {
-                if (!isAuthenticated) {
-                  setIsAuthOpen(true);
-                  return;
-                }
-                if (!isHost) {
-                  setIsHostRegistrationOpen(true);
-                  return;
-                }
-                if (typeof window !== "undefined") {
-                  window.location.href = "/host/dashboard";
-                }
-              }}
-              className="landing-nav__primary rounded-full bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-950 font-bold text-xs px-4 sm:px-5 py-2 shadow-sm transition-all cursor-pointer"
+              onClick={handleListLodge}
+              className="landing-nav__primary hidden lg:inline-flex shrink-0 rounded-full bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-950 font-bold text-xs px-4 sm:px-5 py-2 shadow-sm transition-all cursor-pointer"
             >
               List your lodge
             </Button>
@@ -182,7 +195,7 @@ export function Navbar() {
             {/* User Account Dropdown */}
             {isAuthenticated && user ? (
               <DropdownMenu>
-                <DropdownMenuTrigger className="flex items-center gap-2 pl-2 pr-3 py-1 rounded-full border border-slate-200 dark:border-[#22352B] bg-slate-100 dark:bg-[#14231B] hover:border-emerald-500/40 transition-colors cursor-pointer">
+                <DropdownMenuTrigger aria-label="Open account menu" className="flex min-h-11 shrink-0 items-center gap-2 pl-2 pr-3 py-1 rounded-full border border-slate-200 dark:border-[#22352B] bg-slate-100 dark:bg-[#14231B] hover:border-emerald-500/40 transition-colors cursor-pointer">
                   <div className="relative h-7 w-7 rounded-full overflow-hidden bg-emerald-600/20 border border-emerald-500/30">
                     {user.profilePicture ? (
                       <Image
@@ -256,10 +269,10 @@ export function Navbar() {
               </DropdownMenu>
             ) : (
               <Button
-                onClick={() => setIsAuthOpen(true)}
+                onClick={() => { setIsMobileMenuOpen(false); setIsAuthOpen(true); }}
                 variant="ghost"
                 size="sm"
-                className="text-xs font-bold text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white px-3"
+                className="landing-nav__signin shrink-0 text-xs font-bold text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white px-3"
               >
                 Sign In
               </Button>
@@ -269,17 +282,35 @@ export function Navbar() {
 
         {/* Mobile dropdown menu */}
         {isMobileMenuOpen && (
-          <div className="lg:hidden border-t border-slate-200 dark:border-[#22352B] bg-white dark:bg-[#0B130F] p-4 space-y-2">
-            {NAV_LINKS.map((link) => (
-              <Link
-                key={link.label}
-                href={link.href}
-                onClick={() => setIsMobileMenuOpen(false)}
-                className="block px-3 py-2 rounded-xl text-sm font-semibold text-slate-800 dark:text-[#93A89D] hover:bg-slate-100 dark:hover:bg-[#121E18]"
-              >
-                {link.label}
+          <div id="kampus-mobile-navigation" className="landing-nav__mobile xl:hidden overflow-y-auto border-t border-slate-200 dark:border-[#22352B] bg-white dark:bg-[#0B130F] p-4 space-y-4">
+            <nav aria-label="Mobile navigation" className="space-y-1">
+              {NAV_LINKS.map((link) => (
+                <Link
+                  key={link.label}
+                  href={link.href}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="flex min-h-11 items-center px-3 py-2 rounded-xl text-sm font-semibold text-slate-800 dark:text-[#93A89D] hover:bg-slate-100 dark:hover:bg-[#121E18]"
+                >
+                  {link.label}
+                </Link>
+              ))}
+            </nav>
+            <div className="space-y-2 border-t border-slate-200 dark:border-[#22352B] pt-4">
+              <Link href={isHostView ? "/explore" : "/host/dashboard"} onClick={() => setIsMobileMenuOpen(false)} className="flex min-h-11 items-center rounded-xl px-3 py-2 text-sm font-semibold text-slate-800 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-[#121E18]">
+                {isHostView ? "Student View" : "Host Hub"}
               </Link>
-            ))}
+              <Button variant="ghost" onClick={() => { setIsMobileMenuOpen(false); setIsAppDownloadOpen(true); }} className="min-h-11 w-full justify-start px-3 text-sm">
+                <Smartphone className="h-4 w-4" />
+                Get the app
+              </Button>
+              <div className="flex sm:hidden items-center justify-between gap-3 px-3 py-1">
+                <span className="text-sm font-semibold">Appearance</span>
+                <div className="landing-nav__theme shrink-0"><ThemeToggle /></div>
+              </div>
+              <Button onClick={handleListLodge} className="landing-nav__primary lg:hidden w-full">
+                List your lodge
+              </Button>
+            </div>
           </div>
         )}
       </header>

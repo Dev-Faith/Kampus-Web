@@ -59,11 +59,19 @@ export function PropertyQuickViewDialog({ property, isOpen, onClose }: PropertyQ
       if (!bookingId) throw new Error("The booking response did not include an ID.");
 
       const payment = await bookingsApi.initPayment({ bookingId });
-      if (!payment.paymentUrl) {
+      if (payment.paymentMode === "test") {
+        const confirmed = window.confirm(
+          `Simulate this ₦${payment.amount.toLocaleString()} test payment? No real money will move.`,
+        );
+        if (confirmed) await bookingsApi.completeTestPayment(payment.paymentReference);
         window.location.assign("/bookings");
         return;
       }
-      window.location.assign(payment.paymentUrl);
+      if (payment.paymentUrl) {
+        window.location.assign(payment.paymentUrl);
+        return;
+      }
+      window.location.assign("/bookings");
     } catch (error: any) {
       if (bookingId) {
         toast.error("Booking saved, payment not started", {

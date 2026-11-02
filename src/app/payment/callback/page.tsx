@@ -60,12 +60,12 @@ function PaymentCallbackContent() {
     refund: {
       icon: <Clock3 className="h-8 w-8 text-amber-600" />,
       title: "Payment received; refund review in progress",
-      body: "The payment could not be applied to your inspection extension. A refund is processing or needs support review. Check your booking for the latest status.",
+      body: "The payment could not be applied to your booking or inspection extension. A refund is processing or needs support review. Check your booking for the latest status.",
     },
     refunded: {
       icon: <CheckCircle2 className="h-8 w-8 text-emerald-600" />,
-      title: "Extension fee refunded",
-      body: "Your inspection extension was not applied, and the refund has been confirmed. Check with your bank or payment provider for when it will appear.",
+      title: "Payment refunded",
+      body: "The refund has been confirmed. Check your booking for details and your bank or payment provider for when it will appear.",
     },
   }[state];
 

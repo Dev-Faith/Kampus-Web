@@ -1,6 +1,5 @@
-import { Property } from "@/types/property";
-
-export const CURATED_FUTMINNA_LODGES: Property[] = [
+// Design samples only. These are not live marketplace listings.
+export const CURATED_FUTMINNA_LODGES = [
   {
     id: "lodge-gk-01",
     title: "Apex Royal En-Suite Villa",

@@ -149,6 +149,8 @@ export interface EscrowTransaction {
   inspectionCode?: string;
   inspectionDeadline?: string;
   isInspected?: boolean;
+  reviewRequired?: boolean;
+  settlementConfirmed?: boolean;
   heldAt?: string;
   releasedAt?: string;
 }
@@ -190,6 +192,7 @@ export interface Booking {
   };
   inspectionExtensionFee?: number | null;
   escrowCheckoutEnabled?: boolean;
+  paymentMode?: "test" | "flutterwave" | "disabled";
   canExtendInspection?: boolean;
   canResumeInspectionExtension?: boolean;
   dispute?: {
@@ -211,6 +214,11 @@ export interface LandlordStats {
   totalProperties: number;
   availableProperties: number;
   bookedProperties: number;
+  occupiedProperties?: number;
+  reservedProperties?: number;
+  unavailableProperties?: number;
+  awaitingPaymentBookings?: number;
+  readyForConfirmation?: number;
   maintenanceProperties: number;
   totalBookings: number;
   pendingConfirmations: number;

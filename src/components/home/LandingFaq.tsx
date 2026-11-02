@@ -11,9 +11,13 @@ interface FaqItem {
 
 const FAQS: FaqItem[] = [
   {
+    question: "How long do I have to inspect?",
+    answer: "You have 3 calendar days from your move-in date. After that deadline, you can buy a one-day extension for ₦1,000, up to four times (₦4,000 total). The maximum is 7 calendar days. If you have not inspected by then, Kampus reviews the booking and keeps landlord payout paused.",
+  },
+  {
     question: "How do payment and move-in inspection work on Kampus?",
     answer:
-      "After the payment provider confirms your charge, Kampus records it against your booking and shows an inspection code and deadline. Inspect the room and collect your keys before sharing the code with the host. Code verification records inspection approval and queues payout processing. Fund custody and settlement follow the payment provider's arrangement.",
+      "After the payment provider confirms your charge, Kampus records it against your booking and shows an inspection code and deadline. Inspect the room and collect your keys before sharing the code with the host. Code verification records inspection approval and queues payout processing. Kampus manages the payment and landlord payout. Flutterwave is the payment processor, not an escrow agent.",
   },
   {
     question: "What happens if the room does not match the photos or has broken amenities?",
@@ -38,7 +42,7 @@ const FAQS: FaqItem[] = [
   {
     question: "Can parents pay directly on behalf of their children?",
     answer:
-      "Yes. Parents or guardians can complete the reservation payment using direct bank transfer, USSD, debit card, or mobile banking via our secure Paystack/Flutterwave gateway while the student manages the physical key inspection.",
+      "Yes. Parents or guardians can complete the reservation payment using direct bank transfer, USSD, debit card, or mobile banking via our secure Flutterwave gateway while the student manages the physical key inspection.",
   },
 ];
 

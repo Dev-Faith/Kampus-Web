@@ -81,7 +81,7 @@ export function StreetAgentComparison() {
             </div>
             <div className="col-span-4 text-emerald-700 dark:text-emerald-400 flex items-center gap-1.5">
               <Check className="h-4 w-4" />
-              <span>The Kampus Escrow Way</span>
+              <span>Kampus Booking Protection</span>
             </div>
           </div>
 

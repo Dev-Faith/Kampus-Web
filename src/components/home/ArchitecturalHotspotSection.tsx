@@ -56,7 +56,7 @@ const ARCHITECTURAL_HOTSPOTS: Hotspot[] = [
     xPercent: 24,
     yPercent: 78,
     cardPosition: "right",
-    badge: "Escrow Inspected",
+    badge: "Inspect Before Approval",
     icon: Lock,
     lodgeId: "lodge-gk-01",
   },

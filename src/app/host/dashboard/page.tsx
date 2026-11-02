@@ -88,6 +88,7 @@ export default function HostDashboardPage() {
   const [newAddress, setNewAddress] = useState("");
   const [newDescription, setNewDescription] = useState("");
   const [uploadedUrls, setUploadedUrls] = useState<string[]>([]);
+  const selectedBuilding = buildings.find((building) => building.id === newBuildingId);
 
   useEffect(() => {
     if (!isAuthenticated) return;
@@ -125,19 +126,22 @@ export default function HostDashboardPage() {
   const otherListingRent = Math.max(0, totalListedRent - occupiedListingRent);
 
   const totalLodges = properties.length;
-  const occupiedCount = properties.filter((p) => p.status === "occupied").length;
+  const bookedCount = properties.filter((p) => p.status === "occupied").length;
+  const occupiedCount = stats?.occupiedProperties ?? 0;
+  const reservedCount = stats?.reservedProperties ?? 0;
   const availableCount = properties.filter((p) => p.status === "available").length;
   const occupancyRate = totalLodges > 0 ? Math.round((occupiedCount / totalLodges) * 100) : 0;
 
   const handleStatusChange = async (propertyId: string, newStatus: LodgeStatus) => {
-    // Optimistic UI update
-    setProperties((prev) =>
-      prev.map((p) => (p.id === propertyId ? { ...p, status: newStatus } : p))
-    );
-
     const apiStatus = newStatus === "occupied" ? "booked" : (newStatus as any);
-    await landlordApi.updateStatus(propertyId, apiStatus);
-    showToast(`Property status updated to "${newStatus}" on Kampus Gateway.`);
+    try {
+      await landlordApi.updateStatus(propertyId, apiStatus);
+      setProperties((prev) => prev.map((p) => p.id === propertyId ? { ...p, status: newStatus } : p));
+      showToast("Unit availability updated.");
+      landlordApi.getStats().then(setStats).catch(() => {});
+    } catch {
+      toast.error("Availability could not be updated. Please try again.");
+    }
   };
 
   const handleSaveBank = async (e: React.FormEvent) => {
@@ -155,7 +159,6 @@ export default function HostDashboardPage() {
 
   const handleCreateProperty = async (e: React.FormEvent) => {
     e.preventDefault();
-    const selectedBuilding = buildings.find((building) => building.id === newBuildingId);
     const buildingAddress = selectedBuilding?.address ?? newAddress.trim();
     const buildingArea = selectedBuilding?.campusArea ?? newArea;
     if (!newTitle.trim() || !buildingAddress || !buildingArea || !newRent || newNumberOfRooms === "") return;
@@ -184,7 +187,8 @@ export default function HostDashboardPage() {
     const newProp = backendLodgeToProperty(created);
 
     setProperties([newProp, ...properties]);
-    if (created.building) {
+    const createdBuilding = created.building;
+    if (createdBuilding) {
       setBuildings((current) => {
         const existingIndex = current.findIndex((building) => building.id === created.buildingId);
         if (existingIndex >= 0) {
@@ -192,7 +196,7 @@ export default function HostDashboardPage() {
             ? { ...building, unitCount: (building.unitCount ?? 0) + 1 }
             : building);
         }
-        return [{ ...created.building, unitCount: 1 }, ...current];
+        return [{ ...createdBuilding, unitCount: 1 }, ...current];
       });
     }
     setIsCreateOpen(false);
@@ -464,13 +468,13 @@ export default function HostDashboardPage() {
               <div className="rounded-2xl bg-slate-50 dark:bg-[#0B130F] p-4 border border-slate-200 dark:border-[#22352B] space-y-1">
                 <span className="text-[10px] font-bold uppercase text-amber-600 dark:text-amber-400 flex items-center gap-1">
                   <Clock className="h-3 w-3" />
-                  Occupied Listing Rent
+                  Reserved / occupied listing rent
                 </span>
                 <p className="text-lg font-black text-slate-900 dark:text-white tabular-nums">
                   {isPrivacyActive ? "₦ ••••••" : `₦${occupiedListingRent.toLocaleString()}`}
                 </p>
                 <p className="text-[11px] text-slate-500 dark:text-[#93A89D]">
-                  Estimated from current listed rent for occupied properties
+                  Estimated from rent on unavailable listings; this is not paid earnings
                 </p>
               </div>
 
@@ -519,14 +523,14 @@ export default function HostDashboardPage() {
           <div className="editorial-card rounded-3xl border border-slate-200 dark:border-[#22352B] bg-white dark:bg-[#121E18] p-6 sm:p-8 flex flex-col justify-between space-y-6 shadow-sm dark:shadow-xl">
             <div>
               <span className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-[#93A89D]">
-                Hostel Portfolio Occupancy
+                Verified unit occupancy
               </span>
               <div className="flex items-baseline gap-2 mt-2">
                 <span className="text-4xl font-black text-slate-900 dark:text-white tabular-nums">
                   {occupancyRate}%
                 </span>
                 <span className="text-xs text-emerald-600 dark:text-emerald-400 font-bold">
-                  High Season
+                  Verified move-ins
                 </span>
               </div>
             </div>
@@ -540,7 +544,7 @@ export default function HostDashboardPage() {
                 />
                 <div
                   className="h-full bg-slate-200 dark:bg-slate-700 rounded-r-full transition-all duration-500"
-                  style={{ width: `${100 - occupancyRate}%` }}
+                  style={{ width: `${totalLodges ? availableCount / totalLodges * 100 : 0}%` }}
                 />
               </div>
 
@@ -549,6 +553,7 @@ export default function HostDashboardPage() {
                   <span className="h-2 w-2 rounded-full bg-emerald-500" />
                   <span>{occupiedCount} Occupied</span>
                 </span>
+                <span>{reservedCount} Reserved</span>
                 <span className="flex items-center gap-1">
                   <span className="h-2 w-2 rounded-full bg-slate-300 dark:bg-slate-700" />
                   <span>{availableCount} Available</span>
@@ -558,9 +563,9 @@ export default function HostDashboardPage() {
 
             <div className="rounded-2xl bg-slate-50 dark:bg-[#0E1A14] p-3 text-[11px] text-slate-600 dark:text-[#93A89D] border border-slate-200 dark:border-[#22352B]">
               <span className="text-slate-900 dark:text-white font-bold block mb-0.5">
-                Next Semester Student Inflow
+                Reservations and move-ins
               </span>
-              FUTMINNA academic session begins next month. Expect 100% reservation capacity.
+              Reserved units remain unavailable while payment or inspection is pending. Occupancy is recorded after move-in verification.
             </div>
           </div>
         </div>
@@ -605,7 +610,7 @@ export default function HostDashboardPage() {
                     : "text-slate-600 dark:text-[#93A89D] hover:text-slate-900 dark:hover:text-white"
                 }`}
               >
-                Occupied ({occupiedCount})
+                Reserved / occupied ({bookedCount})
               </button>
             </div>
           </div>

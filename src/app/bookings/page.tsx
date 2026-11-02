@@ -49,6 +49,8 @@ interface EscrowBooking {
   extensionTotalPaid: number;
   canExtendInspection: boolean;
   canResumeInspectionExtension: boolean;
+  escrowCheckoutEnabled: boolean;
+  paymentMode: "test" | "flutterwave" | "disabled";
   moveInKeyCode: string;
   status: "payment_pending" | "held_in_escrow" | "payout_pending" | "inspected_released" | "disputed" | "refund_pending" | "refund_failed" | "refunded";
   imageUrl: string;
@@ -76,7 +78,7 @@ export default function BookingsPage() {
     bookingsApi.getBookings().then((res) => {
       const liveBookings: EscrowBooking[] = (res.items || []).map((b) => {
         const escrowStatus = String(b.escrow?.status ?? b.escrowStatus ?? "").toUpperCase();
-        const isDisputed = escrowStatus === "DISPUTED" || ["OPEN", "UNDER_REVIEW"].includes(b.dispute?.status);
+        const isDisputed = b.escrow?.reviewRequired || escrowStatus === "DISPUTED" || ["OPEN", "UNDER_REVIEW"].includes(b.dispute?.status ?? "");
         const status: EscrowBooking["status"] = isDisputed
           ? "disputed"
           : escrowStatus === "RELEASED"
@@ -121,6 +123,8 @@ export default function BookingsPage() {
           extensionTotalPaid: Number(b.inspectionExtension?.totalPaidAmount ?? 0),
           canExtendInspection: Boolean(b.canExtendInspection),
           canResumeInspectionExtension: Boolean(b.canResumeInspectionExtension),
+          escrowCheckoutEnabled: Boolean(b.escrowCheckoutEnabled),
+          paymentMode: b.paymentMode ?? "disabled",
           moveInKeyCode: b.escrow?.inspectionCode || "",
           status,
           imageUrl: b.lodge?.images?.[0]?.url || "",
@@ -141,6 +145,16 @@ export default function BookingsPage() {
   const handleExtendInspection = async (bookingId: string) => {
     try {
       const result = await bookingsApi.initInspectionExtension({ bookingId });
+      if (result.paymentMode === "test") {
+        const confirmed = window.confirm(
+          `Simulate this ₦${result.amount.toLocaleString()} inspection deferral payment? No real money will move.`,
+        );
+        if (!confirmed) return;
+        await bookingsApi.completeTestPayment(result.paymentReference);
+        showToast("Test deferral payment simulated. No money moved.");
+        window.location.reload();
+        return;
+      }
       if (result.paymentUrl) {
         window.location.assign(result.paymentUrl);
       } else {
@@ -149,6 +163,29 @@ export default function BookingsPage() {
       }
     } catch (error: any) {
       setToastMessage(error?.response?.data?.message || "We couldn't start the extension payment. Refresh and try again.");
+    }
+  };
+
+  const handlePayBooking = async (bookingId: string) => {
+    try {
+      const result = await bookingsApi.initPayment({ bookingId });
+      if (result.paymentMode === "test") {
+        const confirmed = window.confirm(
+          `Simulate this ₦${result.amount.toLocaleString()} test payment? No real money will move.`,
+        );
+        if (!confirmed) return;
+        await bookingsApi.completeTestPayment(result.paymentReference);
+        showToast("Test payment simulated. No money moved.");
+        window.location.reload();
+        return;
+      }
+      if (result.paymentUrl) {
+        window.location.assign(result.paymentUrl);
+        return;
+      }
+      window.location.reload();
+    } catch (error: any) {
+      setToastMessage(error?.response?.data?.message || "We couldn't start payment. Refresh and try again.");
     }
   };
 
@@ -204,7 +241,7 @@ export default function BookingsPage() {
                 onClick={() => setIsAuthOpen(true)}
                 className="editorial-action w-full rounded-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs py-3 shadow-lg"
               >
-                Sign In to Access Escrow Vault
+                Sign In to View Your Bookings
               </Button>
 
               <Link href="/explore" className="block">
@@ -376,7 +413,7 @@ export default function BookingsPage() {
                             ? "Refund Confirmed"
                             : isPaymentPending
                             ? "Payment Pending"
-                            : "Dispute Open · Payout Paused"}
+                            : "Under Review · Payout Paused"}
                         </span>
                       </span>
 
@@ -412,10 +449,14 @@ export default function BookingsPage() {
                         1. Payment Status
                       </span>
                       <p className="font-semibold text-slate-900 dark:text-white">
-                        {isPaymentPending ? "Awaiting payment" : "Payment confirmed by Kampus"}
+                         {isPaymentPending
+                           ? "Awaiting payment"
+                           : booking.paymentMode === "test"
+                           ? "Test payment simulated"
+                           : "Payment confirmed by Kampus"}
                       </p>
                       <span className="text-[11px] text-slate-500 dark:text-[#93A89D]">
-                        Locked on {booking.bookingDate}
+                         {booking.paymentMode === "test" ? "Test mode · No money moved" : `Locked on ${booking.bookingDate}`}
                       </span>
                     </div>
 
@@ -448,15 +489,19 @@ export default function BookingsPage() {
                         </p>
                         <p className="text-xs text-slate-600 dark:text-[#93A89D]">
                           {booking.extensionStatus === "PAID"
-                            ? `Deferral ${booking.extensionPaidCount || 1} of 4 is active through ${booking.extensionDeadline ? new Date(booking.extensionDeadline).toLocaleDateString("en-NG", { timeZone: "Africa/Lagos", month: "short", day: "numeric", year: "numeric" }) : booking.inspectionDeadline}. You have paid ₦${booking.extensionTotalPaid.toLocaleString()} in extension fees.`
+                            ? booking.paymentMode === "test"
+                              ? `Test deferral ${booking.extensionPaidCount || 1} of 4 is recorded through ${booking.extensionDeadline ? new Date(booking.extensionDeadline).toLocaleDateString("en-NG", { timeZone: "Africa/Lagos", month: "short", day: "numeric", year: "numeric" }) : booking.inspectionDeadline}. No money moved.`
+                              : `Deferral ${booking.extensionPaidCount || 1} of 4 is active through ${booking.extensionDeadline ? new Date(booking.extensionDeadline).toLocaleDateString("en-NG", { timeZone: "Africa/Lagos", month: "short", day: "numeric", year: "numeric" }) : booking.inspectionDeadline}. You have paid ₦${booking.extensionTotalPaid.toLocaleString()} in extension fees.`
                             : booking.extensionStatus === "REFUND_PENDING"
-                            ? "Your extension fee refund is being processed by the payment provider."
+                            ? booking.paymentMode === "test" ? "The simulated extension refund is recorded locally. No money moved." : "Your extension fee refund is being processed by the payment provider."
                             : booking.extensionStatus === "REFUND_FAILED"
-                            ? "The provider could not complete the extension fee refund. Please contact Kampus support."
+                            ? booking.paymentMode === "test" ? "The simulated extension refund could not be recorded. Please contact Kampus support." : "The provider could not complete the extension fee refund. Please contact Kampus support."
                             : booking.extensionStatus === "REFUNDED"
-                            ? "Your extension fee has been refunded."
+                            ? booking.paymentMode === "test" ? "The test extension refund was recorded locally. No money moved." : "Your extension fee has been refunded."
                             : booking.extensionStatus === "PENDING"
-                            ? `Deferral ${booking.extensionPaidCount + 1} of 4 is awaiting payment confirmation. Complete checkout today to add one calendar day.`
+                            ? booking.paymentMode === "test"
+                              ? `Test deferral ${booking.extensionPaidCount + 1} of 4 is awaiting your confirmation. No money will move.`
+                              : `Deferral ${booking.extensionPaidCount + 1} of 4 is awaiting payment confirmation. Complete checkout today to add one calendar day.`
                             : `Each deferral adds one calendar day for ₦${booking.extensionFee.toLocaleString()}. You can defer up to four times (₦${(booking.extensionFee * 4).toLocaleString()} total), with each payment due on the day after your current deadline.`}
                         </p>
                       </div>
@@ -466,7 +511,9 @@ export default function BookingsPage() {
                           onClick={() => handleExtendInspection(booking.id)}
                           className="shrink-0 border-amber-600/40 bg-white dark:bg-[#17261F] text-slate-900 dark:text-white text-xs font-bold"
                         >
-                          {booking.extensionStatus === "PENDING" ? "Resume today’s deferral payment" : `Defer one day · ₦${booking.extensionFee.toLocaleString()}`}
+                          {booking.extensionStatus === "PENDING"
+                            ? booking.paymentMode === "test" ? "Resume test deferral" : "Resume today’s deferral payment"
+                            : booking.paymentMode === "test" ? `Simulate deferral · ₦${booking.extensionFee.toLocaleString()}` : `Defer one day · ₦${booking.extensionFee.toLocaleString()}`}
                         </Button>
                       )}
                       {booking.extensionStatus === "PENDING" && (
@@ -474,6 +521,19 @@ export default function BookingsPage() {
                           Refresh payment status
                         </button>
                       )}
+                    </div>
+                  )}
+
+                  {isPaymentPending && booking.escrowCheckoutEnabled && (
+                    <div className="border-t border-slate-200 dark:border-[#22352B] pt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                      <p className="text-xs text-slate-600 dark:text-[#93A89D]">
+                        {booking.paymentMode === "test"
+                          ? "Test mode is on. Completing this step records a simulated payment; no money moves."
+                          : "Pay Kampus through Flutterwave. Landlord payout waits for inspection approval and settlement."}
+                      </p>
+                      <Button onClick={() => handlePayBooking(booking.id)} className="shrink-0 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold">
+                        {booking.paymentMode === "test" ? "Simulate test payment" : "Continue to payment"}
+                      </Button>
                     </div>
                   )}
 
@@ -521,7 +581,7 @@ export default function BookingsPage() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-xl font-bold text-rose-600 dark:text-rose-400">
               <AlertCircle className="h-5 w-5" />
-              Open Escrow Dispute Ticket
+              Report a Booking Problem Ticket
             </DialogTitle>
           </DialogHeader>
 
@@ -561,7 +621,7 @@ export default function BookingsPage() {
                 type="submit"
                 className="rounded-full bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs"
               >
-                Freeze Escrow & Open Ticket
+                Pause Payout & Open Ticket
               </Button>
             </div>
           </form>

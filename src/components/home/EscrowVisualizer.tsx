@@ -32,7 +32,7 @@ const ESCROW_STEPS: EscrowStep[] = [
     subtitle: "Payment Status Tracking",
     headline: "See Your Booking Payment Status in Kampus",
     description:
-      "After the payment provider confirms a charge, Kampus records the payment against your booking. How funds are held and settled depends on the provider's arrangement.",
+      "After the payment provider confirms a charge, Kampus records the payment against your booking. Kampus receives the payment through Flutterwave and manages landlord payout. Flutterwave processes payments and does not provide escrow.",
     badge: "Payment Recorded",
     icon: Lock,
     accentColor: "emerald",
@@ -43,7 +43,7 @@ const ESCROW_STEPS: EscrowStep[] = [
     subtitle: "Verify Room on Arrival",
     headline: "Inspect Before Sharing Your Code",
     description:
-      "Check the room, utilities, and keys before sharing your inspection code with the host. Your booking shows its inspection deadline. If something is wrong, open a dispute for Kampus support to review before the payout decision.",
+      "Check the room, utilities, and keys before sharing your inspection code with the host. You have 3 calendar days from move-in, plus up to four one-day extensions at ₦1,000 each. Uninspected bookings go to support review after day 7; payout stays paused. If something is wrong, open a dispute for Kampus support to review before the payout decision.",
     badge: "Student Inspection Protection",
     icon: Eye,
     accentColor: "gold",
@@ -82,7 +82,7 @@ export function EscrowVisualizer() {
             </span>
           </div>
           <h3 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900 dark:text-white">
-            How Kampus Tracks Your Booking
+            Kampus Booking Protection
           </h3>
           <p className="text-xs sm:text-sm text-slate-600 dark:text-[#93A89D] mt-1 max-w-xl">
             Review payment, inspection, and dispute status for your student accommodation in one place.

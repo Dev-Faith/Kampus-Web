@@ -136,14 +136,18 @@
 }
 
 .landing-nav {
+  --landing-nav-height: 76px;
   background: color-mix(in srgb, var(--background) 92%, transparent) !important;
   border-color: var(--border) !important;
 }
 
 .landing-nav__inner {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  column-gap: 1rem;
   width: min(100%, 1800px);
   max-width: 1800px !important;
-  height: 76px !important;
+  min-height: var(--landing-nav-height);
   padding-inline: clamp(1rem, 4.2vw, 3.5rem) !important;
 }
 
@@ -166,27 +170,32 @@
 }
 
 .landing-nav__theme > button {
+  width: 44px;
+  height: 44px;
   border-color: var(--border) !important;
   background: transparent !important;
   color: var(--foreground) !important;
 }
 
 .landing-nav__theme > div {
+  width: 44px;
+  height: 44px;
   border-color: var(--border) !important;
   background: transparent !important;
 }
 
-.landing-nav__inner > div:last-child > button:first-child {
+.landing-nav__app {
+  min-height: 44px;
   color: var(--muted-foreground) !important;
 }
 
-.landing-nav__inner > div:last-child > button:first-child:hover {
+.landing-nav__app:hover {
   color: var(--foreground) !important;
 }
 
 .landing-nav__primary,
-.landing-nav__inner > div:last-child > button:last-of-type {
-  min-height: 42px;
+.landing-nav__signin {
+  min-height: 44px;
   padding: 0.65rem 1.15rem;
   border: 1px solid rgb(255 255 255 / 9%);
   border-radius: 999px;
@@ -199,13 +208,17 @@
 }
 
 .landing-nav__primary:hover,
-.landing-nav__inner > div:last-child > button:last-of-type:hover {
+.landing-nav__signin:hover {
   transform: translateY(-2px);
   background: #c45b37 !important;
 }
 
-.landing-nav__inner > div:last-child {
+.landing-nav__actions {
   gap: 0.75rem;
+}
+
+.landing-nav__mobile {
+  max-height: calc(100dvh - var(--landing-nav-height));
 }
 
 .landing-nav :is(a, button):focus-visible {
@@ -1569,18 +1582,21 @@
     padding: 1.65rem 1rem 5rem;
   }
 
+  .landing-nav {
+    --landing-nav-height: 64px;
+  }
+
   .landing-nav__inner {
-    height: 64px !important;
     padding-inline: 1rem !important;
   }
 
-  .landing-nav__inner > div:last-child {
+  .landing-nav__actions {
     gap: 0.45rem !important;
   }
 
-  .landing-nav__inner > div:last-child > button:last-of-type {
+  .landing-nav__signin {
     padding: 0.58rem 0.85rem;
-    font-size: 0.68rem;
+    font-size: 0.78rem;
   }
 
   .landing-hero {

@@ -19,7 +19,8 @@ export interface InitPaymentPayload {
 
 export interface InitPaymentResponse {
   paymentReference: string;
-  paymentUrl: string;
+  paymentUrl: string | null;
+  paymentMode?: "test" | "flutterwave";
   amount: number;
   currency: string;
 }
@@ -80,6 +81,14 @@ export const bookingsApi = {
     const response = await apiClient.post<ApiResponse<InitPaymentResponse & { status?: string; extendedDeadline?: string }>>(
       "/payments/inspection-extension/init",
       payload
+    );
+    return response.data.data;
+  },
+
+  async completeTestPayment(reference: string): Promise<{ paymentMode: "test"; simulated: true; [key: string]: unknown }> {
+    const response = await apiClient.post<ApiResponse<{ paymentMode: "test"; simulated: true; [key: string]: unknown }>>(
+      "/payments/test/complete",
+      { reference },
     );
     return response.data.data;
   },

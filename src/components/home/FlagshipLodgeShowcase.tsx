@@ -44,7 +44,7 @@ const FLAGSHIP_PROPERTIES: FlagshipProperty[] = [
     category: "Hybrid Solar Studio",
     neighborhood: "Gidan Kwano Main Gate",
     badgeTag: "GIDAN KWANO",
-    certification: "Escrow Gold Verified",
+    certification: "Booking Protection",
     priceDisplay: "₦250,000 — ₦380,000",
     completionDate: "Session 2026/2027",
     status: "Inspected & Available",

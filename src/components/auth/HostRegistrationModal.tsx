@@ -229,7 +229,7 @@ export function HostRegistrationModal({
               <span>Payout account details:</span>
             </div>
             <p className="text-slate-600 dark:text-slate-300">
-              These details are saved for payout setup. Payment custody, eligibility, and settlement timing depend on the configured payment provider.
+              Kampus verifies your bank account before payout. Flutterwave processes the transfer after inspection approval, settlement and balance checks.
             </p>
           </div>
 
