@@ -54,6 +54,7 @@ export interface LandlordProfile {
 }
 
 export interface User {
+  adminAccess?: boolean;
   id: string;
   phone: string;
   email: string | null;

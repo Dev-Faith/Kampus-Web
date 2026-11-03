@@ -4,7 +4,6 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { apiClient } from "@/api/client";
 import { useAuthStore } from "@/lib/stores/useAuthStore";
-import { Navbar } from "@/components/layout/Navbar";
 
 type Queue = {
   bookings: {
@@ -45,7 +44,7 @@ function message(error: unknown) {
 }
 
 export default function PaymentOperationsPage() {
-  const { user, isAuthenticated, checkAuth } = useAuthStore();
+  const { user, isAuthenticated } = useAuthStore();
   const [queue, setQueue] = useState<Queue | null>(null);
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState("");
@@ -58,9 +57,6 @@ export default function PaymentOperationsPage() {
       setNotice(message(error));
     }
   }, []);
-  useEffect(() => {
-    void checkAuth();
-  }, [checkAuth]);
   useEffect(() => {
     if (isAdmin) void refresh();
   }, [isAdmin, refresh]);
@@ -93,8 +89,7 @@ export default function PaymentOperationsPage() {
     "rounded-lg border px-3 py-2 text-sm disabled:opacity-50 hover:bg-slate-100 dark:hover:bg-slate-800";
   return (
     <>
-      <Navbar />
-      <main className="mx-auto max-w-6xl space-y-6 px-4 py-10">
+      <section className="mx-auto max-w-6xl space-y-6">
         <Link href="/admin/disputes" className="text-sm underline">
           Dispute and inspection reviews
         </Link>
@@ -113,7 +108,8 @@ export default function PaymentOperationsPage() {
               Kampus manages booking funds. Flutterwave processes collections,
               refunds and landlord transfers. An approved inspection can still
               be waiting for settlement. Unknown transfers must be checked
-              before any further payment.
+              before any further payment. Each queue shows up to 100 oldest
+              records. Use Booking support to inspect any specific reservation.
             </p>
             <div className="flex flex-wrap gap-3">
               <button
@@ -126,7 +122,14 @@ export default function PaymentOperationsPage() {
               <button
                 className={button}
                 disabled={busy}
-                onClick={() => void act("reconcile")}
+                onClick={() => {
+                  if (
+                    window.confirm(
+                      "Check payment events and process eligible approved payouts? This can send real money when live transfers are enabled.",
+                    )
+                  )
+                    void act("reconcile");
+                }}
               >
                 Check payments & process approved payouts
               </button>
@@ -360,7 +363,7 @@ export default function PaymentOperationsPage() {
             </form>
           </>
         )}
-      </main>
+      </section>
     </>
   );
 }

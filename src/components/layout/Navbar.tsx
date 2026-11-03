@@ -94,7 +94,7 @@ export function Navbar() {
     { label: "About", href: "/#about" },
     { label: "Lodges", href: "/explore" },
     { label: "Roommates", href: "/roommates" },
-    ...(user?.role === "ADMIN" ? [{ label: "Dispute review", href: "/admin/disputes" }] : []),
+    ...(user?.role === "ADMIN" || user?.adminAccess ? [{ label: "Administration", href: "/admin" }] : []),
   ];
 
   return (

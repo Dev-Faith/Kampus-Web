@@ -1,285 +1,337 @@
 "use client";
-
-import React, { useEffect, useState } from "react";
-import type { FormEvent } from "react";
-import { AlertTriangle, ArrowLeft, CheckCircle2, Clock3, LoaderCircle, ShieldCheck } from "lucide-react";
+import { useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
-import { Navbar } from "@/components/layout/Navbar";
-import { AdminDispute, bookingsApi } from "@/api/bookings";
-import { useAuthStore } from "@/lib/stores/useAuthStore";
-import { toast } from "@/lib/stores/useToastStore";
-
-type Resolution = "student_refund" | "landlord_release";
-
-const formatMoney = (amount: number) =>
-  new Intl.NumberFormat("en-NG", { style: "currency", currency: "NGN", maximumFractionDigits: 0 }).format(amount);
-
-const formatDate = (value: string) =>
-  new Date(value).toLocaleString("en-NG", { dateStyle: "medium", timeStyle: "short" });
-
-export default function AdminDisputesPage() {
-  const { user, isAuthenticated, isLoading: authLoading, checkAuth, login } = useAuthStore();
-  const [disputes, setDisputes] = useState<AdminDispute[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [loadError, setLoadError] = useState<string | null>(null);
-  const [activeDisputeId, setActiveDisputeId] = useState<string | null>(null);
-  const [resolution, setResolution] = useState<Resolution>("student_refund");
-  const [note, setNote] = useState("");
-  const [isResolving, setIsResolving] = useState(false);
-  const [emailOrPhone, setEmailOrPhone] = useState("");
-  const [password, setPassword] = useState("");
-  const [refundBookingId, setRefundBookingId] = useState("");
-  const [refundAction, setRefundAction] = useState<"reconcile" | "retry" | null>(null);
-  const [refundResult, setRefundResult] = useState<string | null>(null);
-
+import { apiClient } from "@/api/client";
+import { adminError, date, money, type AdminRow } from "@/api/admin";
+type Case = {
+  id: string;
+  bookingId: string;
+  status: string;
+  reason: string;
+  evidence: unknown;
+  resolution?: string;
+  createdAt: string;
+  booking: AdminRow;
+};
+export default function DisputesPage() {
+  const [rows, setRows] = useState<Case[]>([]);
+  const [page, setPage] = useState(1),
+    [pages, setPages] = useState(1),
+    [total, setTotal] = useState(0);
+  const [filter, setFilter] = useState(""),
+    [searchText, setSearchText] = useState(""),
+    [search, setSearch] = useState("");
+  const [revision, setRevision] = useState(0),
+    [loading, setLoading] = useState(true);
+  const [error, setError] = useState(""),
+    [notice, setNotice] = useState("");
+  const [selected, setSelected] = useState<Case | null>(null);
+  const [resolution, setResolution] = useState("student_refund"),
+    [note, setNote] = useState(""),
+    [busy, setBusy] = useState(false);
+  const [handoverConfirmed, setHandoverConfirmed] = useState(false);
   useEffect(() => {
-    void checkAuth();
-  }, [checkAuth]);
-
+    setHandoverConfirmed(false);
+  }, [selected?.id]);
   useEffect(() => {
-    if (!isAuthenticated || user?.role !== "ADMIN") {
-      setIsLoading(false);
-      return;
-    }
-
-    let cancelled = false;
-    setIsLoading(true);
-    setLoadError(null);
-    bookingsApi.getAdminDisputes()
-      .then((items) => { if (!cancelled) setDisputes(items); })
-      .catch((error: any) => {
-        if (cancelled) return;
-        setLoadError(error?.response?.data?.message || "Could not load dispute cases.");
+    const abort = new AbortController();
+    setLoading(true);
+    setError("");
+    apiClient
+      .get("/admin/cases", {
+        params: { page, pageSize: 20, filter, search },
+        signal: abort.signal,
       })
-      .finally(() => { if (!cancelled) setIsLoading(false); });
-
-    return () => { cancelled = true; };
-  }, [isAuthenticated, user?.id, user?.role]);
-
-  const handleAdminLogin = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const success = await login(emailOrPhone.trim(), password, "ADMIN");
-    if (!success) toast.error("Admin sign-in failed", { description: useAuthStore.getState().error || "Check your credentials and try again." });
-  };
-
-  const startResolution = (disputeId: string, choice: Resolution) => {
-    setActiveDisputeId(disputeId);
-    setResolution(choice);
-    setNote("");
-  };
-
-  const handleResolve = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    if (!activeDisputeId || note.trim().length < 3) return;
-
-    setIsResolving(true);
+      .then((res) => {
+        setRows(res.data.data.items);
+        setPages(res.data.data.pagination.totalPages);
+        setTotal(res.data.data.pagination.total);
+      })
+      .catch((e) => {
+        if (!abort.signal.aborted) {
+          setRows([]);
+          setError(adminError(e));
+        }
+      })
+      .finally(() => {
+        if (!abort.signal.aborted) setLoading(false);
+      });
+    return () => abort.abort();
+  }, [page, filter, search, revision]);
+  async function resolve(e: FormEvent) {
+    e.preventDefault();
+    if (!selected) return;
+    setBusy(true);
+    setError("");
+    setNotice("");
     try {
-      const result = await bookingsApi.resolveAdminDispute(activeDisputeId, resolution, note.trim());
-      setDisputes((current) => current.filter((item) => item.id !== activeDisputeId));
-      setActiveDisputeId(null);
+      const result = await apiClient.post(
+        "/admin/disputes/" + selected.id + "/resolve",
+        {
+          resolution,
+          note: note.trim(),
+          handoverConfirmed:
+            resolution === "landlord_release" && handoverConfirmed,
+        },
+        { timeout: 90000 },
+      );
+      setNotice(
+        result.data.message ||
+          "Decision recorded. Check the payment queue for the final provider status.",
+      );
+      setSelected(null);
       setNote("");
-      toast.success(result.message || "Dispute decision recorded", {
-        description: resolution === "student_refund"
-          ? `Refund status: ${result.data.escrowStatus}. Provider processing may still be required.`
-          : "Payout is approved and may now be transferred after settlement and balance checks. Check the payment queue for its final status.",
-      });
-    } catch (error: any) {
-      toast.error("Could not resolve dispute", {
-        description: error?.response?.data?.message || "Refresh the case and try again.",
-      });
+      setRevision((v) => v + 1);
+    } catch (e) {
+      setError(adminError(e));
     } finally {
-      setIsResolving(false);
+      setBusy(false);
     }
-  };
-
-  const handleRefundFollowUp = async (action: "reconcile" | "retry") => {
-    const bookingId = refundBookingId.trim();
-    if (!bookingId) return;
-    setRefundAction(action);
-    setRefundResult(null);
-    try {
-      const result = action === "reconcile"
-        ? await bookingsApi.reconcileAdminRefund(bookingId)
-        : await bookingsApi.retryAdminRefund(bookingId);
-      const status = result?.status ?? result?.data?.status ?? "unknown";
-      setRefundResult(`${status}${result?.providerStatus ? ` · provider: ${result.providerStatus}` : ""}${result?.message ? ` · ${result.message}` : ""}`);
-      toast.success(action === "reconcile" ? "Refund status refreshed" : "Refund retry submitted", {
-        description: `Current status: ${status}`,
-      });
-    } catch (error: any) {
-      toast.error("Refund follow-up failed", {
-        description: error?.response?.data?.message || "Check the booking ID and provider status.",
-      });
-    } finally {
-      setRefundAction(null);
-    }
-  };
-
-  const isAdmin = isAuthenticated && user?.role === "ADMIN";
-
+  }
   return (
-    <>
-      <Navbar />
-      <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-10 sm:px-6 lg:px-8">
-        <Link href="/" className="mb-6 inline-flex items-center gap-2 text-sm text-slate-600 hover:text-slate-950 dark:text-slate-300 dark:hover:text-white">
-          <ArrowLeft className="h-4 w-4" /> Back to Kampus
-        </Link>
-
-        <Link href="/admin/payments" className="mb-4 inline-block text-sm underline">Manage payments and pending transfers</Link>
-        <div className="mb-8 flex items-start gap-4">
-          <div className="rounded-2xl bg-amber-100 p-3 text-amber-800 dark:bg-amber-500/15 dark:text-amber-300">
-            <ShieldCheck className="h-6 w-6" />
-          </div>
-          <div>
-            <p className="text-xs font-bold uppercase tracking-[0.18em] text-emerald-700 dark:text-emerald-400">Administrator tools</p>
-            <h1 className="mt-1 text-3xl font-black tracking-tight text-slate-950 dark:text-white">Dispute review</h1>
-            <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600 dark:text-slate-300">
-              Review open cases and record a refund or landlord payout decision. A refund is processed by the payment provider; approving a landlord payout only queues processing and does not transfer funds.
-            </p>
-          </div>
+    <section>
+      <div className="admin-heading">
+        <div>
+          <p className="admin-eyebrow">Student & landlord support</p>
+          <h1>Disputes & inspection reviews</h1>
+          <p>
+            Review both parties’ evidence before deciding. Refunds and payouts
+            remain subject to provider confirmation.
+          </p>
         </div>
-
-        {!isAuthenticated ? (
-          <section className="mx-auto max-w-md rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-[#26372D] dark:bg-[#101A14]">
-            <h2 className="text-lg font-bold text-slate-900 dark:text-white">Administrator sign-in</h2>
-            <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">Use an existing administrator account. Only accounts with the ADMIN role can access dispute records.</p>
-            <form onSubmit={handleAdminLogin} className="mt-5 space-y-3">
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-200">
-                Email or phone
-                <input required value={emailOrPhone} onChange={(event) => setEmailOrPhone(event.target.value)} className="mt-1 w-full rounded-xl border border-slate-300 bg-transparent px-3 py-2.5 outline-none focus:border-emerald-600 dark:border-slate-700" autoComplete="username" />
+        <button
+          className="admin-button"
+          disabled={busy || loading}
+          onClick={() => setRevision((v) => v + 1)}
+        >
+          Refresh
+        </button>
+      </div>
+      <form
+        className="admin-toolbar"
+        onSubmit={(e) => {
+          e.preventDefault();
+          setSearch(searchText.trim());
+          setPage(1);
+          setSelected(null);
+        }}
+      >
+        <label>
+          Search cases
+          <input
+            value={searchText}
+            placeholder="Booking ID, unit title or reason"
+            onChange={(e) => setSearchText(e.target.value)}
+          />
+        </label>
+        <label>
+          Status
+          <select
+            value={filter}
+            onChange={(e) => {
+              setFilter(e.target.value);
+              setPage(1);
+              setSelected(null);
+            }}
+          >
+            <option value="">Open / under review</option>
+            <option value="resolved">Resolved / closed</option>
+          </select>
+        </label>
+        <button className="admin-button">Search</button>
+      </form>
+      {error && (
+        <p className="admin-error" role="alert">
+          {error}
+        </p>
+      )}
+      {notice && (
+        <p className="admin-notice" role="status">
+          {notice}
+        </p>
+      )}
+      {selected && (
+        <form className="admin-dialog admin-form mb-5" onSubmit={resolve}>
+          <h2>Decide case: {selected.booking.lodge?.title}</h2>
+          <p>
+            Booking {selected.bookingId} · {money(selected.booking.totalAmount)}
+          </p>
+          <label>
+            Decision
+            <select
+              value={resolution}
+              onChange={(e) => setResolution(e.target.value)}
+            >
+              <option value="student_refund">Approve student refund</option>
+              <option value="landlord_release">Approve landlord payout</option>
+            </select>
+          </label>
+          <p>
+            {resolution === "student_refund"
+              ? "Confirmation requests a refund through the payment provider. Processing may remain pending."
+              : "Confirmation authorizes a landlord transfer and may send money immediately if settlement, verification, and balance checks pass."}
+          </p>
+          <label>
+            Decision and evidence reviewed
+            <textarea
+              required
+              minLength={5}
+              maxLength={1000}
+              rows={4}
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+            />
+          </label>
+          {resolution === "landlord_release" &&
+            !selected.booking.escrow?.isInspected && (
+              <label className="flex! items-start! gap-3!">
+                <input
+                  type="checkbox"
+                  checked={handoverConfirmed}
+                  required
+                  onChange={(e) => setHandoverConfirmed(e.target.checked)}
+                />
+                <span>
+                  I have verified that the student inspected the room and
+                  received the keys.
+                </span>
               </label>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-200">
-                Password
-                <input required type="password" value={password} onChange={(event) => setPassword(event.target.value)} className="mt-1 w-full rounded-xl border border-slate-300 bg-transparent px-3 py-2.5 outline-none focus:border-emerald-600 dark:border-slate-700" autoComplete="current-password" />
-              </label>
-              <button disabled={authLoading} className="flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-700 px-4 py-3 font-bold text-white disabled:opacity-60">
-                {authLoading && <LoaderCircle className="h-4 w-4 animate-spin" />} Sign in as admin
-              </button>
-            </form>
-          </section>
-        ) : !isAdmin ? (
-          <div className="rounded-2xl border border-rose-200 bg-rose-50 p-5 text-sm text-rose-900 dark:border-rose-900/50 dark:bg-rose-950/30 dark:text-rose-200">
-            This account does not have the ADMIN role. Dispute data and resolution actions are restricted to administrators.
-          </div>
-        ) : (
-          <>
-            <div className="mb-5 flex items-center justify-between rounded-2xl border border-slate-200 bg-white px-5 py-4 dark:border-[#26372D] dark:bg-[#101A14]">
-              <div className="flex items-center gap-3">
-                <Clock3 className="h-5 w-5 text-amber-600 dark:text-amber-400" />
-                <span className="font-semibold text-slate-800 dark:text-slate-100">Open cases</span>
-              </div>
-              <span className="rounded-full bg-slate-100 px-3 py-1 text-sm font-bold text-slate-800 dark:bg-slate-800 dark:text-slate-100">{disputes.length}</span>
-            </div>
-
-            {isLoading ? (
-              <div className="flex items-center justify-center gap-3 py-16 text-slate-600 dark:text-slate-300"><LoaderCircle className="h-5 w-5 animate-spin" /> Loading disputes…</div>
-            ) : loadError ? (
-              <div className="rounded-2xl border border-rose-200 bg-rose-50 p-5 text-sm text-rose-900 dark:border-rose-900/50 dark:bg-rose-950/30 dark:text-rose-200">{loadError}</div>
-            ) : disputes.length === 0 ? (
-              <div className="rounded-3xl border border-slate-200 bg-white px-6 py-16 text-center dark:border-[#26372D] dark:bg-[#101A14]">
-                <CheckCircle2 className="mx-auto h-10 w-10 text-emerald-600" />
-                <h2 className="mt-4 text-lg font-bold text-slate-900 dark:text-white">No open disputes</h2>
-                <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">New cases will appear here when students submit a dispute.</p>
-              </div>
-            ) : (
-              <div className="space-y-5">
-                {disputes.map((dispute) => {
-                  const isActive = activeDisputeId === dispute.id;
-                  const evidence = Array.isArray(dispute.evidence) ? dispute.evidence : [];
-                  return (
-                    <article key={dispute.id} className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-[#26372D] dark:bg-[#101A14] sm:p-6">
-                      <div className="flex flex-wrap items-start justify-between gap-3">
-                        <div>
-                          <p className="text-xs font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400">{dispute.status.replace(/_/g, " ")}</p>
-                          <h2 className="mt-1 text-xl font-bold text-slate-950 dark:text-white">{dispute.booking.lodge.title}</h2>
-                          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Case opened {formatDate(dispute.createdAt)} · Booking {dispute.bookingId}</p>
-                        </div>
-                        <div className="rounded-xl bg-slate-100 px-3 py-2 text-right dark:bg-slate-800">
-                          <p className="text-xs text-slate-500 dark:text-slate-400">Booking amount</p>
-                          <p className="font-bold text-slate-900 dark:text-white">{formatMoney(dispute.booking.totalAmount)}</p>
-                        </div>
-                      </div>
-
-                      <div className="mt-5 grid gap-4 text-sm sm:grid-cols-2">
-                        <div className="rounded-2xl bg-slate-50 p-4 dark:bg-[#0B130F]">
-                          <p className="font-bold text-slate-800 dark:text-slate-100">Student</p>
-                          <p className="mt-1 text-slate-700 dark:text-slate-300">{dispute.booking.student.name}</p>
-                          <p className="text-slate-500 dark:text-slate-400">{dispute.booking.student.email || dispute.booking.student.phone}</p>
-                        </div>
-                        <div className="rounded-2xl bg-slate-50 p-4 dark:bg-[#0B130F]">
-                          <p className="font-bold text-slate-800 dark:text-slate-100">Host & payment status</p>
-                          <p className="mt-1 text-slate-700 dark:text-slate-300">{dispute.booking.lodge.landlord}</p>
-                          <p className="text-slate-500 dark:text-slate-400">{dispute.booking.escrow?.status || "No escrow record"} · Move-in {new Date(dispute.booking.moveInDate).toLocaleDateString("en-NG")}</p>
-                        </div>
-                      </div>
-
-                      <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50/70 p-4 dark:border-amber-900/50 dark:bg-amber-950/20">
-                        <div className="flex items-start gap-2"><AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-700 dark:text-amber-400" /><div><p className="text-xs font-bold uppercase tracking-wide text-amber-900 dark:text-amber-300">Student report</p><p className="mt-1 whitespace-pre-wrap text-sm leading-6 text-slate-800 dark:text-slate-200">{dispute.reason}</p></div></div>
-                      </div>
-
-                      {evidence.length > 0 && (
-                        <details className="mt-3 rounded-2xl border border-slate-200 px-4 py-3 dark:border-slate-700">
-                          <summary className="cursor-pointer text-sm font-semibold text-slate-700 dark:text-slate-200">Evidence ({evidence.length})</summary>
-                          <pre className="mt-3 overflow-x-auto whitespace-pre-wrap text-xs text-slate-600 dark:text-slate-300">{JSON.stringify(evidence, null, 2)}</pre>
-                        </details>
-                      )}
-
-                      {!isActive ? (
-                        <div className="mt-5 flex flex-wrap gap-3">
-                          <button type="button" onClick={() => startResolution(dispute.id, "student_refund")} className="rounded-xl bg-amber-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-amber-700">Review refund</button>
-                          <button type="button" onClick={() => startResolution(dispute.id, "landlord_release")} className="rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-bold text-slate-800 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-100 dark:hover:bg-slate-800">Approve landlord payout</button>
-                        </div>
-                      ) : (
-                        <form onSubmit={handleResolve} className="mt-5 space-y-4 rounded-2xl border border-emerald-200 bg-emerald-50/60 p-4 dark:border-emerald-900/50 dark:bg-emerald-950/20">
-                          <div>
-                            <p className="text-sm font-bold text-slate-900 dark:text-white">Record your decision</p>
-                            <div className="mt-3 flex flex-wrap gap-2">
-                              <button type="button" onClick={() => setResolution("student_refund")} className={`rounded-lg px-3 py-2 text-xs font-bold ${resolution === "student_refund" ? "bg-emerald-700 text-white" : "bg-white text-slate-700 dark:bg-slate-800 dark:text-slate-200"}`}>Refund student</button>
-                              <button type="button" onClick={() => setResolution("landlord_release")} className={`rounded-lg px-3 py-2 text-xs font-bold ${resolution === "landlord_release" ? "bg-emerald-700 text-white" : "bg-white text-slate-700 dark:bg-slate-800 dark:text-slate-200"}`}>Queue landlord payout</button>
-                            </div>
-                          </div>
-                          <label className="block text-sm font-medium text-slate-700 dark:text-slate-200">
-                            Admin note (required for the audit record)
-                            <textarea required minLength={3} maxLength={1000} value={note} onChange={(event) => setNote(event.target.value)} rows={3} className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 outline-none focus:border-emerald-600 dark:border-slate-700 dark:bg-[#0B130F]" />
-                          </label>
-                          <p className="text-xs leading-5 text-slate-600 dark:text-slate-300">
-                            {resolution === "student_refund"
-                              ? "This submits a refund request to the payment provider. The case records the provider's current refund status."
-                              : "This marks payout processing as pending. It does not make a bank transfer."}
-                          </p>
-                          <div className="flex gap-2">
-                            <button disabled={isResolving || note.trim().length < 3} className="inline-flex items-center gap-2 rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-bold text-white disabled:opacity-50">
-                              {isResolving && <LoaderCircle className="h-4 w-4 animate-spin" />} Confirm decision
-                            </button>
-                            <button type="button" disabled={isResolving} onClick={() => setActiveDisputeId(null)} className="rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-600 hover:bg-white dark:text-slate-300 dark:hover:bg-slate-800">Cancel</button>
-                          </div>
-                        </form>
-                      )}
-                    </article>
-                  );
-                })}
-              </div>
             )}
-
-            <section className="mt-10 rounded-3xl border border-slate-200 bg-white p-5 dark:border-[#26372D] dark:bg-[#101A14] sm:p-6">
-              <h2 className="text-lg font-bold text-slate-900 dark:text-white">Refund follow-up</h2>
-              <p className="mt-1 max-w-3xl text-sm leading-6 text-slate-600 dark:text-slate-300">
-                Refresh an existing provider refund by booking ID. Retry is available only when the provider has confirmed the prior refund failed.
-              </p>
-              <div className="mt-4 flex flex-col gap-3 sm:flex-row">
-                <input value={refundBookingId} onChange={(event) => setRefundBookingId(event.target.value)} placeholder="Booking ID" className="min-w-0 flex-1 rounded-xl border border-slate-300 bg-transparent px-3 py-2.5 text-sm outline-none focus:border-emerald-600 dark:border-slate-700" />
-                <button type="button" disabled={!refundBookingId.trim() || Boolean(refundAction)} onClick={() => void handleRefundFollowUp("reconcile")} className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-bold text-slate-800 disabled:opacity-50 dark:border-slate-600 dark:text-slate-100">
-                  {refundAction === "reconcile" && <LoaderCircle className="h-4 w-4 animate-spin" />} Refresh status
-                </button>
-                <button type="button" disabled={!refundBookingId.trim() || Boolean(refundAction)} onClick={() => void handleRefundFollowUp("retry")} className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-bold text-white disabled:opacity-50">
-                  {refundAction === "retry" && <LoaderCircle className="h-4 w-4 animate-spin" />} Retry failed refund
-                </button>
+          <div className="admin-actions">
+            <button
+              className="admin-button primary"
+              disabled={
+                busy ||
+                note.trim().length < 5 ||
+                (resolution === "landlord_release" &&
+                  !selected.booking.escrow?.isInspected &&
+                  !handoverConfirmed)
+              }
+            >
+              {busy ? "Recording decision…" : "Confirm decision"}
+            </button>
+            <button
+              type="button"
+              className="admin-button"
+              disabled={busy}
+              onClick={() => setSelected(null)}
+            >
+              Cancel
+            </button>
+          </div>
+        </form>
+      )}
+      {loading ? (
+        <p role="status">Loading cases…</p>
+      ) : !error && !rows.length ? (
+        <div className="admin-card">
+          <h2>No matching cases</h2>
+          <p>Student disputes and overdue inspection reviews appear here.</p>
+        </div>
+      ) : (
+        <div className="admin-cards">
+          {rows.map((c) => (
+            <article className="admin-card" key={c.id}>
+              <div className="admin-card-head">
+                <div>
+                  <h2>{c.booking.lodge?.title}</h2>
+                  <p className="admin-meta">
+                    Opened {date(c.createdAt)} · {c.bookingId}
+                  </p>
+                </div>
+                <span className="admin-badge warn">
+                  {c.status.replaceAll("_", " ")}
+                </span>
               </div>
-              {refundResult && <p className="mt-3 rounded-xl bg-slate-50 px-3 py-2 text-sm text-slate-700 dark:bg-[#0B130F] dark:text-slate-200">{refundResult}</p>}
-            </section>
-          </>
-        )}
-      </main>
-    </>
+              <p>{c.reason}</p>
+              <dl className="admin-details">
+                <div>
+                  <dt>Student</dt>
+                  <dd>
+                    {c.booking.student?.user.fullName}
+                    <br />
+                    {c.booking.student?.user.email}
+                  </dd>
+                </div>
+                <div>
+                  <dt>Landlord</dt>
+                  <dd>{c.booking.lodge?.landlord?.user.fullName}</dd>
+                </div>
+                <div>
+                  <dt>Booking amount</dt>
+                  <dd>{money(c.booking.totalAmount)}</dd>
+                </div>
+                <div>
+                  <dt>Payment state</dt>
+                  <dd>
+                    {c.booking.escrow?.status}{" "}
+                    {c.booking.escrow?.paymentProvider === "KAMPUS_TEST"
+                      ? "· Test"
+                      : ""}
+                  </dd>
+                </div>
+              </dl>
+              {!!c.evidence && (
+                <details>
+                  <summary>Evidence supplied</summary>
+                  <pre className="whitespace-pre-wrap break-all text-xs mt-3">
+                    {JSON.stringify(c.evidence, null, 2)}
+                  </pre>
+                </details>
+              )}
+              {c.resolution && <p className="admin-notice">{c.resolution}</p>}
+              <div className="admin-actions">
+                <Link
+                  className="admin-button"
+                  href={"/admin/bookings/" + c.bookingId}
+                >
+                  Full booking record
+                </Link>
+                {["OPEN", "UNDER_REVIEW"].includes(c.status) && (
+                  <button
+                    className="admin-button primary"
+                    disabled={busy}
+                    onClick={() => {
+                      setSelected(c);
+                      setNote("");
+                      setError("");
+                    }}
+                  >
+                    Review decision
+                  </button>
+                )}
+              </div>
+            </article>
+          ))}
+        </div>
+      )}
+      <div className="admin-pagination">
+        <span>
+          {total} cases · Page {page} of {pages}
+        </span>
+        <div className="admin-actions">
+          <button
+            className="admin-button"
+            disabled={busy || loading || page <= 1}
+            onClick={() => {
+              setPage((v) => v - 1);
+              setSelected(null);
+            }}
+          >
+            Previous
+          </button>
+          <button
+            className="admin-button"
+            disabled={busy || loading || page >= pages}
+            onClick={() => {
+              setPage((v) => v + 1);
+              setSelected(null);
+            }}
+          >
+            Next
+          </button>
+        </div>
+      </div>
+    </section>
   );
 }
