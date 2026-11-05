@@ -142,7 +142,7 @@ export function ImageUploadDropzone({ onImagesChange }: ImageUploadDropzoneProps
   return (
     <div className="w-full space-y-3">
       {/* Upload Drop Area */}
-      <div className="group relative flex flex-col items-center justify-center rounded-2xl border border-dashed border-[#d8d2c7] bg-white p-6 text-center transition-colors duration-200 hover:border-[#c45b37] hover:bg-[#f6f3ed] dark:border-[#39443d] dark:bg-[#1c241f] dark:hover:border-[#c45b37] dark:hover:bg-[#202722]">
+      <div className="group relative flex flex-col items-center justify-center rounded-2xl border border-dashed border-input bg-card p-6 text-center transition-colors duration-200 hover:border-brand hover:bg-muted">
         <input
           type="file"
           accept="image/*"
@@ -150,22 +150,22 @@ export function ImageUploadDropzone({ onImagesChange }: ImageUploadDropzoneProps
           className="absolute inset-0 z-10 w-full h-full opacity-0 cursor-pointer"
         />
 
-        <div className="mb-2.5 flex h-12 w-12 items-center justify-center rounded-2xl border border-[#e3ded4] bg-[#eeece6] text-[#c45b37] transition-transform group-hover:scale-[1.03] dark:border-[#39443d] dark:bg-[#252c27]">
+        <div className="mb-2.5 flex h-12 w-12 items-center justify-center rounded-2xl border border-border bg-muted text-brand transition-transform group-hover:scale-[1.03]">
           <UploadCloud className="h-6 w-6" />
         </div>
 
-        <h4 className="text-sm font-semibold text-slate-900 dark:text-white">
+        <h4 className="text-sm font-semibold text-foreground">
           Drop Lodge Photos Here, or Browse
         </h4>
-        <p className="mt-0.5 max-w-sm text-[11px] text-slate-600 dark:text-[#a6afa8]">
+        <p className="mt-0.5 max-w-sm text-[11px] text-muted-foreground">
           Automatic 16:10 aspect ratio crop & WebP retina compression (&le;400KB)
         </p>
 
-        <div className="mt-3 flex items-center gap-2 rounded-full border border-[#e3ded4] bg-[#f6f3ed] px-3 py-1 text-[10px] font-medium text-slate-600 dark:border-[#39443d] dark:bg-[#171d19] dark:text-[#a6afa8]">
-          <Crop className="h-3 w-3 text-[#c45b37]" />
+        <div className="mt-3 flex items-center gap-2 rounded-full border border-border bg-muted px-3 py-1 text-[10px] font-medium text-muted-foreground">
+          <Crop className="h-3 w-3 text-brand" />
           <span>16:10 Ratio</span>
-          <span className="text-[#3A4D43]">•</span>
-          <Sliders className="h-3 w-3 text-[#c45b37]" />
+          <span className="text-muted-foreground">•</span>
+          <Sliders className="h-3 w-3 text-brand" />
           <span>Auto WebP Compression</span>
         </div>
       </div>
@@ -175,13 +175,13 @@ export function ImageUploadDropzone({ onImagesChange }: ImageUploadDropzoneProps
         <div className="kampus-modal-backdrop fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in">
           <div className="kampus-modal relative flex max-h-[94vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl" role="dialog" aria-modal="true" aria-labelledby="kampus-crop-title">
             {/* Header */}
-            <div className="flex items-center justify-between border-b border-slate-200 px-5 py-3.5 dark:border-[#303832]">
+            <div className="flex items-center justify-between border-b border-border px-5 py-3.5">
               <div>
-                <h3 id="kampus-crop-title" className="flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-white">
-                  <Crop className="h-4 w-4 text-[#c45b37]" />
+                <h3 id="kampus-crop-title" className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                  <Crop className="h-4 w-4 text-brand" />
                   Crop Photo (16:10 Frame)
                 </h3>
-                <p className="text-[11px] text-slate-600 dark:text-[#a6afa8]">
+                <p className="text-[11px] text-muted-foreground">
                   Drag to frame your room before compression
                 </p>
               </div>
@@ -210,10 +210,10 @@ export function ImageUploadDropzone({ onImagesChange }: ImageUploadDropzoneProps
             </div>
 
             {/* Controls Bar */}
-            <div className="space-y-3 border-t border-slate-200 bg-[#eeece6] px-5 py-3.5 dark:border-[#303832] dark:bg-[#171d19]">
+            <div className="space-y-3 border-t border-border bg-muted px-5 py-3.5">
               <div className="flex items-center justify-between gap-4">
                 <div className="flex-1 flex items-center gap-2.5">
-                  <ZoomIn className="h-4 w-4 text-slate-500 dark:text-[#a6afa8]" />
+                  <ZoomIn className="h-4 w-4 text-muted-foreground" />
                   <input
                     type="range"
                     min={1}
@@ -221,17 +221,17 @@ export function ImageUploadDropzone({ onImagesChange }: ImageUploadDropzoneProps
                     step={0.1}
                     value={zoom}
                     onChange={(e) => setZoom(Number(e.target.value))}
-                    className="h-1.5 w-full cursor-pointer rounded-lg accent-[#c45b37]"
+                    className="h-1.5 w-full cursor-pointer rounded-lg accent-brand"
                   />
-                  <span className="w-7 text-[11px] text-slate-600 dark:text-[#a6afa8]">{zoom.toFixed(1)}x</span>
+                  <span className="w-7 text-[11px] text-muted-foreground">{zoom.toFixed(1)}x</span>
                 </div>
 
                 <button
                   type="button"
                   onClick={() => setRotation((r) => (r + 90) % 360)}
-                  className="flex items-center gap-1.5 rounded-full border border-slate-300 bg-white px-3 py-1.5 text-xs text-slate-800 transition-colors hover:bg-slate-50 dark:border-[#39443d] dark:bg-[#202722] dark:text-[#f4f1ea] dark:hover:bg-[#29312b]"
+                  className="flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-xs text-foreground transition-colors hover:bg-muted"
                 >
-                  <RotateCw className="h-3.5 w-3.5 text-[#c45b37]" />
+                  <RotateCw className="h-3.5 w-3.5 text-brand" />
                   <span>Rotate</span>
                 </button>
               </div>
@@ -241,7 +241,7 @@ export function ImageUploadDropzone({ onImagesChange }: ImageUploadDropzoneProps
                 <Button
                   variant="outline"
                   onClick={() => setSelectedImageSrc(null)}
-                  className="rounded-full border-slate-300 text-slate-700 hover:text-slate-950 text-xs dark:border-[#39443d] dark:text-[#c1c8c2] dark:hover:text-white"
+                  className="rounded-full border-border text-foreground hover:text-foreground text-xs"
                 >
                   Cancel
                 </Button>
@@ -252,7 +252,7 @@ export function ImageUploadDropzone({ onImagesChange }: ImageUploadDropzoneProps
                 >
                   {isProcessing ? (
                     <span className="flex items-center gap-2">
-                      <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-slate-950 border-t-transparent" />
+                      <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-border border-t-transparent" />
                       Compressing...
                     </span>
                   ) : (
@@ -272,10 +272,10 @@ export function ImageUploadDropzone({ onImagesChange }: ImageUploadDropzoneProps
       {processedItems.length > 0 && (
         <div className="space-y-2.5 pt-1">
           <div className="flex items-center justify-between text-xs px-0.5">
-            <span className="font-bold text-white">
+            <span className="font-bold text-foreground">
               Uploaded Photos ({processedItems.length})
             </span>
-            <span className="text-emerald-400 text-[11px] font-semibold flex items-center gap-1">
+            <span className="text-success text-[11px] font-semibold flex items-center gap-1">
               <CheckCircle2 className="h-3.5 w-3.5" />
               <span>Ready for listing</span>
             </span>
@@ -290,10 +290,10 @@ export function ImageUploadDropzone({ onImagesChange }: ImageUploadDropzoneProps
               return (
                 <div
                   key={item.id}
-                  className="flex items-center gap-3 rounded-2xl border border-[#22352B] bg-[#121E18] p-2.5 shadow-sm hover:border-[#344E40] transition-colors"
+                  className="flex items-center gap-3 rounded-2xl border border-border bg-card p-2.5 shadow-sm hover:border-brand transition-colors"
                 >
                   {/* Thumbnail */}
-                  <div className="relative h-14 w-20 shrink-0 overflow-hidden rounded-xl bg-[#0B130F] border border-[#22352B]/60 aspect-[16/10]">
+                  <div className="relative h-14 w-20 shrink-0 overflow-hidden rounded-xl bg-background border border-border/60 aspect-[16/10]">
                     <Image
                       src={item.url}
                       alt={item.fileName}
@@ -305,26 +305,26 @@ export function ImageUploadDropzone({ onImagesChange }: ImageUploadDropzoneProps
 
                   {/* Info */}
                   <div className="min-w-0 flex-1 space-y-1">
-                    <p className="truncate text-xs font-semibold text-white">
+                    <p className="truncate text-xs font-semibold text-foreground">
                       {item.fileName}
                     </p>
 
                     {/* Compression metric in single non-wrapping line */}
                     <div className="flex items-center gap-1.5 text-[11px] whitespace-nowrap">
-                      <span className="text-[#93A89D]">
+                      <span className="text-muted-foreground">
                         {formatFileSize(item.originalSize)}
                       </span>
-                      <ArrowRight className="h-3 w-3 text-emerald-400 shrink-0" />
-                      <span className="font-bold text-emerald-400">
+                      <ArrowRight className="h-3 w-3 text-success shrink-0" />
+                      <span className="font-bold text-success">
                         {formatFileSize(item.compressedSize)}
                       </span>
-                      <span className="rounded-full bg-emerald-500/15 border border-emerald-500/30 px-1.5 py-0.2 text-[9px] font-bold text-emerald-300">
+                      <span className="rounded-full bg-success-soft border border-success/25 px-1.5 py-0.2 text-[9px] font-bold text-success">
                         -{savedPct}%
                       </span>
                     </div>
 
-                    <div className="flex items-center gap-1.5 text-[10px] text-[#93A89D]">
-                      <span className="bg-[#0B130F] border border-[#22352B] px-1.5 py-0.5 rounded text-[9px] text-emerald-300 font-medium">
+                    <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                      <span className="bg-background border border-border px-1.5 py-0.5 rounded text-[9px] text-success font-medium">
                         16:10 WebP
                       </span>
                     </div>
@@ -334,7 +334,7 @@ export function ImageUploadDropzone({ onImagesChange }: ImageUploadDropzoneProps
                   <button
                     type="button"
                     onClick={() => handleRemoveItem(item.id)}
-                    className="h-8 w-8 rounded-lg text-[#93A89D] hover:text-rose-400 hover:bg-rose-500/10 flex items-center justify-center transition-colors shrink-0"
+                    className="h-8 w-8 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive-soft flex items-center justify-center transition-colors shrink-0"
                     title="Remove photo"
                   >
                     <Trash2 className="h-3.5 w-3.5" />

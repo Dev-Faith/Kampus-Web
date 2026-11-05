@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useCallback, useEffect } from "react";
+import React, { useState, useRef, useCallback } from "react";
 import Map, {
   Marker,
   Popup,
@@ -9,6 +9,7 @@ import Map, {
 } from "react-map-gl/maplibre";
 import * as maplibregl from "maplibre-gl";
 import Image from "next/image";
+import { useTheme } from "next-themes";
 import { ArrowUpRight } from "lucide-react";
 import { Property } from "@/types/property";
 import { getCampusAreaLabel } from "@/lib/constants/campus-areas";
@@ -43,6 +44,7 @@ export function PropertyMap({
   onBoundsChange,
 }: PropertyMapProps) {
   const mapRef = useRef<MapRef | null>(null);
+  const { resolvedTheme } = useTheme();
   const {
     hoveredPropertyId,
     setHoveredPropertyId,
@@ -108,7 +110,7 @@ export function PropertyMap({
   return (
     <>
       <div
-        className={`relative h-full w-full overflow-hidden rounded-2xl bg-slate-950 border border-slate-800 ${className}`}
+        className={`relative h-full w-full overflow-hidden rounded-2xl bg-muted border border-border ${className}`}
       >
         <Map
           ref={mapRef}
@@ -119,7 +121,9 @@ export function PropertyMap({
             zoom: mappedProperties.length ? 13 : 5,
           }}
           style={{ width: "100%", height: "100%" }}
-          mapStyle="https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json"
+          mapStyle={resolvedTheme === "dark"
+            ? "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json"
+            : "https://basemaps.cartocdn.com/gl/positron-gl-style/style.json"}
           onMoveEnd={handleMapMoveEnd}
           attributionControl={false}
         >
@@ -146,8 +150,8 @@ export function PropertyMap({
                   onMouseLeave={() => setHoveredPropertyId(null)}
                   className={`group relative flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-bold transition-all duration-200 cursor-pointer select-none ${
                     isHovered || isSelected
-                      ? "scale-105 -translate-y-1 z-40 bg-[#c45b37] text-white border border-white/40"
-                      : "bg-slate-900/95 text-white hover:bg-slate-800 hover:scale-105 border border-slate-700/80"
+                      ? "scale-105 -translate-y-1 z-40 bg-brand-strong text-primary-foreground border border-brand-strong"
+                      : "bg-card text-foreground hover:bg-muted hover:scale-105 border border-border shadow-sm"
                   }`}
                 >
                   <span className="tabular-nums">
@@ -158,8 +162,8 @@ export function PropertyMap({
                   <span
                     className={`absolute -bottom-1.5 left-1/2 -translate-x-1/2 h-2 w-2 rotate-45 border-r border-b ${
                       isHovered || isSelected
-                        ? "bg-[#c45b37] border-[#c45b37]"
-                        : "bg-slate-900 border-slate-700/80"
+                        ? "bg-brand-strong border-brand-strong"
+                        : "bg-card border-border"
                     }`}
                   />
                 </button>
@@ -173,46 +177,47 @@ export function PropertyMap({
               longitude={activePopupProperty.address.coordinates.lng}
               latitude={activePopupProperty.address.coordinates.lat}
               anchor="top"
+              maxWidth="280px"
               closeButton={true}
               closeOnClick={false}
               onClose={() => setActivePopupProperty(null)}
-              className="z-50 [&_.maplibregl-popup-content]:rounded-2xl [&_.maplibregl-popup-content]:bg-slate-900 [&_.maplibregl-popup-content]:p-0 [&_.maplibregl-popup-content]:border [&_.maplibregl-popup-content]:border-slate-800 [&_.maplibregl-popup-content]:shadow-2xl [&_.maplibregl-popup-close-button]:text-white [&_.maplibregl-popup-close-button]:p-2 [&_.maplibregl-popup-tip]:border-b-slate-900"
+              className="property-map-popup z-50 [&_.maplibregl-popup-content]:rounded-2xl [&_.maplibregl-popup-content]:bg-card [&_.maplibregl-popup-content]:p-0 [&_.maplibregl-popup-content]:border [&_.maplibregl-popup-content]:border-border [&_.maplibregl-popup-content]:shadow-2xl [&_.maplibregl-popup-close-button]:text-foreground [&_.maplibregl-popup-close-button]:p-2 [&_.maplibregl-popup-tip]:border-b-card"
             >
-              <div className="w-64 overflow-hidden rounded-2xl bg-slate-900 text-slate-100">
+              <div className="w-64 overflow-hidden rounded-2xl bg-card text-foreground">
                 <div className="relative aspect-[16/10] w-full">
                   {activePopupProperty.images[0]?.url ? (
                     <Image src={activePopupProperty.images[0].url} alt={activePopupProperty.title} fill className="object-cover" />
-                  ) : <div className="grid h-full place-items-center text-xs text-slate-400">No photos</div>}
-                  <div className="absolute top-2 left-2 rounded-md bg-emerald-500/90 px-2 py-0.5 text-[10px] font-bold text-slate-950 uppercase">
+                  ) : <div className="grid h-full place-items-center text-xs text-muted-foreground">No photos</div>}
+                  <div className="absolute top-2 left-2 rounded-md bg-card/95 px-2 py-0.5 text-[10px] font-bold text-foreground uppercase">
                     {activePopupProperty.propertyType}
                   </div>
                 </div>
 
                 <div className="p-3.5 space-y-2">
                   <div className="flex items-baseline justify-between">
-                    <span className="text-base font-extrabold text-white tabular-nums">
+                    <span className="text-base font-semibold text-foreground tabular-nums">
                       {activePopupProperty.currency}
                       {activePopupProperty.price.toLocaleString()}
                     </span>
-                    <span className="text-[11px] text-slate-400">
+                    <span className="text-[11px] text-muted-foreground">
                       {activePopupProperty.propertyType}
                     </span>
                   </div>
 
-                  <h4 className="text-xs font-semibold text-white line-clamp-1">
+                  <h4 className="text-xs font-semibold text-foreground line-clamp-1">
                     {activePopupProperty.title}
                   </h4>
 
-                  <p className="text-[11px] text-slate-400 line-clamp-1">{[activePopupProperty.building?.name, activePopupProperty.unitLabel, getCampusAreaLabel(activePopupProperty.campusArea), activePopupProperty.address.city, activePopupProperty.address.state].filter(Boolean).join(", ")}</p>
+                  <p className="text-[11px] text-muted-foreground line-clamp-1">{[activePopupProperty.building?.name, activePopupProperty.unitLabel, getCampusAreaLabel(activePopupProperty.campusArea), activePopupProperty.address.city, activePopupProperty.address.state].filter(Boolean).join(", ")}</p>
 
-                  <div className="flex items-center justify-between border-t border-slate-800/80 pt-2 text-[11px] text-slate-300">
+                  <div className="flex items-center justify-between border-t border-border/80 pt-2 text-[11px] text-muted-foreground">
                     <span>{activePopupProperty.numberOfRooms == null ? "Rooms not specified" : `${activePopupProperty.numberOfRooms} rooms`}</span>
                     <button
                       type="button"
                       onClick={() => {
                         setQuickViewProperty(activePopupProperty);
                       }}
-                      className="flex items-center gap-0.5 text-emerald-400 font-bold hover:underline"
+                      className="flex items-center gap-0.5 text-brand-strong font-bold hover:underline"
                     >
                       View
                       <ArrowUpRight className="h-3 w-3" />
@@ -225,10 +230,10 @@ export function PropertyMap({
         </Map>
 
         {/* Floating Map Legend / Status Pill */}
-        <div className="pointer-events-none absolute bottom-4 left-4 z-20 flex items-center gap-2 rounded-full bg-slate-950/80 backdrop-blur-md px-3.5 py-1.5 border border-white/10 text-xs font-medium text-slate-300 shadow-xl">
+        <div className="pointer-events-none absolute bottom-4 left-4 z-20 flex items-center gap-2 rounded-full bg-card/95 backdrop-blur-md px-3.5 py-1.5 border border-border text-xs font-medium text-muted-foreground shadow-sm">
           <span className="relative flex h-2 w-2">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand opacity-75" />
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-brand" />
           </span>
           <span>
             {mappedProperties.length} listings with map coordinates

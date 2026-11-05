@@ -6,7 +6,6 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import {
   Building2,
-  PlusCircle,
   Sparkles,
   GraduationCap,
   ShieldCheck,
@@ -43,7 +42,7 @@ import { KampusLogo } from "@/components/brand/KampusLogo";
 function KampusBrandMark() {
   return (
     <Link href="/" className="group flex h-11 w-11 shrink-0 items-center justify-center" aria-label="Kampus Home">
-      <KampusLogo variant="mark" size={36} className="transition-transform duration-200 group-hover:scale-[1.04]" markClassName="text-slate-900 dark:text-white" />
+      <KampusLogo variant="mark" size={36} className="transition-transform duration-200 group-hover:scale-[1.04]" markClassName="text-foreground" />
     </Link>
   );
 }
@@ -52,13 +51,15 @@ export function Navbar() {
   const pathname = usePathname();
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
+  const [authRole, setAuthRole] = useState<"STUDENT" | "LANDLORD">("STUDENT");
+  const [authMode, setAuthMode] = useState<"signin" | "signup">("signin");
   const [isHostRegistrationOpen, setIsHostRegistrationOpen] = useState(false);
   const [isAppDownloadOpen, setIsAppDownloadOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const mobileMenuTrigger = useRef<HTMLButtonElement>(null);
 
-  const { user, role, isAuthenticated, logout, switchRole, checkAuth } = useAuthStore();
-  const isHost = user?.role === "LANDLORD" || Boolean(user?.landlord);
+  const { user, role, isAuthenticated, logout, checkAuth } = useAuthStore();
+  const isHost = user?.role === "LANDLORD";
 
   useEffect(() => {
     checkAuth();
@@ -79,8 +80,10 @@ export function Navbar() {
   const handleListLodge = () => {
     setIsMobileMenuOpen(false);
     if (!isAuthenticated) {
+      setAuthRole("LANDLORD");
+      setAuthMode("signup");
       setIsAuthOpen(true);
-    } else if (!isHost) {
+    } else if (!isHost || user?.profileStatus !== "COMPLETED") {
       setIsHostRegistrationOpen(true);
     } else {
       window.location.href = "/host/dashboard";
@@ -99,7 +102,7 @@ export function Navbar() {
 
   return (
     <>
-      <header className="landing-nav sticky top-0 z-40 w-full border-b border-slate-200/80 dark:border-[#22352B] bg-white/95 dark:bg-[#0B130F]/95 backdrop-blur-xl transition-colors duration-200">
+      <header className="landing-nav sticky top-0 z-40 w-full border-b border-border bg-background/95 backdrop-blur-xl transition-colors duration-200">
         <div className="landing-nav__inner mx-auto items-center px-4 sm:px-6 lg:px-8">
           <div className="min-w-0 flex items-center">
             {/* Mobile menu trigger */}
@@ -107,7 +110,7 @@ export function Navbar() {
               type="button"
               ref={mobileMenuTrigger}
               onClick={() => setIsMobileMenuOpen((open) => !open)}
-              className="xl:hidden flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-[#121E18]"
+              className="xl:hidden flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-foreground hover:bg-muted"
               aria-label={isMobileMenuOpen ? "Close navigation" : "Open navigation"}
               aria-expanded={isMobileMenuOpen}
               aria-controls="kampus-mobile-navigation"
@@ -126,13 +129,13 @@ export function Navbar() {
                     aria-current={isActive ? "page" : undefined}
                     className={`transition-colors relative py-1 ${
                       isActive
-                        ? "text-slate-900 dark:text-white font-bold"
-                        : "text-slate-600 dark:text-[#93A89D] hover:text-slate-900 dark:hover:text-white"
+                        ? "text-foreground font-semibold"
+                        : "text-muted-foreground hover:text-foreground"
                     }`}
                   >
                     {link.label}
                     {isActive && (
-                      <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-slate-900 dark:bg-emerald-400 rounded-full" />
+                      <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-brand rounded-full" />
                     )}
                   </Link>
                 );
@@ -151,7 +154,7 @@ export function Navbar() {
               variant="ghost"
               size="sm"
               onClick={() => setIsAppDownloadOpen(true)}
-              className="landing-nav__app hidden xl:inline-flex shrink-0 text-[13px] font-medium text-slate-700 dark:text-[#93A89D] hover:text-slate-900 dark:hover:text-white px-2 cursor-pointer"
+              className="landing-nav__app hidden xl:inline-flex shrink-0 text-[13px] font-medium text-muted-foreground hover:text-foreground px-2 cursor-pointer"
             >
               Get the app
             </Button>
@@ -167,7 +170,7 @@ export function Navbar() {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="rounded-full border border-slate-200 dark:border-[#22352B] bg-white dark:bg-[#121E18] text-slate-900 dark:text-emerald-300 text-xs font-semibold px-3.5"
+                  className="rounded-full border border-border text-foreground text-xs font-medium px-3.5"
                 >
                   Student View
                 </Button>
@@ -177,7 +180,7 @@ export function Navbar() {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="rounded-full border border-slate-200 dark:border-[#22352B] bg-white dark:bg-[#121E18] text-slate-800 dark:text-white text-xs font-semibold px-3.5"
+                  className="rounded-full border border-border text-foreground text-xs font-medium px-3.5"
                 >
                   Host Hub
                 </Button>
@@ -187,7 +190,7 @@ export function Navbar() {
             {/* Solid Pill CTA ("Invest" / "Post Lodge") */}
             <Button
               onClick={handleListLodge}
-              className="landing-nav__primary hidden lg:inline-flex shrink-0 rounded-full bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-950 font-bold text-xs px-4 sm:px-5 py-2 shadow-sm transition-all cursor-pointer"
+              className="landing-nav__primary hidden lg:inline-flex shrink-0 rounded-full bg-primary text-primary-foreground hover:bg-primary-hover font-medium text-xs px-4 sm:px-5 py-2 shadow-none transition-colors cursor-pointer"
             >
               List your lodge
             </Button>
@@ -195,8 +198,8 @@ export function Navbar() {
             {/* User Account Dropdown */}
             {isAuthenticated && user ? (
               <DropdownMenu>
-                <DropdownMenuTrigger aria-label="Open account menu" className="flex min-h-11 shrink-0 items-center gap-2 pl-2 pr-3 py-1 rounded-full border border-slate-200 dark:border-[#22352B] bg-slate-100 dark:bg-[#14231B] hover:border-emerald-500/40 transition-colors cursor-pointer">
-                  <div className="relative h-7 w-7 rounded-full overflow-hidden bg-emerald-600/20 border border-emerald-500/30">
+                <DropdownMenuTrigger aria-label="Open account menu" className="flex min-h-11 shrink-0 items-center gap-2 pl-2 pr-3 py-1 rounded-full border border-border bg-card hover:border-brand/40 transition-colors cursor-pointer">
+                  <div className="relative h-7 w-7 rounded-full overflow-hidden bg-brand-soft border border-brand/30">
                     {user.profilePicture ? (
                       <Image
                         src={user.profilePicture}
@@ -206,44 +209,44 @@ export function Navbar() {
                         className="object-cover"
                       />
                     ) : (
-                      <UserIcon className="h-4 w-4 m-1.5 text-emerald-600 dark:text-emerald-400" />
+                      <UserIcon className="h-4 w-4 m-1.5 text-brand-strong" />
                     )}
                   </div>
-                  <ChevronDown className="h-3 w-3 text-slate-500 dark:text-[#93A89D]" />
+                  <ChevronDown className="h-3 w-3 text-muted-foreground" />
                 </DropdownMenuTrigger>
                 <DropdownMenuContent
                   align="end"
-                  className="w-56 bg-white dark:bg-[#0E1A14] border border-slate-200 dark:border-[#22352B] text-slate-900 dark:text-slate-100 rounded-2xl p-1.5 shadow-2xl"
+                  className="w-56 bg-card border border-border text-foreground rounded-[1.35rem] p-1.5 shadow-md"
                 >
                   <DropdownMenuLabel className="px-3 py-2">
-                    <div className="text-xs font-bold text-slate-900 dark:text-white">{user.fullName || "Kampus Member"}</div>
-                    <div className="text-[10px] text-slate-500 dark:text-[#93A89D] truncate">{user.email || user.phone}</div>
-                    <div className="mt-1.5 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-50 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-600/20">
+                    <div className="text-xs font-semibold text-foreground">{user.fullName || "Kampus Member"}</div>
+                    <div className="text-[10px] text-muted-foreground truncate">{user.email || user.phone}</div>
+                    <div className="mt-1.5 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium uppercase tracking-wider bg-brand-soft text-brand-strong border border-brand/25">
                       <ShieldCheck className="h-3 w-3" />
-                      {role === "STUDENT" ? "Student Account" : "Host Account"}
+                      {user.role === "ADMIN" ? "Administrator" : user.role === "STUDENT" ? "Student Account" : "Landlord Account"}
                     </div>
                   </DropdownMenuLabel>
-                  <DropdownMenuSeparator className="bg-slate-200 dark:bg-[#22352B]" />
+                  <DropdownMenuSeparator className="bg-border" />
                   {isHost ? (
                     <DropdownMenuItem
-                      onClick={() => switchRole(role === "STUDENT" ? "LANDLORD" : "STUDENT")}
-                      className="text-xs hover:bg-emerald-500/10 cursor-pointer rounded-xl flex items-center justify-between"
+                      onClick={() => { window.location.href = isHostView ? "/explore" : "/host/dashboard"; }}
+                      className="text-xs hover:bg-brand-soft cursor-pointer rounded-xl flex items-center justify-between"
                     >
-                      <span>Switch to {role === "STUDENT" ? "Host Portal" : "Student View"}</span>
+                      <span>{isHostView ? "Browse accommodation" : "Open host dashboard"}</span>
                       {role === "STUDENT" ? (
-                        <Building2 className="h-3.5 w-3.5 text-amber-500 dark:text-amber-400" />
+                        <Building2 className="h-3.5 w-3.5 text-brand-strong" />
                       ) : (
-                        <GraduationCap className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+                        <GraduationCap className="h-3.5 w-3.5 text-brand-strong" />
                       )}
                     </DropdownMenuItem>
                   ) : (
                     <DropdownMenuItem
                       onClick={() => setIsHostRegistrationOpen(true)}
-                      className="text-xs text-amber-700 dark:text-amber-300 hover:bg-amber-500/10 cursor-pointer rounded-xl flex items-center justify-between"
+                      className="text-xs text-brand-strong hover:bg-brand-soft cursor-pointer rounded-xl flex items-center justify-between"
                     >
                       <div className="flex items-center gap-1.5">
-                        <Building2 className="h-3.5 w-3.5 text-amber-500 dark:text-amber-400" />
-                        <span>Register as Host / Landlord</span>
+                        <Building2 className="h-3.5 w-3.5 text-brand-strong" />
+                        <span>Use a landlord account</span>
                       </div>
                     </DropdownMenuItem>
                   )}
@@ -253,14 +256,14 @@ export function Navbar() {
                         window.location.href = isHost && role === "LANDLORD" ? "/host/dashboard" : "/bookings";
                       }
                     }}
-                    className="text-xs hover:bg-emerald-500/10 cursor-pointer rounded-xl flex items-center justify-between"
+                    className="text-xs hover:bg-brand-soft cursor-pointer rounded-xl flex items-center justify-between"
                   >
                     <span>{isHost && role === "LANDLORD" ? "Host Dashboard" : "My Bookings"}</span>
                   </DropdownMenuItem>
-                  <DropdownMenuSeparator className="bg-slate-200 dark:bg-[#22352B]" />
+                  <DropdownMenuSeparator className="bg-border" />
                   <DropdownMenuItem
                     onClick={logout}
-                    className="text-xs text-rose-500 dark:text-rose-400 hover:bg-rose-500/10 cursor-pointer rounded-xl flex items-center gap-2"
+                    className="text-xs text-destructive hover:bg-destructive-soft cursor-pointer rounded-xl flex items-center gap-2"
                   >
                     <LogOut className="h-3.5 w-3.5" />
                     <span>Log Out</span>
@@ -269,12 +272,12 @@ export function Navbar() {
               </DropdownMenu>
             ) : (
               <Button
-                onClick={() => { setIsMobileMenuOpen(false); setIsAuthOpen(true); }}
+                onClick={() => { setIsMobileMenuOpen(false); setAuthRole("STUDENT"); setAuthMode("signin"); setIsAuthOpen(true); }}
                 variant="ghost"
                 size="sm"
-                className="landing-nav__signin shrink-0 text-xs font-bold text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white px-3"
+                className="landing-nav__signin shrink-0 text-xs font-medium bg-primary text-primary-foreground hover:bg-primary-hover px-3"
               >
-                Sign In
+                Join / Sign in
               </Button>
             )}
           </div>
@@ -282,21 +285,22 @@ export function Navbar() {
 
         {/* Mobile dropdown menu */}
         {isMobileMenuOpen && (
-          <div id="kampus-mobile-navigation" className="landing-nav__mobile xl:hidden overflow-y-auto border-t border-slate-200 dark:border-[#22352B] bg-white dark:bg-[#0B130F] p-4 space-y-4">
+          <div id="kampus-mobile-navigation" className="landing-nav__mobile xl:hidden overflow-y-auto border-t border-border bg-background p-4 space-y-4">
             <nav aria-label="Mobile navigation" className="space-y-1">
+              {!isAuthenticated && <Button variant="outline" className="w-full min-h-11" onClick={() => { setIsMobileMenuOpen(false); setAuthRole("STUDENT"); setAuthMode("signup"); setIsAuthOpen(true); }}>Create account</Button>}
               {NAV_LINKS.map((link) => (
                 <Link
                   key={link.label}
                   href={link.href}
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className="flex min-h-11 items-center px-3 py-2 rounded-xl text-sm font-semibold text-slate-800 dark:text-[#93A89D] hover:bg-slate-100 dark:hover:bg-[#121E18]"
+                  className="flex min-h-11 items-center px-3 py-2 rounded-xl text-sm font-medium text-foreground hover:bg-muted"
                 >
                   {link.label}
                 </Link>
               ))}
             </nav>
-            <div className="space-y-2 border-t border-slate-200 dark:border-[#22352B] pt-4">
-              <Link href={isHostView ? "/explore" : "/host/dashboard"} onClick={() => setIsMobileMenuOpen(false)} className="flex min-h-11 items-center rounded-xl px-3 py-2 text-sm font-semibold text-slate-800 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-[#121E18]">
+            <div className="space-y-2 border-t border-border pt-4">
+              <Link href={isHostView ? "/explore" : "/host/dashboard"} onClick={() => setIsMobileMenuOpen(false)} className="flex min-h-11 items-center rounded-xl px-3 py-2 text-sm font-medium text-foreground hover:bg-muted">
                 {isHostView ? "Student View" : "Host Hub"}
               </Link>
               <Button variant="ghost" onClick={() => { setIsMobileMenuOpen(false); setIsAppDownloadOpen(true); }} className="min-h-11 w-full justify-start px-3 text-sm">
@@ -304,7 +308,7 @@ export function Navbar() {
                 Get the app
               </Button>
               <div className="flex sm:hidden items-center justify-between gap-3 px-3 py-1">
-                <span className="text-sm font-semibold">Appearance</span>
+                <span className="text-sm font-medium">Appearance</span>
                 <div className="landing-nav__theme shrink-0"><ThemeToggle /></div>
               </div>
               <Button onClick={handleListLodge} className="landing-nav__primary lg:hidden w-full">
@@ -314,18 +318,24 @@ export function Navbar() {
           </div>
         )}
       </header>
+      {isAuthenticated && user && user.role !== "ADMIN" && (user.profileStatus !== "COMPLETED" || user.hasPassword === false) && (
+        <div className="flex flex-wrap items-center justify-center gap-3 border-b border-border bg-muted px-4 py-3 text-sm">
+          <span>Finish setting up your {user.role === "LANDLORD" ? "landlord" : "student"} account.</span>
+          <Button size="sm" onClick={() => { setAuthRole(user.role === "LANDLORD" ? "LANDLORD" : "STUDENT"); setIsAuthOpen(true); }}>Complete profile</Button>
+        </div>
+      )}
 
       {/* Ingestion Pipeline Modal */}
       <Dialog open={isUploadOpen} onOpenChange={setIsUploadOpen}>
         <DialogContent className="max-w-2xl p-6">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-xl font-semibold text-slate-900 dark:text-white">
-              <Sparkles className="h-5 w-5 text-emerald-400" />
+            <DialogTitle className="flex items-center gap-2 text-xl font-medium text-foreground">
+              <Sparkles className="h-5 w-5 text-brand-strong" />
               Landlord Photo Ingestion & Retina Compression
             </DialogTitle>
           </DialogHeader>
 
-          <p className="text-xs text-[#93A89D] -mt-2">
+          <p className="text-xs text-muted-foreground -mt-2">
             Interception dropzone adhering to <code>.agents/rules/image-pipeline.md</code>.
             Forces 16:10 crop framing and client-side compression below 400KB WebP before cloud storage dispatch.
           </p>
@@ -337,7 +347,7 @@ export function Navbar() {
       </Dialog>
 
       {/* Interactive Auth Modal */}
-      <AuthModal isOpen={isAuthOpen} onClose={() => setIsAuthOpen(false)} />
+      <AuthModal isOpen={isAuthOpen} onClose={() => setIsAuthOpen(false)} defaultRole={authRole} defaultMode={authMode} />
 
       {/* Host Registration Modal for Students */}
       <HostRegistrationModal

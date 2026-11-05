@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { motion, useReducedMotion } from "motion/react";
+import { motion } from "motion/react";
 import { Check, KeyRound, MapPinned, ShieldCheck } from "lucide-react";
 
 const BENEFITS = [
@@ -32,7 +32,6 @@ const BENEFITS = [
 ];
 
 export function ArchitecturalBentoPurpose() {
-  const reduceMotion = useReducedMotion();
 
   return (
     <section id="about" className="landing-purpose" aria-labelledby="purpose-title">
@@ -53,7 +52,8 @@ export function ArchitecturalBentoPurpose() {
             <motion.article
               key={benefit.number}
               className={`landing-purpose__card landing-purpose__card--${benefit.tone}`}
-              initial={reduceMotion ? false : { opacity: 0, y: 22 }}
+              data-reveal
+              initial={{ opacity: 0, y: 22 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, amount: 0.2 }}
               transition={{ duration: 0.55, delay: index * 0.08, ease: [0.22, 1, 0.36, 1] }}

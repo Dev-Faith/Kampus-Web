@@ -26,13 +26,13 @@ const CAMPUS_AREAS = [
 
 export function MinnaNeighborhoods() {
   return (
-    <section className="landing-neighborhoods space-y-6" aria-labelledby="campus-areas-title">
+    <section className="landing-neighborhoods" aria-labelledby="campus-areas-title">
       <div className="landing-neighborhoods__header flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
         <div>
           <p className="landing-eyebrow">Currently serving FUTMINNA</p>
           <h2
             id="campus-areas-title"
-            className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight"
+            className="text-2xl sm:text-3xl font-black text-foreground tracking-tight"
           >
             Browse by campus area.
           </h2>
@@ -54,7 +54,7 @@ export function MinnaNeighborhoods() {
             key={campusArea.id}
             whileHover={{ y: -4 }}
             transition={{ type: "spring", stiffness: 350, damping: 25 }}
-            className="landing-neighborhoods__card relative min-h-[300px] rounded-3xl overflow-hidden border border-slate-200 dark:border-[#22352B] bg-slate-900 dark:bg-[#121E18] flex flex-col justify-end p-5 shadow-xl"
+            className="landing-neighborhoods__card relative min-h-[300px] overflow-hidden bg-primary flex flex-col justify-end"
           >
             <div className="absolute inset-0 z-0">
               <Image
@@ -67,20 +67,20 @@ export function MinnaNeighborhoods() {
               <div className="landing-neighborhoods__shade absolute inset-0" />
             </div>
 
-            <div className="relative z-10 space-y-4">
-              <div className="flex items-center gap-2 text-xs font-semibold text-emerald-300">
+            <div className="landing-neighborhoods__copy relative z-10">
+              <div className="flex items-center gap-2 text-xs font-semibold text-white/90">
                 <MapPin className="h-4 w-4" />
                 <span>FUTMINNA</span>
               </div>
 
               <div>
                 <h3 className="text-xl font-black text-white">{campusArea.name}</h3>
-                <p className="mt-1 text-sm text-[#C4D5CC]">
+                <p className="mt-1 text-sm text-white/80">
                   Areas currently covered around this campus
                 </p>
               </div>
 
-              <div className="flex flex-wrap gap-2">
+              <div className="landing-neighborhoods__areas flex flex-wrap gap-2">
                 {campusArea.areas.map((areaCode) => {
                   const area = CAMPUS_AREA_OPTIONS.find((option) => option.id === areaCode);
                   if (!area) return null;
@@ -89,7 +89,7 @@ export function MinnaNeighborhoods() {
                       key={area.id}
                       href={`/explore?campus=FUTMINNA&area=${area.id}`}
                       aria-label={`Search accommodation in ${area.label}`}
-                      className="rounded-full border border-white/25 bg-[#0B130F]/75 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:border-emerald-300 hover:bg-emerald-900/80"
+                      className="rounded-full border border-white/25 bg-ink-solid/75 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:border-white/50 hover:bg-ink-solid"
                     >
                       {area.label}
                     </Link>

@@ -54,6 +54,7 @@ export interface LandlordProfile {
 }
 
 export interface User {
+  hasPassword?: boolean;
   adminAccess?: boolean;
   id: string;
   phone: string;

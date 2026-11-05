@@ -1,6 +1,12 @@
 import { create } from "zustand";
-import { User, UserRole } from "@/types/api";
-import { authApi } from "@/api/auth";
+import { isAxiosError } from "axios";
+import { User, UserRole, AuthResponseData } from "@/types/api";
+import {
+  authApi,
+  UpdateProfilePayload,
+  UpdateLandlordProfilePayload,
+} from "@/api/auth";
+import { authError } from "@/lib/auth-errors";
 import { toast } from "@/lib/stores/useToastStore";
 
 interface AuthState {
@@ -11,233 +17,221 @@ interface AuthState {
   isAuthenticated: boolean;
   isLoading: boolean;
   error: string | null;
-
-  // Actions
-  login: (emailOrPhone: string, password: string, role: UserRole) => Promise<boolean>;
-  sendOtp: (phone: string, role: UserRole) => Promise<{ requestId: string; expiresIn: number } | null>;
-  verifyOtp: (phone: string, code: string) => Promise<boolean>;
+  login: (
+    emailOrPhone: string,
+    password: string,
+    role: UserRole,
+  ) => Promise<boolean>;
+  sendOtp: (
+    phone: string,
+    role: UserRole,
+  ) => Promise<{
+    requestId: string;
+    expiresIn: number;
+    resendAfterSeconds?: number;
+  } | null>;
+  verifyOtp: (
+    phone: string,
+    code: string,
+    requestId?: string,
+  ) => Promise<boolean>;
+  completeProfile: (
+    payload: UpdateProfilePayload | UpdateLandlordProfilePayload,
+  ) => Promise<boolean>;
+  registerAsLandlord: (
+    payload: UpdateLandlordProfilePayload,
+  ) => Promise<boolean>;
   logout: () => void;
   switchRole: (role: UserRole) => boolean;
   isRegisteredHost: () => boolean;
-  registerAsLandlord: (payload: any) => Promise<boolean>;
   setUser: (user: User) => void;
   checkAuth: () => Promise<void>;
   clearError: () => void;
 }
 
+function persistUser(user: User) {
+  if (typeof window !== "undefined")
+    localStorage.setItem("kampus_user", JSON.stringify(user));
+}
+function persistSession(data: AuthResponseData) {
+  if (typeof window !== "undefined") {
+    localStorage.setItem("kampus_access_token", data.accessToken);
+    localStorage.setItem("kampus_refresh_token", data.refreshToken);
+    persistUser(data.user);
+  }
+  return {
+    user: data.user,
+    role: data.user.role,
+    accessToken: data.accessToken,
+    refreshToken: data.refreshToken,
+    isAuthenticated: true,
+    isLoading: false,
+    error: null,
+  };
+}
+function clearSession() {
+  if (typeof window !== "undefined")
+    ["kampus_access_token", "kampus_refresh_token", "kampus_user"].forEach(
+      (key) => localStorage.removeItem(key),
+    );
+  return {
+    user: null,
+    role: "STUDENT" as const,
+    accessToken: null,
+    refreshToken: null,
+    isAuthenticated: false,
+    isLoading: false,
+    error: null,
+  };
+}
+
 export const useAuthStore = create<AuthState>((set, get) => ({
-  user: null,
-  role: "STUDENT",
-  accessToken: null,
-  refreshToken: null,
-  isAuthenticated: false,
-  isLoading: false,
-  error: null,
-
+  ...clearSessionOnServer(),
   clearError: () => set({ error: null }),
-
   login: async (emailOrPhone, password, role) => {
     set({ isLoading: true, error: null });
     try {
-      const data = await authApi.login({ emailOrPhone, password, role });
-      if (typeof window !== "undefined") {
-        localStorage.setItem("kampus_access_token", data.accessToken);
-        localStorage.setItem("kampus_refresh_token", data.refreshToken);
-        localStorage.setItem("kampus_user", JSON.stringify(data.user));
-      }
-      set({
-        user: data.user,
-        role: data.user.role,
-        accessToken: data.accessToken,
-        refreshToken: data.refreshToken,
-        isAuthenticated: true,
-        isLoading: false,
-        error: null,
-      });
+      set(
+        persistSession(await authApi.login({ emailOrPhone, password, role })),
+      );
       return true;
-    } catch (err: any) {
-      const errorMsg =
-        err?.response?.data?.message ||
-        err?.message ||
-        "Login failed. Please verify your phone/email and password.";
-      set({ isLoading: false, error: errorMsg });
+    } catch (error) {
+      set({
+        isLoading: false,
+        error: authError(
+          error,
+          "Could not sign in. Check your connection and try again.",
+        ),
+      });
       return false;
     }
   },
-
   sendOtp: async (phone, role) => {
     set({ isLoading: true, error: null });
     try {
-      const res = await authApi.sendOtp({ phone, role });
-      set({ isLoading: false, error: null });
-      return res;
-    } catch (err: any) {
-      const errorMsg =
-        err?.response?.data?.message ||
-        err?.message ||
-        "Could not send SMS verification code. Please check your phone number.";
-      set({ isLoading: false, error: errorMsg });
+      const result = await authApi.sendOtp({ phone, role });
+      set({ isLoading: false });
+      return result;
+    } catch (error) {
+      set({
+        isLoading: false,
+        error: authError(error, "Could not send your verification code."),
+      });
       return null;
     }
   },
-
-  verifyOtp: async (phone, code) => {
+  verifyOtp: async (phone, code, requestId) => {
     set({ isLoading: true, error: null });
     try {
-      const data = await authApi.verifyOtp({ phone, code });
-      if (typeof window !== "undefined") {
-        localStorage.setItem("kampus_access_token", data.accessToken);
-        localStorage.setItem("kampus_refresh_token", data.refreshToken);
-        localStorage.setItem("kampus_user", JSON.stringify(data.user));
-      }
-      set({
-        user: data.user,
-        role: data.user.role,
-        accessToken: data.accessToken,
-        refreshToken: data.refreshToken,
-        isAuthenticated: true,
-        isLoading: false,
-        error: null,
-      });
+      set(persistSession(await authApi.verifyOtp({ phone, code, requestId })));
       return true;
-    } catch (err: any) {
-      const errorMsg =
-        err?.response?.data?.message ||
-        err?.message ||
-        "Invalid OTP verification code. Please try again.";
-      set({ isLoading: false, error: errorMsg });
+    } catch (error) {
+      set({
+        isLoading: false,
+        error: authError(
+          error,
+          "Could not verify this code. Please try again.",
+        ),
+      });
       return false;
     }
   },
-
-  isRegisteredHost: () => {
+  completeProfile: async (payload) => {
     const user = get().user;
-    if (!user) return false;
-    return user.role === "LANDLORD" || Boolean(user.landlord);
-  },
-
-  registerAsLandlord: async (payload: any) => {
+    if (!user || !["STUDENT", "LANDLORD"].includes(user.role)) return false;
     set({ isLoading: true, error: null });
     try {
-      const updatedUser = await authApi.updateLandlordProfile(payload);
-      if (typeof window !== "undefined") {
-        localStorage.setItem("kampus_user", JSON.stringify(updatedUser));
-      }
-      set({
-        user: updatedUser,
-        role: "LANDLORD",
-        isLoading: false,
-        error: null,
-      });
-      toast.success("Host Profile Activated!", {
-        description: "You are now registered as an accredited Landlord on Kampus.",
-      });
-      return true;
-    } catch (err: any) {
-      const errorMsg =
-        err?.response?.data?.message ||
-        err?.message ||
-        "Could not complete host registration. Please try again.";
-      set({ isLoading: false, error: errorMsg });
-      toast.error("Registration Incomplete", { description: errorMsg });
-      return false;
-    }
-  },
-
-  setUser: (user: User) => {
-    if (typeof window !== "undefined") {
-      localStorage.setItem("kampus_user", JSON.stringify(user));
-    }
-    set({ user, role: user.role });
-  },
-
-  switchRole: (role: UserRole) => {
-    const currentUser = get().user;
-    if (!currentUser) {
-      set({ role });
-      return true;
-    }
-
-    // STRICT GUARD: If switching to LANDLORD, verify landlord registration
-    if (role === "LANDLORD") {
-      const isHost = currentUser.role === "LANDLORD" || Boolean(currentUser.landlord);
-      if (!isHost) {
-        toast.error("Host Account Required", {
-          description: "You are not registered as a host. Please complete landlord verification first.",
+      if (user.role === "LANDLORD")
+        await authApi.updateLandlordProfile(payload);
+      else await authApi.updateProfile(payload);
+      // Profile endpoints return partial records. Always restore the complete session shape.
+      const updated = await authApi.getMe();
+      persistUser(updated);
+      set({ user: updated, role: updated.role, isLoading: false });
+      if (updated.profileStatus !== "COMPLETED") {
+        set({
+          error:
+            "Your details were saved. Please complete the remaining required fields.",
         });
         return false;
       }
+      return true;
+    } catch (error) {
+      set({
+        isLoading: false,
+        error: authError(
+          error,
+          "Could not finish your profile. Your entries are still here; please try again.",
+        ),
+      });
+      return false;
     }
-
-    const updatedUser: User = {
-      ...currentUser,
-      role,
-    };
-    if (typeof window !== "undefined") {
-      localStorage.setItem("kampus_user", JSON.stringify(updatedUser));
+  },
+  registerAsLandlord: async (payload) => {
+    if (get().user?.role !== "LANDLORD") {
+      set({ error: "Please sign in with a separate landlord account." });
+      return false;
     }
-    set({ role, user: updatedUser });
-    toast.info("Active Role Switched", {
-      description: `Now viewing as ${role === "STUDENT" ? "Student" : "Landlord & Property Host"}.`,
-    });
+    return get().completeProfile(payload);
+  },
+  isRegisteredHost: () => get().user?.role === "LANDLORD",
+  setUser: (user) => {
+    persistUser(user);
+    set({ user, role: user.role });
+  },
+  // A display preference must never overwrite the authenticated account role.
+  switchRole: (role) => {
+    if (role === "LANDLORD" && get().user?.role !== "LANDLORD") return false;
+    if (role === "ADMIN" && get().user?.role !== "ADMIN") return false;
+    set({ role });
     return true;
   },
-
   logout: () => {
-    authApi.logout();
-    if (typeof window !== "undefined") {
-      localStorage.removeItem("kampus_access_token");
-      localStorage.removeItem("kampus_refresh_token");
-      localStorage.removeItem("kampus_user");
-    }
-    set({
-      user: null,
-      role: "STUDENT",
-      accessToken: null,
-      refreshToken: null,
-      isAuthenticated: false,
-      isLoading: false,
-      error: null,
-    });
-    toast.info("Signed Out", {
-      description: "You have been securely signed out of your Kampus session.",
-    });
+    void authApi.logout();
+    set(clearSession());
+    toast.info("Signed out");
   },
-
   checkAuth: async () => {
     if (typeof window === "undefined") return;
     const token = localStorage.getItem("kampus_access_token");
-    const userStr = localStorage.getItem("kampus_user");
-
-    if (token && userStr) {
-      try {
-        const parsedUser: User = JSON.parse(userStr);
-        set({
-          user: parsedUser,
-          role: parsedUser.role,
-          accessToken: token,
-          isAuthenticated: true,
-        });
-
-        // Silently revalidate against live /auth/me
-        const liveUser = await authApi.getMe();
-        if (liveUser) {
-          localStorage.setItem("kampus_user", JSON.stringify(liveUser));
-          set({ user: liveUser, role: liveUser.role });
-        }
-      } catch {
-        // If token expired/invalid, clear session
-        localStorage.removeItem("kampus_access_token");
-        localStorage.removeItem("kampus_refresh_token");
-        localStorage.removeItem("kampus_user");
-        set({
-          user: null,
-          role: "STUDENT",
-          accessToken: null,
-          refreshToken: null,
-          isAuthenticated: false,
-        });
-      }
+    const saved = localStorage.getItem("kampus_user");
+    if (!token || !saved) return;
+    try {
+      const user: User = JSON.parse(saved);
+      set({
+        user,
+        role: user.role,
+        accessToken: token,
+        refreshToken: localStorage.getItem("kampus_refresh_token"),
+        isAuthenticated: true,
+      });
+      const liveUser = await authApi.getMe();
+      // Ignore a response from a session that has since signed out or changed.
+      if (
+        get().user?.id === user.id &&
+        localStorage.getItem("kampus_access_token")
+      )
+        get().setUser(liveUser);
+    } catch (error) {
+      if (
+        error instanceof SyntaxError ||
+        (isAxiosError(error) &&
+          [401, 403].includes(error.response?.status || 0))
+      )
+        set(clearSession());
+      // A temporary connection failure must not discard an unfinished signup.
     }
   },
 }));
+
+function clearSessionOnServer() {
+  return {
+    user: null,
+    role: "STUDENT" as UserRole,
+    accessToken: null,
+    refreshToken: null,
+    isAuthenticated: false,
+    isLoading: false,
+    error: null,
+  };
+}

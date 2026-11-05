@@ -38,50 +38,50 @@ function PaymentCallbackContent() {
 
   const content = {
     checking: {
-      icon: <Clock3 className="h-8 w-8 text-amber-600" />,
+      icon: <Clock3 className="h-8 w-8 text-warning" />,
       title: "Confirming your payment",
       body: "We are checking the transaction directly with Flutterwave.",
     },
     confirmed: {
-      icon: <CheckCircle2 className="h-8 w-8 text-emerald-600" />,
+      icon: <CheckCircle2 className="h-8 w-8 text-success" />,
       title: "Payment confirmed",
       body: "Your booking or inspection extension has been updated.",
     },
     pending: {
-      icon: <Clock3 className="h-8 w-8 text-amber-600" />,
+      icon: <Clock3 className="h-8 w-8 text-warning" />,
       title: "Confirmation is still pending",
       body: "The provider has not confirmed the payment yet. Check your booking again shortly; a successful provider verification will update it automatically.",
     },
     failed: {
-      icon: <XCircle className="h-8 w-8 text-rose-600" />,
+      icon: <XCircle className="h-8 w-8 text-destructive" />,
       title: "Payment was not completed",
       body: "No inspection extension has been applied. You can return to your booking and try again while the extension window is open.",
     },
     refund: {
-      icon: <Clock3 className="h-8 w-8 text-amber-600" />,
+      icon: <Clock3 className="h-8 w-8 text-warning" />,
       title: "Payment received; refund review in progress",
       body: "The payment could not be applied to your booking or inspection extension. A refund is processing or needs support review. Check your booking for the latest status.",
     },
     refunded: {
-      icon: <CheckCircle2 className="h-8 w-8 text-emerald-600" />,
+      icon: <CheckCircle2 className="h-8 w-8 text-success" />,
       title: "Payment refunded",
       body: "The refund has been confirmed. Check your booking for details and your bank or payment provider for when it will appear.",
     },
   }[state];
 
   return (
-    <div className="min-h-screen flex flex-col bg-background text-foreground">
+    <div className="editorial-page min-h-screen flex flex-col bg-background text-foreground">
       <Navbar />
       <main className="flex-1 grid place-items-center px-4 py-12">
-        <section className="w-full max-w-lg rounded-3xl border border-slate-200 dark:border-[#22352B] bg-white dark:bg-[#121E18] p-8 text-center shadow-xl">
-          <div className="mx-auto mb-5 grid h-16 w-16 place-items-center rounded-2xl bg-slate-100 dark:bg-[#0E1A14]">
-            {state === "checking" ? <ShieldCheck className="h-8 w-8 text-emerald-600" /> : content.icon}
+        <section className="payment-result w-full max-w-lg rounded-3xl border border-border bg-card p-8 text-center shadow-sm">
+          <div className="mx-auto mb-5 grid h-16 w-16 place-items-center rounded-2xl bg-muted">
+            {state === "checking" ? <ShieldCheck className="h-8 w-8 text-success" /> : content.icon}
           </div>
-          <h1 className="text-2xl font-black">{content.title}</h1>
-          <p className="mt-3 text-sm leading-6 text-slate-600 dark:text-[#93A89D]">{content.body}</p>
+          <h1 className="text-3xl font-normal tracking-tight">{content.title}</h1>
+          <p className="mt-3 text-sm leading-6 text-muted-foreground">{content.body}</p>
           <div className="mt-7 flex flex-col sm:flex-row justify-center gap-3">
             <Link href="/bookings">
-              <Button className="w-full rounded-full bg-emerald-700 text-white hover:bg-emerald-600">View my bookings</Button>
+              <Button className="w-full rounded-full bg-primary text-primary-foreground hover:bg-primary-hover">View my bookings</Button>
             </Link>
             {state === "pending" && (
               <Button variant="outline" onClick={() => window.location.reload()} className="rounded-full">Check again</Button>

@@ -22,11 +22,11 @@ export function PropertyCardCarousel({
   if (!images || images.length === 0) {
     return (
       <div
-        className={`relative w-full overflow-hidden rounded-xl bg-slate-100 dark:bg-[#14231B] border border-slate-200 dark:border-[#22352B] flex flex-col items-center justify-center text-center p-6 text-slate-500 dark:text-[#93A89D] ${aspectRatio} ${className}`}
+        className={`relative w-full overflow-hidden rounded-xl bg-muted border border-border flex flex-col items-center justify-center text-center p-6 text-muted-foreground ${aspectRatio} ${className}`}
       >
-        <Building2 className="h-10 w-10 text-slate-400 dark:text-[#586B61] mb-2 opacity-50" />
-        <span className="text-xs font-semibold text-slate-700 dark:text-[#93A89D]">Photos Coming Soon</span>
-        <span className="text-[10px] text-slate-400 dark:text-[#586B61]">Kampus Verified Lodge</span>
+        <Building2 className="h-10 w-10 text-muted-foreground mb-2 opacity-50" />
+        <span className="text-xs font-medium text-foreground">Photos Coming Soon</span>
+        <span className="text-[10px] text-muted-foreground">Kampus Verified Lodge</span>
       </div>
     );
   }
@@ -82,7 +82,7 @@ export function PropertyCardCarousel({
 
   return (
     <div
-      className={`group/carousel relative w-full overflow-hidden rounded-xl bg-slate-900 ${aspectRatio} ${className}`}
+      className={`group/carousel relative w-full overflow-hidden rounded-xl bg-ink-solid ${aspectRatio} ${className}`}
     >
       {/* Embla Viewport */}
       <div className="h-full w-full overflow-hidden" ref={emblaRef}>
@@ -113,7 +113,7 @@ export function PropertyCardCarousel({
             type="button"
             aria-label="Previous image"
             onClick={scrollPrev}
-            className="absolute left-2.5 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full bg-black/60 text-white backdrop-blur-md transition-all duration-200 opacity-0 group-hover/carousel:opacity-100 hover:bg-black/90 hover:scale-110 active:scale-95 z-20 shadow-lg"
+            className="absolute left-2.5 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full bg-black/60 text-white backdrop-blur-md transition-all duration-200 opacity-0 group-hover/carousel:opacity-100 hover:bg-black/90 hover:scale-110 active:scale-95 z-20 shadow-sm"
           >
             <ChevronLeft className="h-4 w-4" />
           </button>
@@ -122,7 +122,7 @@ export function PropertyCardCarousel({
             type="button"
             aria-label="Next image"
             onClick={scrollNext}
-            className="absolute right-2.5 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full bg-black/60 text-white backdrop-blur-md transition-all duration-200 opacity-0 group-hover/carousel:opacity-100 hover:bg-black/90 hover:scale-110 active:scale-95 z-20 shadow-lg"
+            className="absolute right-2.5 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full bg-black/60 text-white backdrop-blur-md transition-all duration-200 opacity-0 group-hover/carousel:opacity-100 hover:bg-black/90 hover:scale-110 active:scale-95 z-20 shadow-sm"
           >
             <ChevronRight className="h-4 w-4" />
           </button>

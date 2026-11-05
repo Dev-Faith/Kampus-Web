@@ -1,6 +1,6 @@
 "use client";
 
-import React, { Suspense } from "react";
+import React, { Suspense, useState } from "react";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { HeroArchitecturalShowcase } from "@/components/home/HeroArchitecturalShowcase";
@@ -11,14 +11,19 @@ import { EscrowVisualizer } from "@/components/home/EscrowVisualizer";
 import { HostCtaBanner } from "@/components/home/HostCtaBanner";
 import { LandingFaq } from "@/components/home/LandingFaq";
 import { ScrollReveal } from "@/components/home/ScrollReveal";
+import { LandingAtmosphere } from "@/components/home/LandingAtmosphere";
+import "./landing.css";
 
 function LandingPageContent() {
+  const [motionPaused, setMotionPaused] = useState(false);
+
   return (
-    <div className="landing-page min-h-screen flex flex-col bg-background text-foreground transition-colors duration-200">
+    <div className="landing-page min-h-screen flex flex-col bg-background text-foreground transition-colors duration-200" data-motion={motionPaused ? "paused" : "playing"}>
+      <LandingAtmosphere />
       <Navbar />
 
       <main className="landing-main flex-1">
-        <HeroArchitecturalShowcase />
+        <HeroArchitecturalShowcase motionPaused={motionPaused} onToggleMotion={() => setMotionPaused((paused) => !paused)} />
 
         <ScrollReveal className="landing-block">
           <ArchitecturalBentoPurpose />
@@ -32,10 +37,8 @@ function LandingPageContent() {
           <MinnaNeighborhoods />
         </ScrollReveal>
 
-        <ScrollReveal className="landing-block landing-escrow" delay={0.04}>
-          <section id="escrow" aria-label="How rent protection works">
-            <EscrowVisualizer />
-          </section>
+        <ScrollReveal className="landing-block" delay={0.04}>
+          <EscrowVisualizer />
         </ScrollReveal>
 
         <ScrollReveal className="landing-block">

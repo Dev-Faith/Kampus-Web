@@ -75,6 +75,7 @@ export default function BookingsPage() {
       setIsLoading(false);
       return;
     }
+    setIsLoading(true);
     bookingsApi.getBookings().then((res) => {
       const liveBookings: EscrowBooking[] = (res.items || []).map((b) => {
         const escrowStatus = String(b.escrow?.status ?? b.escrowStatus ?? "").toUpperCase();
@@ -136,7 +137,7 @@ export default function BookingsPage() {
       setBookings([]);
       setIsLoading(false);
     });
-  }, []);
+  }, [isAuthenticated]);
 
   const showToast = (msg: string) => {
     toast.success(msg);
@@ -219,19 +220,19 @@ export default function BookingsPage() {
       <div className="editorial-page bookings-page min-h-screen flex flex-col bg-background text-foreground transition-colors">
         <Navbar />
         <main className="flex-1 flex items-center justify-center p-4 sm:p-8">
-          <div className="editorial-card max-w-md w-full rounded-3xl border border-slate-200 dark:border-[#22352B] bg-white dark:bg-[#121E18] p-8 sm:p-10 text-center space-y-6 shadow-xl">
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 shadow-inner">
+          <div className="editorial-card max-w-md w-full rounded-3xl border border-border bg-card p-8 sm:p-10 text-center space-y-6 shadow-xl">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-success-soft text-success border border-success/25 shadow-inner">
               <ShieldCheck className="h-8 w-8" />
             </div>
 
             <div className="space-y-2">
-              <span className="text-[10px] font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-success">
                 Your bookings
               </span>
-              <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+              <h2 className="text-2xl font-semibold text-foreground tracking-tight">
                 Sign in to view your stays
               </h2>
-              <p className="text-xs sm:text-sm text-slate-600 dark:text-[#93A89D] leading-relaxed">
+              <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
                 Your reservations and move-in details are saved to your student account. Sign in to pick up where you left off.
               </p>
             </div>
@@ -239,7 +240,7 @@ export default function BookingsPage() {
             <div className="space-y-3 pt-2">
               <Button
                 onClick={() => setIsAuthOpen(true)}
-                className="editorial-action w-full rounded-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs py-3 shadow-lg"
+                className="editorial-action w-full rounded-full bg-primary hover:bg-primary-hover text-primary-foreground font-bold text-xs py-3 shadow-lg"
               >
                 Sign In to View Your Bookings
               </Button>
@@ -247,7 +248,7 @@ export default function BookingsPage() {
               <Link href="/explore" className="block">
                 <Button
                   variant="outline"
-                  className="w-full rounded-full border-slate-300 dark:border-[#22352B] bg-white dark:bg-[#0E1A14] text-slate-700 dark:text-[#93A89D] hover:text-slate-900 dark:hover:text-white text-xs font-semibold"
+                  className="w-full rounded-full border-border bg-card text-foreground hover:text-foreground text-xs font-semibold"
                 >
                   Browse Verified Student Lodges
                 </Button>
@@ -268,29 +269,30 @@ export default function BookingsPage() {
   return (
     <div className="editorial-page bookings-page min-h-screen flex flex-col bg-background text-foreground transition-colors">
       <Navbar />
+      <AuthModal isOpen={isAuthOpen} onClose={() => setIsAuthOpen(false)} defaultRole="STUDENT" />
 
       {/* Floating Feedback Banner */}
       {toastMessage && (
-        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-2xl border border-emerald-500/30 bg-white dark:bg-[#0E1A14] px-5 py-3 text-xs font-semibold text-emerald-800 dark:text-emerald-300 shadow-2xl animate-in fade-in slide-in-from-bottom-3">
-          <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-2xl border border-success/25 bg-card px-5 py-3 text-xs font-semibold text-success shadow-2xl animate-in fade-in slide-in-from-bottom-3">
+          <CheckCircle2 className="h-4 w-4 text-success shrink-0" />
           <span>{toastMessage}</span>
         </div>
       )}
 
       <main className="editorial-main flex-1 max-w-5xl mx-auto w-full px-4 sm:px-6 py-8 space-y-8">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-200 dark:border-[#22352B] pb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-border pb-6">
           <div>
             <div className="flex items-center gap-2 mb-1.5">
-              <ShieldCheck className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-              <span className="editorial-eyebrow text-[11px] font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400">
+              <ShieldCheck className="h-4 w-4 text-success" />
+              <span className="editorial-eyebrow text-[11px] font-semibold uppercase tracking-widest text-brand-strong">
                 Your stays
               </span>
             </div>
-            <h1 className="editorial-title text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
+            <h1 className="editorial-title text-2xl sm:text-3xl font-semibold text-foreground tracking-tight">
               Your bookings
             </h1>
-            <p className="text-xs sm:text-sm text-slate-600 dark:text-[#93A89D] mt-1">
+            <p className="text-xs sm:text-sm text-muted-foreground mt-1">
               Track payment, move-in inspection, and any open disputes for your bookings.
             </p>
           </div>
@@ -298,7 +300,7 @@ export default function BookingsPage() {
           <Link href="/explore">
             <Button
               variant="outline"
-              className="rounded-full border-slate-300 dark:border-[#22352B] bg-white dark:bg-[#121E18] text-slate-800 dark:text-white hover:bg-slate-100 dark:hover:bg-[#17261F] text-xs font-bold"
+              className="rounded-full border-border bg-card text-foreground hover:bg-muted text-xs font-bold"
             >
               Browse More Lodges
             </Button>
@@ -311,24 +313,24 @@ export default function BookingsPage() {
             {[1, 2].map((i) => (
               <div
                 key={i}
-                className="h-64 rounded-3xl border border-slate-200 dark:border-[#22352B] bg-slate-100 dark:bg-[#121E18] animate-pulse p-6"
+                className="h-64 rounded-3xl border border-border bg-muted animate-pulse p-6"
               />
             ))}
           </div>
         ) : bookings.length === 0 ? (
-          <div className="editorial-card rounded-3xl border border-slate-200 dark:border-[#22352B] bg-white dark:bg-[#121E18] p-12 text-center space-y-4 shadow-xl">
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+          <div className="editorial-card rounded-3xl border border-border bg-card p-12 text-center space-y-4 shadow-xl">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-success-soft text-success border border-success/25">
               <ShieldCheck className="h-8 w-8" />
             </div>
             <div className="max-w-md mx-auto space-y-1.5">
-              <h3 className="text-xl font-bold text-slate-900 dark:text-white">No Active Bookings</h3>
-              <p className="text-xs sm:text-sm text-slate-600 dark:text-[#93A89D] leading-relaxed">
+              <h3 className="text-xl font-bold text-foreground">No Active Bookings</h3>
+              <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
                 Once payment is confirmed, your booking status and inspection code appear here. Inspect the room and collect the keys before sharing the code with your host. Open a dispute if the lodge does not match what you booked.
               </p>
             </div>
             <div className="pt-2">
               <Link href="/explore">
-                <Button className="editorial-action rounded-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-6 py-2.5 shadow-lg">
+                <Button className="editorial-action rounded-full bg-primary hover:bg-primary-hover text-primary-foreground font-bold text-xs px-6 py-2.5 shadow-lg">
                   Browse Verified Student Lodges
                 </Button>
               </Link>
@@ -346,12 +348,12 @@ export default function BookingsPage() {
               return (
                 <div
                   key={booking.id}
-                  className="editorial-card rounded-3xl border border-slate-200 dark:border-[#22352B] bg-white dark:bg-[#121E18] p-6 sm:p-8 space-y-6 shadow-md dark:shadow-xl"
+                  className="editorial-card rounded-3xl border border-border bg-card p-6 sm:p-8 space-y-6 shadow-md "
                 >
                   {/* Top Row: Info & Status */}
                   <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-5">
-                    <div className="flex items-start gap-4">
-                      <div className="relative h-20 w-28 shrink-0 overflow-hidden rounded-2xl bg-slate-100 dark:bg-[#0B130F] border border-slate-200 dark:border-[#22352B] flex items-center justify-center">
+                    <div className="flex min-w-0 items-start gap-3 sm:gap-4">
+                      <div className="relative h-20 w-20 sm:w-28 shrink-0 overflow-hidden rounded-2xl bg-muted border border-border flex items-center justify-center">
                         {booking.imageUrl ? (
                           <Image
                             src={booking.imageUrl}
@@ -360,21 +362,21 @@ export default function BookingsPage() {
                             className="object-cover"
                           />
                         ) : (
-                          <Building className="h-8 w-8 text-[#586B61]" />
+                          <Building className="h-8 w-8 text-muted-foreground" />
                         )}
                       </div>
 
-                      <div>
-                        <span className="text-[11px] font-mono text-slate-500 dark:text-[#93A89D]">
+                      <div className="min-w-0 flex-1">
+                        <span className="block break-all text-[11px] font-mono text-muted-foreground">
                           {booking.id}
                         </span>
-                        <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white mt-0.5">
+                        <h3 className="break-words text-base sm:text-lg font-semibold text-foreground mt-0.5">
                           {booking.lodgeTitle}
                         </h3>
-                        <p className="text-xs text-slate-600 dark:text-[#93A89D] flex items-center gap-1 mt-1">
-                          <GraduationCap className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+                        <p className="break-words text-xs leading-5 text-muted-foreground mt-1">
+                          <GraduationCap className="mr-1 inline-block h-3.5 w-3.5 text-brand-strong" />
                           <span>{booking.campus}</span>
-                          <span>•</span>
+                          <span className="mx-1">·</span>
                           <span>{booking.roomType}</span>
                         </p>
                       </div>
@@ -383,20 +385,20 @@ export default function BookingsPage() {
                     {/* Status Badge */}
                     <div className="shrink-0 text-left md:text-right">
                       <span
-                        className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wider ${
+                        className={`inline-flex max-w-full items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wider ${
                           isHeld
-                            ? "bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/30"
+                            ? "bg-warning-soft text-warning  border border-warning/25"
                             : isReleased
-                            ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30"
-                            : "bg-rose-500/10 text-rose-700 dark:text-rose-300 border border-rose-500/30"
+                            ? "bg-success-soft text-success  border border-success/25"
+                            : "bg-destructive-soft text-destructive  border border-destructive/25"
                         }`}
                       >
-                        {isHeld && <Clock className="h-3.5 w-3.5 text-amber-500 dark:text-amber-400" />}
+                        {isHeld && <Clock className="h-3.5 w-3.5 text-warning" />}
                         {isReleased && (
-                          <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+                          <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-success" />
                         )}
                         {isDisputed && (
-                          <AlertCircle className="h-3.5 w-3.5 text-rose-600 dark:text-rose-400" />
+                          <AlertCircle className="h-3.5 w-3.5 text-destructive" />
                         )}
                         <span>
                           {isHeld
@@ -417,7 +419,7 @@ export default function BookingsPage() {
                         </span>
                       </span>
 
-                      <p className="text-lg font-black text-slate-900 dark:text-white mt-1 tabular-nums">
+                      <p className="text-lg font-semibold text-foreground mt-1 tabular-nums">
                         {booking.currency}
                         {booking.amountHeld.toLocaleString()}
                       </p>
@@ -426,68 +428,68 @@ export default function BookingsPage() {
 
                   {/* Move-in Key Code Box (When in Escrow) */}
                   {isHeld && (
-                    <div className="rounded-2xl border border-[#c45b37]/25 bg-[#f7f1ed] dark:bg-[#1b1715] p-5 flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div className="rounded-2xl border border-brand/25 bg-surface-sand p-5 flex flex-col sm:flex-row items-center justify-between gap-4">
                       <div className="space-y-1 text-center sm:text-left">
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-[#a94c2e] dark:text-[#e08b6a]">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-brand-strong">
                           Move-in Verification Secret Code
                         </span>
-                        <p className="text-xs text-slate-600 dark:text-[#93A89D]">
+                        <p className="text-xs text-muted-foreground">
                           After inspecting the room and receiving the keys, share this code with your host to record your approval:
                         </p>
                       </div>
 
-                      <div className="rounded-xl bg-white dark:bg-[#0B130F] border border-[#c45b37]/35 px-5 py-2 font-mono text-base font-black tracking-widest text-[#a94c2e] dark:text-[#e08b6a]">
+                      <div className="rounded-xl bg-card border border-brand/35 px-5 py-2 font-mono text-base font-semibold tracking-widest text-brand-strong">
                         {booking.moveInKeyCode || "Available after payment confirmation"}
                       </div>
                     </div>
                   )}
 
                   {/* 3-Step Milestone Visualizer */}
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3 border-t border-slate-200 dark:border-[#22352B] pt-5">
-                    <div className="rounded-xl bg-slate-50 dark:bg-[#0E1A14] p-3 text-xs border border-slate-200 dark:border-[#22352B]">
-                      <span className="text-[10px] font-bold uppercase text-emerald-600 dark:text-emerald-400 block mb-1">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3 border-t border-border pt-5">
+                    <div className="rounded-xl bg-muted p-3 text-xs border border-border">
+                      <span className="text-[10px] font-bold uppercase text-success block mb-1">
                         1. Payment Status
                       </span>
-                      <p className="font-semibold text-slate-900 dark:text-white">
+                      <p className="font-semibold text-foreground">
                          {isPaymentPending
                            ? "Awaiting payment"
                            : booking.paymentMode === "test"
                            ? "Test payment simulated"
                            : "Payment confirmed by Kampus"}
                       </p>
-                      <span className="text-[11px] text-slate-500 dark:text-[#93A89D]">
+                      <span className="text-[11px] text-muted-foreground">
                          {booking.paymentMode === "test" ? "Test mode · No money moved" : `Locked on ${booking.bookingDate}`}
                       </span>
                     </div>
 
-                    <div className="rounded-xl bg-slate-50 dark:bg-[#0E1A14] p-3 text-xs border border-slate-200 dark:border-[#22352B]">
-                      <span className="text-[10px] font-bold uppercase text-amber-600 dark:text-amber-400 block mb-1">
+                    <div className="rounded-xl bg-muted p-3 text-xs border border-border">
+                      <span className="text-[10px] font-bold uppercase text-warning block mb-1">
                         2. Physical Inspection
                       </span>
-                      <p className="font-semibold text-slate-900 dark:text-white">Inspect Room & Facilities</p>
-                      <span className="text-[11px] text-slate-500 dark:text-[#93A89D]">
+                      <p className="font-semibold text-foreground">Inspect Room & Facilities</p>
+                      <span className="text-[11px] text-muted-foreground">
                         Deadline: {booking.inspectionDeadline}
                       </span>
                     </div>
 
-                    <div className="rounded-xl bg-slate-50 dark:bg-[#0E1A14] p-3 text-xs border border-slate-200 dark:border-[#22352B]">
-                      <span className="text-[10px] font-bold uppercase text-purple-600 dark:text-purple-400 block mb-1">
+                    <div className="rounded-xl bg-muted p-3 text-xs border border-border">
+                      <span className="text-[10px] font-bold uppercase text-info block mb-1">
                         3. Key Acceptance
                       </span>
-                      <p className="font-semibold text-slate-900 dark:text-white">Authorize Payout</p>
-                      <span className="text-[11px] text-slate-500 dark:text-[#93A89D]">
+                      <p className="font-semibold text-foreground">Authorize Payout</p>
+                      <span className="text-[11px] text-muted-foreground">
                         Direct to {booking.hostName}
                       </span>
                     </div>
                   </div>
 
                   {(booking.canExtendInspection || booking.canResumeInspectionExtension || ["PAID", "PENDING", "REFUND_PENDING", "REFUND_FAILED", "REFUNDED"].includes(booking.extensionStatus || "")) && (
-                    <div className="rounded-2xl border border-amber-500/25 bg-amber-50/70 dark:bg-amber-500/5 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="rounded-2xl border border-warning/25 bg-warning-soft p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                       <div className="space-y-1">
-                        <p className="text-sm font-bold text-slate-900 dark:text-white">
+                        <p className="text-sm font-bold text-foreground">
                           {booking.extensionStatus === "PAID" ? "Inspection deadline extended" : "Need more time to inspect?"}
                         </p>
-                        <p className="text-xs text-slate-600 dark:text-[#93A89D]">
+                        <p className="text-xs text-muted-foreground">
                           {booking.extensionStatus === "PAID"
                             ? booking.paymentMode === "test"
                               ? `Test deferral ${booking.extensionPaidCount || 1} of 4 is recorded through ${booking.extensionDeadline ? new Date(booking.extensionDeadline).toLocaleDateString("en-NG", { timeZone: "Africa/Lagos", month: "short", day: "numeric", year: "numeric" }) : booking.inspectionDeadline}. No money moved.`
@@ -509,7 +511,7 @@ export default function BookingsPage() {
                         <Button
                           variant="outline"
                           onClick={() => handleExtendInspection(booking.id)}
-                          className="shrink-0 border-amber-600/40 bg-white dark:bg-[#17261F] text-slate-900 dark:text-white text-xs font-bold"
+                          className="shrink-0 border-warning/25 bg-card text-foreground text-xs font-bold"
                         >
                           {booking.extensionStatus === "PENDING"
                             ? booking.paymentMode === "test" ? "Resume test deferral" : "Resume today’s deferral payment"
@@ -517,7 +519,7 @@ export default function BookingsPage() {
                         </Button>
                       )}
                       {booking.extensionStatus === "PENDING" && (
-                        <button type="button" onClick={() => window.location.reload()} className="text-xs font-semibold text-amber-800 dark:text-amber-300 underline">
+                        <button type="button" onClick={() => window.location.reload()} className="text-xs font-semibold text-warning underline">
                           Refresh payment status
                         </button>
                       )}
@@ -525,13 +527,13 @@ export default function BookingsPage() {
                   )}
 
                   {isPaymentPending && booking.escrowCheckoutEnabled && (
-                    <div className="border-t border-slate-200 dark:border-[#22352B] pt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                      <p className="text-xs text-slate-600 dark:text-[#93A89D]">
+                    <div className="border-t border-border pt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                      <p className="text-xs text-muted-foreground">
                         {booking.paymentMode === "test"
                           ? "Test mode is on. Completing this step records a simulated payment; no money moves."
                           : "Pay Kampus through Flutterwave. Landlord payout waits for inspection approval and settlement."}
                       </p>
-                      <Button onClick={() => handlePayBooking(booking.id)} className="shrink-0 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold">
+                      <Button onClick={() => handlePayBooking(booking.id)} className="shrink-0 bg-primary hover:bg-primary-hover text-primary-foreground text-xs font-bold">
                         {booking.paymentMode === "test" ? "Simulate test payment" : "Continue to payment"}
                       </Button>
                     </div>
@@ -539,11 +541,11 @@ export default function BookingsPage() {
 
                   {/* Action Buttons */}
                   {(isHeld || isPayoutPending) && (
-                    <div className="flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-slate-200 dark:border-[#22352B] pt-4">
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-border pt-4">
                       <button
                         type="button"
                         onClick={() => handleOpenDispute(booking.id)}
-                        className="text-xs font-bold text-rose-500 dark:text-rose-400 hover:text-rose-600 dark:hover:text-rose-300 hover:underline flex items-center gap-1.5"
+                        className="text-xs font-bold text-destructive hover:text-destructive hover:underline flex items-center gap-1.5"
                       >
                         <AlertCircle className="h-4 w-4" />
                         <span>Report Issue / Room Not as Described</span>
@@ -559,9 +561,9 @@ export default function BookingsPage() {
                                 : `Host ${booking.hostName} can be messaged via your Kampus dashboard`
                             )
                           }
-                          className="flex-1 sm:flex-none border-slate-300 dark:border-[#22352B] bg-white dark:bg-[#17261F] text-slate-800 dark:text-[#F2F9F5] text-xs font-semibold"
+                          className="flex-1 sm:flex-none border-border bg-card text-foreground text-xs font-semibold"
                         >
-                          <Phone className="h-3.5 w-3.5 mr-1.5 text-emerald-600 dark:text-emerald-400" />
+                          <Phone className="h-3.5 w-3.5 mr-1.5 text-success" />
                           Call Landlord
                         </Button>
 
@@ -577,21 +579,21 @@ export default function BookingsPage() {
 
       {/* Escrow Dispute Modal */}
       <Dialog open={!!disputeBookingId} onOpenChange={(open) => !open && setDisputeBookingId(null)}>
-        <DialogContent className="editorial-dialog max-w-md bg-white dark:bg-[#0B130F] border border-rose-200 dark:border-rose-500/30 text-slate-900 dark:text-slate-100 p-6 rounded-3xl shadow-2xl">
+        <DialogContent className="editorial-dialog max-w-md bg-card border border-destructive/25 text-foreground p-6 rounded-3xl shadow-2xl">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-xl font-bold text-rose-600 dark:text-rose-400">
+            <DialogTitle className="flex items-center gap-2 text-xl font-bold text-destructive">
               <AlertCircle className="h-5 w-5" />
               Report a Booking Problem Ticket
             </DialogTitle>
           </DialogHeader>
 
-          <p className="text-xs text-slate-600 dark:text-[#93A89D] -mt-2">
+          <p className="text-xs text-muted-foreground -mt-2">
             Opening a dispute marks this booking as disputed so Kampus support can review it before the payout decision.
           </p>
 
           <form onSubmit={handleSubmitDispute} className="space-y-4 mt-2">
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-700 dark:text-[#93A89D]">
+              <label className="text-xs font-semibold text-foreground">
                 Reason for Dispute
               </label>
               <textarea
@@ -599,12 +601,12 @@ export default function BookingsPage() {
                 placeholder="e.g. Property does not match photos; power meter damaged, water borehole not operational."
                 value={disputeReason}
                 onChange={(e) => setDisputeReason(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-[#14231B] border border-slate-200 dark:border-[#22352B] text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 text-xs focus:outline-none focus:border-rose-500"
+                className="w-full px-3 py-2 rounded-xl bg-muted border border-border text-foreground placeholder:text-muted-foreground text-xs focus:outline-none focus:border-destructive/25"
                 required
               />
             </div>
 
-            <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 text-[11px] text-rose-800 dark:text-rose-300">
+            <div className="p-3 rounded-xl bg-destructive-soft border border-destructive/25 text-[11px] text-destructive">
               Disputed funds are protected under Nigerian Consumer Protection & Tenancy Law.
             </div>
 
@@ -613,13 +615,13 @@ export default function BookingsPage() {
                 type="button"
                 variant="outline"
                 onClick={() => setDisputeBookingId(null)}
-                className="rounded-full border-slate-200 dark:border-[#22352B] text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-[#14231B] text-xs"
+                className="rounded-full border-border text-foreground hover:bg-muted text-xs"
               >
                 Cancel
               </Button>
               <Button
                 type="submit"
-                className="rounded-full bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs"
+                className="rounded-full bg-destructive-soft hover:bg-destructive/20 text-destructive font-bold text-xs"
               >
                 Pause Payout & Open Ticket
               </Button>

@@ -76,73 +76,78 @@ function ExplorePlatform() {
       <Navbar />
 
       <main className="explore-main flex-1">
+        <header className="explore-intro">
+          <p className="editorial-eyebrow text-xs font-semibold uppercase tracking-widest text-brand-strong">FUTMINNA / Find your next home</p>
+          <h1 className="editorial-title">A place that feels like you.</h1>
+          <p>Explore rooms and flats around Gidankwano and Bosso. Find the space, neighbourhood, and budget that fit your student life.</p>
+        </header>
         {/* Filter and Query Control Bar */}
         <div className="w-full">
           <PropertyFilterBar />
         </div>
 
         {/* Results Counter & Live Indicator */}
-        <div className="explore-summary flex flex-wrap items-center justify-between gap-2 text-xs text-slate-600 dark:text-[#93A89D]">
+        <div className="explore-summary flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="font-bold text-slate-900 dark:text-white">
+            <span className="font-bold text-foreground">
               {filteredProperties.length} listings
             </span>
             <span>from the selected search</span>
             {campus !== "all" && (
-              <span className="rounded-full bg-[#f4e8e2] dark:bg-[#2a201b] px-2 py-0.5 font-bold text-[#a94c2e] dark:text-[#e08b6a] border border-[#c45b37]/25">
+              <span className="rounded-full bg-brand-soft px-2 py-0.5 font-bold text-brand-strong border border-brand/25">
                 {campus}
               </span>
             )}
             {type !== "all" && (
-              <span className="rounded-full bg-slate-100 dark:bg-[#121E18] px-2 py-0.5 font-medium text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-[#22352B] capitalize">
+              <span className="rounded-full bg-muted px-2 py-0.5 font-medium text-foreground border border-border capitalize">
                 {getAccommodationTypeLabel(type)}
               </span>
             )}
             {area !== "all" && (
-              <span className="rounded-full border border-slate-200 bg-slate-100 px-2 py-0.5 font-medium text-slate-700 capitalize dark:border-[#22352B] dark:bg-[#121E18] dark:text-slate-300">
+              <span className="rounded-full border border-border bg-muted px-2 py-0.5 font-medium text-foreground capitalize">
                 {CAMPUS_AREA_OPTIONS.find((option) => option.id === area)?.label ?? area}
               </span>
             )}
 
             {isFetching && (
-              <Loader2 className="h-3.5 w-3.5 animate-spin text-emerald-500" />
+              <Loader2 className="h-3.5 w-3.5 animate-spin text-brand-strong" />
             )}
           </div>
 
-          <div className="flex items-center gap-2 text-[#a94c2e] dark:text-[#e08b6a] font-semibold">
+          <div className="flex items-center gap-2 text-brand-strong font-semibold">
             <ShieldCheck className="h-4 w-4" />
             <span className="hidden sm:inline">Move-in Inspection Code</span>
           </div>
         </div>
 
         {hasFetchError ? (
-          <div role="alert" className="my-8 rounded-2xl border border-rose-300 bg-rose-50 p-8 text-center dark:border-rose-900 dark:bg-rose-950/30">
-            <h3 className="text-base font-bold text-slate-900 dark:text-white">
+          <div role="alert" className="my-8 rounded-2xl border border-destructive/25 bg-destructive-soft p-8 text-center">
+            <h3 className="text-base font-bold text-foreground">
               Listings couldn’t be loaded
             </h3>
-            <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
+            <p className="mt-1 text-sm text-muted-foreground">
               Please try again. This is a loading problem, not an empty search result.
             </p>
             <button
               type="button"
               onClick={() => setRetryCount((count) => count + 1)}
-              className="mt-4 rounded-full bg-emerald-700 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-800"
+              className="mt-4 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary-hover"
             >
               Try again
             </button>
           </div>
         ) : isFetching ? (
-          <div role="status" className="my-8 flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white p-8 text-sm text-slate-600 dark:border-[#22352B] dark:bg-[#0E1A14] dark:text-[#93A89D]">
-            <Loader2 className="h-4 w-4 animate-spin text-emerald-500" />
+          <div role="status" className="my-8 flex items-center justify-center gap-2 rounded-2xl border border-border bg-card p-8 text-sm text-muted-foreground">
+            <Loader2 className="h-4 w-4 animate-spin text-brand-strong" />
             Loading listings…
           </div>
         ) : filteredProperties.length === 0 ? (
-          <div className="my-8 rounded-2xl border border-slate-200 bg-white p-12 text-center shadow-sm dark:border-[#22352B] dark:bg-[#0E1A14]">
-            <Inbox className="mx-auto mb-3 h-10 w-10 text-slate-400 dark:text-[#586B61]" />
-            <h3 className="text-base font-bold text-slate-900 dark:text-white">
+          <div className="my-8 rounded-2xl border border-border bg-card p-12 text-center shadow-sm">
+            <Inbox className="mx-auto mb-3 h-10 w-10 text-muted-foreground" />
+            <h3 className="text-base font-bold text-foreground">
               No matching student lodges found
             </h3>
-            <p className="mt-1 text-xs text-slate-500 dark:text-[#93A89D]">
+            <p className="mt-1 text-xs text-muted-foreground">
               Try changing your search filters.
             </p>
           </div>
@@ -196,7 +201,7 @@ function ExplorePlatform() {
         </div>
 
         {/* MOBILE VIEWPORT (< 768px): Edge-to-Edge Map with Vaul Draggable Sheet */}
-        <div className="explore-mobile-map block md:hidden relative w-full h-[calc(100vh-14rem)] rounded-2xl overflow-hidden border border-[#22352B]">
+        <div className="explore-mobile-map block md:hidden relative w-full h-[calc(100vh-14rem)] rounded-2xl overflow-hidden border border-border">
           <PropertyMap properties={filteredProperties} />
           <MobileListingDrawer properties={filteredProperties} />
         </div>
@@ -211,10 +216,10 @@ export default function ExplorePage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex flex-col items-center justify-center bg-[#0B130F] text-[#93A89D]">
+        <div className="min-h-screen flex flex-col items-center justify-center bg-background text-muted-foreground">
           <div className="flex items-center gap-3">
-            <Loader2 className="h-6 w-6 animate-spin text-emerald-400" />
-            <span className="text-sm font-semibold tracking-wide text-white">
+            <Loader2 className="h-6 w-6 animate-spin text-brand-strong" />
+            <span className="text-sm font-semibold tracking-wide text-foreground">
               Loading Kampus Accommodation Map...
             </span>
           </div>

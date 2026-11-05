@@ -1,355 +1,425 @@
 "use client";
 
-import React, { useState } from "react";
-import { motion } from "motion/react";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
 import {
-  X,
-  Phone,
-  Mail,
-  Lock,
-  ArrowRight,
-  ShieldCheck,
-  GraduationCap,
-  Building2,
-  KeyRound,
-  CheckCircle2,
-  AlertCircle,
-} from "lucide-react";
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { ProfileSetup } from "./ProfileSetup";
 import { useAuthStore } from "@/lib/stores/useAuthStore";
+import { authApi } from "@/api/auth";
+import { normalizePhone } from "@/lib/auth-errors";
 import { UserRole } from "@/types/api";
-
 import { toast } from "@/lib/stores/useToastStore";
-import { KampusLogo } from "@/components/brand/KampusLogo";
 
 interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
   defaultRole?: UserRole;
+  defaultMode?: "signin" | "signup";
+}
+const inputClass =
+  "mt-1 w-full min-h-11 rounded-xl border border-border bg-background px-3 py-2 text-base text-foreground";
+
+export function AuthModal({
+  isOpen,
+  onClose,
+  defaultRole = "STUDENT",
+  defaultMode = "signin",
+}: AuthModalProps) {
+  const isLoading = useAuthStore((state) => state.isLoading);
+  return (
+    <Dialog
+      open={isOpen}
+      onOpenChange={(open) => {
+        if (!open && !useAuthStore.getState().isLoading) onClose();
+      }}
+    >
+      <DialogContent
+        className="max-w-lg p-5 sm:p-7 overflow-y-auto"
+        showCloseButton={!isLoading}
+      >
+        {isOpen && (
+          <AuthFlow
+            key={defaultRole + defaultMode}
+            onClose={onClose}
+            defaultRole={defaultRole}
+            defaultMode={defaultMode}
+          />
+        )}
+      </DialogContent>
+    </Dialog>
+  );
 }
 
-export function AuthModal({ isOpen, onClose, defaultRole = "STUDENT" }: AuthModalProps) {
-  const { login, sendOtp, verifyOtp, isLoading, error, clearError } = useAuthStore();
-  const [role, setRole] = useState<UserRole>(defaultRole);
-  const [authMethod, setAuthMethod] = useState<"otp" | "password">("otp");
-
-  // Form states (clean, non-dummy)
+function AuthFlow({
+  onClose,
+  defaultRole,
+  defaultMode,
+}: Required<Omit<AuthModalProps, "isOpen">>) {
+  const router = useRouter();
+  const {
+    user,
+    isAuthenticated,
+    login,
+    sendOtp,
+    verifyOtp,
+    isLoading,
+    error,
+    clearError,
+  } = useAuthStore();
+  const [role, setRole] = useState<UserRole>(
+    defaultRole === "LANDLORD" ? "LANDLORD" : "STUDENT",
+  );
+  const [mode, setMode] = useState(defaultMode);
+  const [method, setMethod] = useState<"password" | "otp">("password");
   const [phone, setPhone] = useState("");
   const [emailOrPhone, setEmailOrPhone] = useState("");
   const [password, setPassword] = useState("");
-  const [otpSent, setOtpSent] = useState(false);
-  const [otpCode, setOtpCode] = useState("");
-  const [feedbackMsg, setFeedbackMsg] = useState<string | null>(null);
+  const [code, setCode] = useState("");
+  const [challenge, setChallenge] = useState<{
+    requestId: string;
+    expiresAt: number;
+    resendAt: number;
+  } | null>(null);
+  const [now, setNow] = useState(Date.now());
+  const [status, setStatus] = useState<Awaited<
+    ReturnType<typeof authApi.registrationStatus>
+  > | null>(null);
+  const [statusFailed, setStatusFailed] = useState(false);
+  const [statusAttempt, setStatusAttempt] = useState(0);
+  const [localError, setLocalError] = useState("");
+  const needsProfile =
+    isAuthenticated &&
+    user?.role !== "ADMIN" &&
+    (user?.profileStatus !== "COMPLETED" || user?.hasPassword === false);
 
-  if (!isOpen) return null;
-
-  const handleSendOtp = async (e: React.FormEvent) => {
-    e.preventDefault();
+  useEffect(() => {
     clearError();
-    setFeedbackMsg(null);
-    if (!phone) return;
-
-    const res = await sendOtp(phone, role);
-    if (res) {
-      setOtpSent(true);
-      toast.info("Verification Code Dispatched", {
-        description: `6-digit SMS OTP sent to ${phone}. Valid for 10 minutes.`,
+  }, [clearError]);
+  useEffect(() => {
+    let active = true;
+    authApi
+      .registrationStatus()
+      .then((value) => {
+        if (active) {
+          setStatus(value);
+          setStatusFailed(false);
+        }
+      })
+      .catch(() => {
+        if (active) setStatusFailed(true);
       });
-    } else {
-      toast.error("Could Not Send OTP", {
-        description: "Please check your phone number and network connectivity.",
+    return () => {
+      active = false;
+    };
+  }, [statusAttempt]);
+  useEffect(() => {
+    if (!challenge) return;
+    const timer = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(timer);
+  }, [challenge]);
+
+  function resetOtp() {
+    setChallenge(null);
+    setCode("");
+    setLocalError("");
+    clearError();
+  }
+  function finish() {
+    toast.success("You’re all set");
+    const accountRole = useAuthStore.getState().user?.role;
+    onClose();
+    if (accountRole === "LANDLORD") router.push("/host/dashboard");
+  }
+  function afterAuthentication() {
+    const account = useAuthStore.getState().user;
+    if (account?.profileStatus === "COMPLETED" && account.hasPassword !== false)
+      finish();
+  }
+  async function requestCode() {
+    const normalized = normalizePhone(phone);
+    if (!/^\+234[789]\d{9}$/.test(normalized)) {
+      setLocalError(
+        "Enter a valid Nigerian phone number, such as 0801 234 5678.",
+      );
+      return;
+    }
+    setLocalError("");
+    const result = await sendOtp(normalized, role);
+    if (result) {
+      setPhone(normalized);
+      setCode("");
+      setNow(Date.now());
+      setChallenge({
+        requestId: result.requestId,
+        expiresAt: Date.now() + result.expiresIn * 1000,
+        resendAt: Date.now() + (result.resendAfterSeconds ?? 60) * 1000,
       });
     }
-  };
-
-  const handleVerifyOtp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    clearError();
-    setFeedbackMsg(null);
-    if (!otpCode) return;
-
-    const success = await verifyOtp(phone, otpCode);
-    if (success) {
-      toast.success("Welcome to Kampus!", {
-        description: `Successfully signed in as ${role === "STUDENT" ? "Student" : "Landlord"}.`,
-      });
-      onClose();
-    } else {
-      toast.error("Verification Failed", {
-        description: "Invalid or expired OTP code. Please check and retry.",
-      });
-    }
-  };
-
-  const handlePasswordLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    clearError();
-    setFeedbackMsg(null);
-    if (!emailOrPhone || !password) return;
-
-    const success = await login(emailOrPhone, password, role);
-    if (success) {
-      toast.success("Welcome Back!", {
-        description: `Successfully signed in as ${role === "STUDENT" ? "Student" : "Landlord"}.`,
-      });
-      onClose();
-    } else {
-      toast.error("Authentication Failed", {
-        description: "Invalid credentials. Please verify your email/phone and password.",
-      });
-    }
-  };
-
+  }
+  async function submit(event: React.FormEvent) {
+    event.preventDefault();
+    if (mode === "signin" && method === "password") {
+      const identity = emailOrPhone.includes("@")
+        ? emailOrPhone.trim().toLowerCase()
+        : normalizePhone(emailOrPhone);
+      if (await login(identity, password, role)) afterAuthentication();
+    } else if (!challenge) await requestCode();
+    else if (await verifyOtp(phone, code, challenge.requestId))
+      afterAuthentication();
+  }
+  const useOtp = mode === "signup" || method === "otp";
+  const expired = Boolean(challenge && now >= challenge.expiresAt);
+  const resendSeconds = challenge
+    ? Math.max(0, Math.ceil((challenge.resendAt - now) / 1000))
+    : 0;
   return (
-    <div className="kampus-modal-backdrop fixed inset-0 z-50 flex items-center justify-center p-4">
-      <motion.div
-        initial={{ opacity: 0, scale: 0.985, y: 8 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.985, y: 8 }}
-        transition={{ duration: 0.18, ease: "easeOut" }}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="kampus-auth-title"
-        className="kampus-modal relative max-h-[92vh] w-full max-w-md overflow-y-auto rounded-3xl"
-      >
-        {/* Close Button */}
-        <button
-          onClick={onClose}
-          aria-label="Close sign in"
-          className="kampus-modal-close absolute top-4 right-4 z-10 p-2 rounded-full transition-colors"
-        >
-          <X className="h-5 w-5" />
-        </button>
-
-        <div className="p-6 sm:p-8 space-y-6">
-          {/* Header */}
-          <div className="text-center space-y-2">
-            <KampusLogo variant="mark" size={44} className="mx-auto mb-2" markClassName="text-slate-900 dark:text-[#f4f1ea]" />
-            <div className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-[#eeece6] px-3 py-1 text-xs font-medium text-slate-700 dark:border-[#303832] dark:bg-[#202722] dark:text-[#c1c8c2]">
-              <ShieldCheck className="h-3.5 w-3.5 text-[#c45b37]" />
-              <span>Kampus Secure ID</span>
-            </div>
-            <h2 id="kampus-auth-title" className="text-2xl font-semibold tracking-tight text-slate-900 dark:text-white">
-              Sign In to Kampus
-            </h2>
-            <p className="text-xs text-slate-600 dark:text-[#93A89D]">
-              Find verified university accommodation and manage your booking in Kampus.
-            </p>
-          </div>
-
-          {/* Role Switcher Tabs */}
-          <div className="grid grid-cols-2 p-1 rounded-2xl bg-slate-100 dark:bg-[#14231B] border border-slate-200 dark:border-[#22352B]">
-            <button
-              type="button"
-              onClick={() => {
-                setRole("STUDENT");
-                clearError();
-              }}
-              className={`flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-bold transition-all ${
-                role === "STUDENT"
-                  ? "bg-[#c45b37] text-white shadow-none"
-                  : "text-slate-600 dark:text-[#93A89D] hover:text-slate-900 dark:hover:text-white"
-              }`}
-            >
-              <GraduationCap className="h-4 w-4" />
-              <span>Student</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setRole("LANDLORD");
-                clearError();
-              }}
-              className={`flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-bold transition-all ${
-                role === "LANDLORD"
-                  ? "bg-[#c45b37] text-white shadow-none"
-                  : "text-slate-600 dark:text-[#93A89D] hover:text-slate-900 dark:hover:text-white"
-              }`}
-            >
-              <Building2 className="h-4 w-4" />
-              <span>Host / Landlord</span>
-            </button>
-          </div>
-
-          {/* Method Switcher (OTP vs Password) */}
-          <div className="flex border-b border-slate-200 dark:border-[#22352B] text-xs font-medium">
-            <button
-              type="button"
-              onClick={() => {
-                setAuthMethod("otp");
-                clearError();
-              }}
-              className={`flex-1 pb-2.5 border-b-2 transition-all ${
-                authMethod === "otp"
-                  ? "border-[#c45b37] text-[#a94c2e] dark:text-[#e58a69] font-semibold"
-                  : "border-transparent text-slate-500 dark:text-[#93A89D] hover:text-slate-900 dark:hover:text-white"
-              }`}
-            >
-              Phone SMS Verification
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setAuthMethod("password");
-                clearError();
-              }}
-              className={`flex-1 pb-2.5 border-b-2 transition-all ${
-                authMethod === "password"
-                  ? "border-[#c45b37] text-[#a94c2e] dark:text-[#e58a69] font-semibold"
-                  : "border-transparent text-slate-500 dark:text-[#93A89D] hover:text-slate-900 dark:hover:text-white"
-              }`}
-            >
-              Password Login
-            </button>
-          </div>
-
-          {/* Real Error Message */}
-          {error && (
-            <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 text-rose-700 dark:text-rose-300 text-xs flex items-center gap-2">
-              <AlertCircle className="h-4 w-4 shrink-0" />
-              <span>{error}</span>
-            </div>
-          )}
-
-          {/* Success Message */}
-          {feedbackMsg && (
-            <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 text-emerald-800 dark:text-emerald-300 text-xs flex items-center gap-2">
-              <CheckCircle2 className="h-4 w-4 shrink-0" />
-              <span>{feedbackMsg}</span>
-            </div>
-          )}
-
-          {/* Form Content */}
-          {authMethod === "otp" ? (
-            !otpSent ? (
-              <form onSubmit={handleSendOtp} className="space-y-4">
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-slate-700 dark:text-[#93A89D]">
-                    Nigerian Mobile Number
-                  </label>
-                  <div className="relative">
-                    <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 dark:text-[#93A89D]" />
-                    <input
-                      type="tel"
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
-                      placeholder="+234 812 345 6789"
-                      className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-50 dark:bg-[#14231B] border border-slate-200 dark:border-[#22352B] text-slate-900 dark:text-white text-xs placeholder:text-slate-400 dark:placeholder:text-[#93A89D]/50 focus:outline-none focus:border-emerald-500"
-                      required
-                    />
-                  </div>
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={isLoading || !phone}
-                  className="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white dark:text-slate-950 font-bold text-xs flex items-center justify-center gap-2 transition-colors disabled:opacity-50 shadow-md"
-                >
-                  {isLoading ? (
-                    <span className="animate-spin h-4 w-4 border-2 border-white dark:border-slate-950 border-t-transparent rounded-full" />
-                  ) : (
-                    <>
-                      <span>Send Verification Code</span>
-                      <ArrowRight className="h-4 w-4" />
-                    </>
-                  )}
-                </button>
-              </form>
-            ) : (
-              <form onSubmit={handleVerifyOtp} className="space-y-4">
-                <div className="space-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <label className="text-xs font-semibold text-slate-700 dark:text-[#93A89D]">
-                      Verification Code
-                    </label>
-                    <button
-                      type="button"
-                      onClick={() => setOtpSent(false)}
-                      className="text-[11px] text-emerald-600 dark:text-emerald-400 hover:underline font-semibold"
-                    >
-                      Change number
-                    </button>
-                  </div>
-                  <div className="relative">
-                    <KeyRound className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 dark:text-[#93A89D]" />
-                    <input
-                      type="text"
-                      maxLength={6}
-                      value={otpCode}
-                      onChange={(e) => setOtpCode(e.target.value)}
-                      placeholder="Enter 6-digit code"
-                      className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-50 dark:bg-[#14231B] border border-slate-200 dark:border-[#22352B] text-slate-900 dark:text-white text-center tracking-widest text-lg font-bold focus:outline-none focus:border-emerald-500"
-                      required
-                    />
-                  </div>
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={isLoading || otpCode.length < 4}
-                  className="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white dark:text-slate-950 font-bold text-xs flex items-center justify-center gap-2 transition-colors disabled:opacity-50 shadow-md"
-                >
-                  {isLoading ? (
-                    <span className="animate-spin h-4 w-4 border-2 border-white dark:border-slate-950 border-t-transparent rounded-full" />
-                  ) : (
-                    <span>Verify & Continue</span>
-                  )}
-                </button>
-              </form>
-            )
-          ) : (
-            <form onSubmit={handlePasswordLogin} className="space-y-4">
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-700 dark:text-[#93A89D]">
-                  Email or Phone
-                </label>
-                <div className="relative">
-                  <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 dark:text-[#93A89D]" />
-                  <input
-                    type="text"
-                    value={emailOrPhone}
-                    onChange={(e) => setEmailOrPhone(e.target.value)}
-                    placeholder="student@university.edu.ng"
-                    className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-50 dark:bg-[#14231B] border border-slate-200 dark:border-[#22352B] text-slate-900 dark:text-white text-xs placeholder:text-slate-400 dark:placeholder:text-[#93A89D]/50 focus:outline-none focus:border-emerald-500"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-700 dark:text-[#93A89D]">
-                  Password
-                </label>
-                <div className="relative">
-                  <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 dark:text-[#93A89D]" />
-                  <input
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••••••"
-                    className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-50 dark:bg-[#14231B] border border-slate-200 dark:border-[#22352B] text-slate-900 dark:text-white text-xs placeholder:text-slate-400 dark:placeholder:text-[#93A89D]/50 focus:outline-none focus:border-emerald-500"
-                    required
-                  />
-                </div>
-              </div>
-
-              <button
-                type="submit"
-                disabled={isLoading || !emailOrPhone || !password}
-                className="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white dark:text-slate-950 font-bold text-xs flex items-center justify-center gap-2 transition-colors disabled:opacity-50 shadow-md"
+    <>
+      <div className="pr-7 space-y-2">
+        <DialogTitle className="text-xl font-bold">
+          {needsProfile
+            ? "Complete your profile"
+            : mode === "signup"
+              ? "Create your Kampus account"
+              : "Welcome to Kampus"}
+        </DialogTitle>
+        <DialogDescription>
+          {needsProfile
+            ? "Your phone is verified. One more step to finish."
+            : "Find a place near campus or manage your rental units."}
+        </DialogDescription>
+      </div>
+      {needsProfile ? (
+        <ProfileSetup onComplete={finish} />
+      ) : (
+        <>
+          <div
+            className="grid grid-cols-2 gap-2 rounded-xl bg-muted p-1"
+            aria-label="Account access"
+          >
+            {(["signin", "signup"] as const).map((value) => (
+              <Button
+                key={value}
+                type="button"
+                variant={mode === value ? "default" : "ghost"}
+                disabled={isLoading}
+                aria-pressed={mode === value}
+                onClick={() => {
+                  setMode(value);
+                  resetOtp();
+                }}
               >
-                {isLoading ? (
-                  <span className="animate-spin h-4 w-4 border-2 border-white dark:border-slate-950 border-t-transparent rounded-full" />
-                ) : (
-                  <>
-                    <span>Sign In to {role === "STUDENT" ? "Student" : "Host"} Account</span>
-                    <ArrowRight className="h-4 w-4" />
-                  </>
-                )}
-              </button>
-            </form>
+                {value === "signin" ? "Sign in" : "Create account"}
+              </Button>
+            ))}
+          </div>
+          <fieldset
+            disabled={isLoading || Boolean(challenge)}
+            className="space-y-2"
+          >
+            <legend className="text-sm font-medium mb-2">
+              {mode === "signup" ? "I’m joining as a" : "Account type"}
+            </legend>
+            <div className="grid grid-cols-2 gap-2">
+              {(["STUDENT", "LANDLORD"] as const).map((value) => (
+                <Button
+                  key={value}
+                  type="button"
+                  variant={role === value ? "default" : "outline"}
+                  aria-pressed={role === value}
+                  onClick={() => {
+                    setRole(value);
+                    resetOtp();
+                  }}
+                >
+                  {value === "STUDENT" ? "Student" : "Landlord"}
+                </Button>
+              ))}
+            </div>
+          </fieldset>
+          {mode === "signup" && (
+            <p className="text-xs text-muted-foreground">
+              1. Verify phone · 2. Complete profile
+              <br />
+              Student and landlord accounts are separate. Each needs its own
+              phone number and email.
+            </p>
           )}
-        </div>
-      </motion.div>
-    </div>
+          {mode === "signin" && (
+            <button
+              type="button"
+              disabled={isLoading}
+              className="text-sm underline text-left min-h-9"
+              onClick={() => {
+                setMethod(method === "password" ? "otp" : "password");
+                resetOtp();
+              }}
+            >
+              {method === "password"
+                ? "Use a verification code instead"
+                : "Use my password instead"}
+            </button>
+          )}
+          {useOtp && !challenge && (
+            <div
+              role="status"
+              className="rounded-xl border border-border bg-muted/50 p-3 text-sm"
+            >
+              {status
+                ? status.message
+                : statusFailed
+                  ? "We couldn’t check phone verification availability. Please try again."
+                  : "Checking phone verification availability…"}
+              {statusFailed && (
+                <Button
+                  className="mt-2"
+                  variant="outline"
+                  onClick={() => {
+                    setStatusFailed(false);
+                    setStatusAttempt(statusAttempt + 1);
+                  }}
+                >
+                  Retry availability check
+                </Button>
+              )}
+            </div>
+          )}
+          <form onSubmit={submit} className="space-y-4">
+            <fieldset
+              disabled={isLoading}
+              className="space-y-4 disabled:opacity-60"
+            >
+              {useOtp ? (
+                challenge ? (
+                  <>
+                    <p className="text-sm">
+                      Enter the six-digit code sent to <strong>{phone}</strong>.
+                    </p>
+                    <label className="block text-sm font-medium">
+                      Verification code
+                      <input
+                        name="otp"
+                        className={inputClass + " tracking-[0.3em]"}
+                        value={code}
+                        onChange={(e) => {
+                          setCode(
+                            e.target.value.replace(/\D/g, "").slice(0, 6),
+                          );
+                          clearError();
+                        }}
+                        inputMode="numeric"
+                        autoComplete="one-time-code"
+                        pattern="[0-9]{6}"
+                        minLength={6}
+                        maxLength={6}
+                        required
+                        autoFocus
+                      />
+                    </label>
+                    <p className="text-xs text-muted-foreground" role="status">
+                      {expired
+                        ? "This code has expired. Request a new one."
+                        : `Code expires in ${Math.max(0, Math.ceil((challenge.expiresAt - now) / 60000))} minute(s).`}
+                    </p>
+                    <div className="flex flex-wrap gap-3">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        disabled={resendSeconds > 0}
+                        onClick={requestCode}
+                      >
+                        {resendSeconds
+                          ? `Resend in ${resendSeconds}s`
+                          : "Resend code"}
+                      </Button>
+                      <Button type="button" variant="ghost" onClick={resetOtp}>
+                        Change number or account type
+                      </Button>
+                    </div>
+                  </>
+                ) : (
+                  <label className="block text-sm font-medium">
+                    Nigerian phone number
+                    <input
+                      name="phone"
+                      type="tel"
+                      autoComplete="tel"
+                      placeholder="0801 234 5678"
+                      className={inputClass}
+                      required
+                      maxLength={24}
+                      value={phone}
+                      onChange={(e) => {
+                        setPhone(e.target.value);
+                        setLocalError("");
+                        clearError();
+                      }}
+                    />
+                  </label>
+                )
+              ) : (
+                <>
+                  <label className="block text-sm font-medium">
+                    Email or phone number
+                    <input
+                      name="emailOrPhone"
+                      autoComplete="username"
+                      required
+                      className={inputClass}
+                      value={emailOrPhone}
+                      onChange={(e) => setEmailOrPhone(e.target.value)}
+                    />
+                  </label>
+                  <label className="block text-sm font-medium">
+                    Password
+                    <input
+                      name="password"
+                      type="password"
+                      autoComplete="current-password"
+                      required
+                      className={inputClass}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                    />
+                  </label>
+                </>
+              )}
+            </fieldset>
+            {(error || localError) && (
+              <p
+                role="alert"
+                className="rounded-xl bg-destructive/10 p-3 text-sm text-destructive"
+              >
+                {localError || error}
+              </p>
+            )}
+            <Button
+              type="submit"
+              className="w-full min-h-11"
+              disabled={
+                isLoading ||
+                (useOtp &&
+                  (!challenge
+                    ? !status?.phoneVerificationAvailable
+                    : code.length !== 6 || expired))
+              }
+            >
+              {isLoading
+                ? "Please wait…"
+                : !useOtp
+                  ? "Sign in with password"
+                  : challenge
+                    ? "Verify phone and continue"
+                    : "Send verification code"}
+            </Button>
+          </form>
+        </>
+      )}
+    </>
   );
 }

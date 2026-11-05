@@ -16,6 +16,7 @@ export interface SendOtpPayload {
 export interface VerifyOtpPayload {
   phone: string;
   code: string;
+  requestId?: string;
 }
 
 export interface UpdateProfilePayload {
@@ -42,13 +43,22 @@ export interface UpdateLandlordProfilePayload {
 }
 
 export const authApi = {
+  async registrationStatus(): Promise<{
+    phoneVerificationAvailable: boolean;
+    expiresIn: number;
+    resendAfterSeconds: number;
+    message: string;
+  }> {
+    const response = await apiClient.get("/auth/registration-status");
+    return response.data.data;
+  },
   /**
    * Log in user with password & role
    */
   async login(payload: LoginPayload): Promise<AuthResponseData> {
     const response = await apiClient.post<ApiResponse<AuthResponseData>>(
       "/auth/login",
-      payload
+      payload,
     );
     return response.data.data;
   },
@@ -56,12 +66,18 @@ export const authApi = {
   /**
    * Request OTP code to phone number (supports userType per backend spec)
    */
-  async sendOtp(
-    payload: SendOtpPayload
-  ): Promise<{ requestId: string; expiresIn: number }> {
+  async sendOtp(payload: SendOtpPayload): Promise<{
+    requestId: string;
+    expiresIn: number;
+    resendAfterSeconds?: number;
+  }> {
     const userType = payload.userType || payload.role || "STUDENT";
     const response = await apiClient.post<
-      ApiResponse<{ requestId: string; expiresIn: number }>
+      ApiResponse<{
+        requestId: string;
+        expiresIn: number;
+        resendAfterSeconds?: number;
+      }>
     >("/auth/send-otp", {
       phone: payload.phone,
       userType,
@@ -75,7 +91,7 @@ export const authApi = {
   async verifyOtp(payload: VerifyOtpPayload): Promise<AuthResponseData> {
     const response = await apiClient.post<ApiResponse<AuthResponseData>>(
       "/auth/verify-otp",
-      payload
+      payload,
     );
     return response.data.data;
   },
@@ -91,22 +107,24 @@ export const authApi = {
   /**
    * Update student user profile
    */
-  async updateProfile(payload: UpdateProfilePayload): Promise<User> {
-    const response = await apiClient.put<ApiResponse<User>>(
-      "/auth/profile",
-      payload
-    );
+  async updateProfile(
+    payload: UpdateProfilePayload,
+  ): Promise<Pick<User, "id" | "profileStatus">> {
+    const response = await apiClient.put<
+      ApiResponse<Pick<User, "id" | "profileStatus">>
+    >("/auth/profile", payload);
     return response.data.data;
   },
 
   /**
    * Complete/Update Landlord profile
    */
-  async updateLandlordProfile(payload: UpdateLandlordProfilePayload): Promise<User> {
-    const response = await apiClient.put<ApiResponse<User>>(
-      "/auth/landlord/profile",
-      payload
-    );
+  async updateLandlordProfile(
+    payload: UpdateLandlordProfilePayload,
+  ): Promise<Pick<User, "id" | "profileStatus">> {
+    const response = await apiClient.put<
+      ApiResponse<Pick<User, "id" | "profileStatus">>
+    >("/auth/landlord/profile", payload);
     return response.data.data;
   },
 

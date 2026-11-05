@@ -32,7 +32,16 @@ apiClient.interceptors.response.use(
       _retry?: boolean;
     };
 
-    if (error.response?.status === 401 && originalRequest && !originalRequest._retry) {
+    const publicAuthRequest =
+      /\/auth\/(login|send-otp|verify-otp|refresh|registration-status)$/.test(
+        originalRequest?.url || "",
+      );
+    if (
+      error.response?.status === 401 &&
+      originalRequest &&
+      !originalRequest._retry &&
+      !publicAuthRequest
+    ) {
       originalRequest._retry = true;
       try {
         const refreshToken =
@@ -64,9 +73,9 @@ apiClient.interceptors.response.use(
           localStorage.removeItem("kampus_access_token");
           localStorage.removeItem("kampus_refresh_token");
         }
-        return Promise.reject(refreshErr);
+        return Promise.reject(error);
       }
     }
     return Promise.reject(error);
-  }
+  },
 );

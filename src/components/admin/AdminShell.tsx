@@ -3,7 +3,8 @@ import { useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuthStore } from "@/lib/stores/useAuthStore";
-import { ShieldCheck, ArrowUpRight, LogOut } from "lucide-react";
+import { ArrowUpRight, LogOut } from "lucide-react";
+import { KampusLogo } from "@/components/brand/KampusLogo";
 
 export const adminLinks = [
   ["/admin", "Overview"],
@@ -39,10 +40,8 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
     <div className="admin-app">
       <header className="admin-topbar">
         <Link href="/admin" className="admin-brand">
-          <ShieldCheck aria-hidden="true" />
-          <span>
-            Kampus <small>Administration</small>
-          </span>
+          <KampusLogo size={34} />
+          <small>Administration</small>
         </Link>
         <div className="admin-top-actions">
           <Link href="/">
@@ -128,7 +127,10 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
               <span>{user?.email}</span>
             </div>
           </aside>
-          <main className="admin-content" id="admin-content">
+          <main
+            className={`admin-content${path === "/admin/payments" ? " admin-payments" : ""}`}
+            id="admin-content"
+          >
             {children}
           </main>
         </div>

@@ -88,7 +88,7 @@ export function FeaturedAccommodations() {
         </div>
 
         <Link href="/explore" className="landing-listings__all-link">
-          <Button variant="outline" className="landing-listings__all rounded-full border border-slate-200 dark:border-[#22352B] bg-white dark:bg-[#121E18] text-emerald-700 dark:text-emerald-300 hover:bg-slate-50 dark:hover:bg-[#17261F] text-xs font-bold flex items-center gap-1.5 shadow-sm transition-colors">
+          <Button variant="outline" className="landing-listings__all rounded-full border border-border bg-card text-brand-strong hover:bg-muted text-xs font-bold flex items-center gap-1.5 shadow-sm transition-colors">
             <span>Explore all homes</span>
             <ArrowRight className="h-4 w-4" />
           </Button>
@@ -105,8 +105,8 @@ export function FeaturedAccommodations() {
               onClick={() => setActivePill(pill.id)}
               aria-pressed={isActive}
               className={`landing-listings__filter rounded-full px-4 py-2 text-xs font-semibold whitespace-nowrap transition-all duration-200 cursor-pointer ${isActive
-                ? "bg-emerald-600 dark:bg-emerald-500 text-white dark:text-slate-950 font-bold shadow-md"
-                : "bg-white dark:bg-[#121E18] text-slate-600 dark:text-[#93A89D] border border-slate-200 dark:border-[#22352B] hover:border-emerald-500/50 hover:text-slate-900 dark:hover:text-white shadow-sm"
+                ? "bg-primary text-primary-foreground font-semibold"
+                : "bg-card  text-muted-foreground  border border-border  hover:border-brand/25 hover:text-foreground  shadow-sm"
                 }`}
             >
               {pill.label}
@@ -117,13 +117,13 @@ export function FeaturedAccommodations() {
 
       {isLoading ? (
         <div className="landing-listings__grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5" aria-label="Loading homes">
-          {[1, 2, 3, 4].map((item) => <div key={item} className="landing-listings__skeleton h-80 rounded-3xl bg-slate-100 dark:bg-[#121E18] border border-slate-200 dark:border-[#22352B]" />)}
+          {[1, 2, 3, 4].map((item) => <div key={item} className="landing-listings__skeleton h-80 rounded-3xl bg-muted border border-border" />)}
         </div>
       ) : hasLoadError ? (
-        <div role="alert" className="landing-listings__empty rounded-3xl border border-rose-200 bg-rose-50 p-10 text-center dark:border-rose-900 dark:bg-rose-950/30">
-          <p className="text-sm font-semibold text-slate-900 dark:text-white">Homes couldn’t be loaded.</p>
-          <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">Please try again.</p>
-          <Button onClick={() => setRetryCount((count) => count + 1)} variant="outline" className="mt-4 rounded-full border-emerald-600/30 text-xs font-bold text-emerald-700 dark:text-emerald-400">
+        <div role="alert" className="landing-listings__empty rounded-3xl border border-destructive/25 bg-destructive-soft p-10 text-center">
+          <p className="text-sm font-semibold text-foreground">Homes couldn’t be loaded.</p>
+          <p className="mt-1 text-xs text-muted-foreground">Please try again.</p>
+          <Button onClick={() => setRetryCount((count) => count + 1)} variant="outline" className="mt-4 rounded-full border-success/25 text-xs font-bold text-brand-strong">
             Try again
           </Button>
         </div>
@@ -132,10 +132,10 @@ export function FeaturedAccommodations() {
           {allLodges.map((lodge) => <PropertyCard key={lodge.id} property={lodge} />)}
         </div>
       ) : (
-        <div className="landing-listings__empty rounded-3xl border border-slate-200 dark:border-[#22352B] bg-white dark:bg-[#0E1A14] p-12 text-center space-y-3 shadow-sm">
-          <p className="text-sm font-semibold text-slate-900 dark:text-white">No homes match this filter just yet.</p>
-          <p className="text-xs text-slate-500 dark:text-[#93A89D]">Try another area or browse every current listing.</p>
-          <Button onClick={() => setActivePill("all")} variant="outline" className="rounded-full border-emerald-600/30 dark:border-emerald-500/40 text-emerald-700 dark:text-emerald-400 text-xs font-bold">
+        <div className="landing-listings__empty rounded-3xl border border-border bg-card p-12 text-center space-y-3 shadow-sm">
+          <p className="text-sm font-semibold text-foreground">No homes match this filter just yet.</p>
+          <p className="text-xs text-muted-foreground">Try another area or browse every current listing.</p>
+          <Button onClick={() => setActivePill("all")} variant="outline" className="rounded-full border-success/25 text-brand-strong text-xs font-bold">
             Show all homes
           </Button>
         </div>

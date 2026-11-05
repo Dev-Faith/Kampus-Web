@@ -4,8 +4,8 @@ import React, { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { motion, useReducedMotion } from "motion/react";
-import { ArrowRight, Building2, GraduationCap, MapPin, Search } from "lucide-react";
+import { motion } from "motion/react";
+import { ArrowRight, Building2, GraduationCap, MapPin, Pause, Play, Search } from "lucide-react";
 import { CAMPUSES } from "@/lib/constants/campuses";
 
 const ROOM_TYPES = [
@@ -23,9 +23,8 @@ const BUDGET_RANGES = [
   { label: "500k+", max: 10_000_000 },
 ];
 
-export function HeroArchitecturalShowcase() {
+export function HeroArchitecturalShowcase({ motionPaused = false, onToggleMotion }: { motionPaused?: boolean; onToggleMotion?: () => void }) {
   const router = useRouter();
-  const reduceMotion = useReducedMotion();
   const [selectedCampus, setSelectedCampus] = useState("FUTMINNA");
   const [selectedRoomType, setSelectedRoomType] = useState("all");
   const [selectedBudgetIdx, setSelectedBudgetIdx] = useState(0);
@@ -45,7 +44,8 @@ export function HeroArchitecturalShowcase() {
     <section className="landing-hero" aria-labelledby="landing-title">
       <div className="landing-hero__intro">
         <motion.div
-          initial={reduceMotion ? false : { opacity: 0, y: 18 }}
+          data-reveal
+          initial={{ opacity: 0, y: 18 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
         >
@@ -62,7 +62,8 @@ export function HeroArchitecturalShowcase() {
 
         <motion.div
           className="landing-hero__aside"
-          initial={reduceMotion ? false : { opacity: 0, y: 18 }}
+          data-reveal
+          initial={{ opacity: 0, y: 18 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.65, delay: 0.12, ease: [0.22, 1, 0.36, 1] }}
         >
@@ -77,7 +78,8 @@ export function HeroArchitecturalShowcase() {
 
       <motion.div
         className="landing-hero__image"
-        initial={reduceMotion ? false : { opacity: 0, scale: 0.985 }}
+        data-reveal
+        initial={{ opacity: 0, scale: 0.985 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.9, delay: 0.18, ease: [0.22, 1, 0.36, 1] }}
       >
@@ -141,6 +143,12 @@ export function HeroArchitecturalShowcase() {
 
       <div className="landing-hero__footnote">
         <span>Accommodation around FUTMINNA campuses</span>
+        {onToggleMotion && (
+          <button type="button" className="landing-motion-toggle" onClick={onToggleMotion} aria-pressed={motionPaused} aria-label="Pause background animation">
+            {motionPaused ? <Play aria-hidden="true" /> : <Pause aria-hidden="true" />}
+            {motionPaused ? "Resume motion" : "Pause motion"}
+          </button>
+        )}
         <span>FUTMINNA / Minna, Nigeria</span>
       </div>
     </section>

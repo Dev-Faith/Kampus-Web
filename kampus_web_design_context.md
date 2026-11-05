@@ -1,5 +1,7 @@
 # Kampus Web Platform: Design Context & Implementation Blueprint
 
+> Historical blueprint. For the current website appearance, follow [DESIGN_SYSTEM.md](./DESIGN_SYSTEM.md) and the shared tokens in `src/app/globals.css`. The current implementation and approved product decisions take precedence over older claims and flows below.
+
 > [!IMPORTANT]
 > This document serves as the master **System Context and Architecture Blueprint** for Antigravity IDE to build the complete web version of **Kampus** (Prop-Tech Student Accommodation & Custodial Escrow Platform).
 
