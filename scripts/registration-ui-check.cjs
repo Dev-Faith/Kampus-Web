@@ -1,11 +1,11 @@
-// Browser regression check using mocked API responses only; no hosted writes or SMS.
+// Browser regression check using mocked API responses only; no hosted writes or email.
 // Node 22+ and Microsoft Edge on Windows. Start the web app on localhost:3000 first.
 const assert = require('node:assert/strict');
 const fs = require('node:fs'), os = require('node:os'), path = require('node:path'), { spawn } = require('node:child_process');
 const out = path.join(os.tmpdir(), 'kampus-registration-check'); fs.mkdirSync(out, { recursive: true });
 const browser = spawn('C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe', ['--headless=new', '--disable-gpu', '--no-first-run', '--no-default-browser-check', '--remote-debugging-port=9345', '--user-data-dir=' + path.join(out, 'profile-' + Date.now()), 'about:blank'], { windowsHide: true, stdio: 'ignore' });
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
-let socket, nextId = 1, smsAvailable = false, currentUser = null, sentRole = 'STUDENT', duplicateProfile = false;
+let socket, nextId = 1, emailAvailable = false, currentUser = null, sentRole = 'STUDENT', duplicateProfile = false;
 const pending = new Map(), writes = [], errors = [], requestId = '31b13368-53de-439b-b4b3-bdefa9d084d0';
 const users = {};
 function call(method, params = {}) { const id = nextId++; return new Promise((resolve, reject) => { pending.set(id, { resolve, reject }); socket.send(JSON.stringify({ id, method, params })); setTimeout(() => { if (pending.has(id)) { pending.delete(id); reject(new Error('Timeout: ' + method)); } }, 30000).unref(); }); }
@@ -15,13 +15,13 @@ async function mock(p) {
   const route = new URL(p.request.url).pathname.replace(/^\/api\//, ''), body = JSON.parse(p.request.postData || '{}');
   let data = {}, code = 200, message = 'OK';
   if (p.request.method === 'OPTIONS') data = {};
-  else if (route === 'auth/registration-status') data = { phoneVerificationAvailable: smsAvailable, expiresIn: 300, resendAfterSeconds: 60, message: smsAvailable ? 'Verify your phone number to create an account.' : 'Phone verification is temporarily unavailable. New accounts cannot register yet. Existing users can sign in with their password.' };
-  else if (route === 'auth/send-otp') { sentRole = body.userType; writes.push({ route, phone: body.phone, role: sentRole }); data = { requestId, expiresIn: 300, resendAfterSeconds: 60 }; }
-  else if (route === 'auth/verify-otp') {
+  else if (route === 'auth/registration-status') data = { verificationMethod: "email", emailVerificationAvailable: emailAvailable, expiresIn: 300, resendAfterSeconds: 60, message: emailAvailable ? "Verify your email address to create an account." : "Email verification is temporarily unavailable. Existing users can still sign in with their password." };
+  else if (route === 'auth/email/send-otp') { sentRole = body.userType; writes.push({ route, email: body.email, role: sentRole }); data = { requestId, expiresIn: 300, resendAfterSeconds: 60 }; }
+  else if (route === 'auth/email/verify-otp') {
     if (body.code !== '123456') { code = 400; message = 'Invalid or expired OTP'; }
     else {
       assert.equal(body.requestId, requestId);
-      currentUser = { id: sentRole.toLowerCase(), phone: body.phone, email: null, fullName: null, role: sentRole, profileStatus: 'UNCOMPLETED', hasPassword: false, student: sentRole === 'STUDENT' ? {} : null, landlord: sentRole === 'LANDLORD' ? {} : null };
+      currentUser = { id: sentRole.toLowerCase(), phone: null, email: body.email, emailVerifiedAt: new Date().toISOString(), phoneVerifiedAt: null, fullName: null, role: sentRole, profileStatus: 'UNCOMPLETED', hasPassword: true, student: sentRole === 'STUDENT' ? {} : null, landlord: sentRole === 'LANDLORD' ? {} : null };
       data = { accessToken: 'ui-fixture', refreshToken: 'ui-fixture', user: currentUser, requiresProfileSetup: true };
     }
   } else if (route === 'auth/login') {
@@ -29,10 +29,10 @@ async function mock(p) {
     else { currentUser = users[body.role]; data = { accessToken: 'ui-fixture', refreshToken: 'ui-fixture', user: currentUser }; }
   } else if (route === 'auth/me') data = currentUser;
   else if (['auth/profile', 'auth/landlord/profile'].includes(route)) {
-    if (duplicateProfile) { code = 409; message = 'This email address is already linked to another account.'; duplicateProfile = false; }
+    if (duplicateProfile) { code = 409; message = 'This phone number is already linked to another account.'; duplicateProfile = false; }
     else {
       const { password, ...profile } = body;
-      currentUser = { ...currentUser, fullName: body.fullName, email: body.email, hasPassword: !!password || currentUser.hasPassword, profileStatus: 'COMPLETED', [currentUser.role === 'STUDENT' ? 'student' : 'landlord']: { ...profile, isVerified: false, kycStatus: 'PENDING' } };
+      currentUser = { ...currentUser, fullName: body.fullName, email: body.email, phone: body.phone, hasPassword: !!password || currentUser.hasPassword, profileStatus: 'COMPLETED', [currentUser.role === 'STUDENT' ? 'student' : 'landlord']: { ...profile, isVerified: false, kycStatus: 'PENDING' } };
       users[currentUser.role] = currentUser;
       data = { id: currentUser.id, fullName: body.fullName, profileStatus: 'COMPLETED' }; // Intentionally partial, as in the real API.
       writes.push({ route, fields: Object.keys(body) });
@@ -52,10 +52,15 @@ async function shot(name) { const r = await call('Page.captureScreenshot', { for
 async function open(mode = 'signup') { await click('Join / Sign in'); await waitFor("!!document.querySelector('[role=dialog] input')"); if (mode === 'signup') await click('Create account', '[role=dialog]'); }
 async function clear() { await evaluate("localStorage.clear()"); currentUser = null; await go(); }
 async function signIn(role, password = 'test-password-123') { await open('signin'); if (role === 'LANDLORD') await click('Landlord', '[role=dialog]'); await field('emailOrPhone', role.toLowerCase() + '@example.test'); await field('password', password); await click('Sign in with password'); }
+async function signupFields(role) {
+  await field('email', role.toLowerCase() + '@example.test');
+  await field('password', 'test-password-123'); await field('confirmPassword', 'test-password-123');
+}
 async function profile(role) {
   await waitFor("!!document.querySelector('input[name=fullName]')");
-  await field('fullName', 'QA ' + role); await field('email', role.toLowerCase() + '@example.test');
-  await field('password', 'test-password-123'); await field('confirmPassword', 'test-password-123');
+  await field('fullName', 'QA ' + role); await field('phone', role === 'STUDENT' ? '0801 234 5678' : '0802 123 4567');
+  assert(await evaluate("document.querySelector('input[name=email]').readOnly"), 'Verified email must be locked');
+  assert(!await evaluate("!!document.querySelector('input[name=password]')"), 'Do not ask for password again');
   if (role === 'STUDENT') { await field('matricNumber', 'FUTMINNA/QA/001'); await field('department', 'Computer Science'); }
   else { await field('bankName', 'Test bank'); await field('bankAccountNumber', '0000000000'); await field('bankAccountName', 'QA Landlord'); await field('bvn', '00000000000'); }
 }
@@ -68,29 +73,31 @@ async function profile(role) {
   await size(320); await go(); await shot('header-320');
   assert(await evaluate('document.documentElement.scrollWidth <= innerWidth'), 'Page overflows at 320px');
   await open(); await waitFor("document.querySelector('[role=dialog]')?.textContent.includes('temporarily unavailable')");
-  assert(await evaluate("[...document.querySelectorAll('button')].find(e=>e.textContent==='Send verification code').disabled"));
-  assert.equal(writes.length, 0); await shot('sms-pending-320'); console.log('SMS pending state and 320px layout: PASS');
-  smsAvailable = true; await go(); await open();
-  await field('phone', '0801 234 5678'); await waitFor("![...document.querySelectorAll('button')].find(e=>e.textContent==='Send verification code').disabled"); await click('Send verification code');
+  assert(await evaluate("[...document.querySelectorAll('button')].find(e=>e.textContent==='Send verification email').disabled"));
+  assert.equal(writes.length, 0); await shot('email-unavailable-320'); console.log('Email unavailable state and 320px layout: PASS');
+  emailAvailable = true; await go(); await open();
+  await signupFields('STUDENT'); await field('confirmPassword', 'different-password'); await click('Send verification email');
+  await waitFor("document.querySelector('[role=alert]')?.textContent.includes('do not match')"); assert.equal(writes.length,0);
+  await field('confirmPassword','test-password-123'); await waitFor("![...document.querySelectorAll('button')].find(e=>e.textContent==='Send verification email').disabled"); await click('Send verification email');
   await waitFor("!!document.querySelector('input[name=otp]')");
-  assert.equal(writes[0].phone, '+2348012345678'); assert.equal(writes[0].role, 'STUDENT');
+  assert.equal(writes[0].email, 'student@example.test'); assert.equal(writes[0].role, 'STUDENT');
+  assert(await evaluate("![...Object.values(localStorage)].some(v=>v.includes('test-password-123'))"), 'Password must not persist in browser storage');
   assert(await evaluate("[...document.querySelectorAll('[role=dialog] button')].find(e=>e.textContent==='Landlord').matches(':disabled')"));
-  await field('otp', '000000'); await click('Verify phone and continue'); await waitFor("document.querySelector('[role=alert]')?.textContent.includes('Invalid or expired')");
-  await field('otp', '123456'); await click('Verify phone and continue'); await profile('STUDENT'); await shot('student-profile-320');
-  await field('confirmPassword', 'different-password'); await click('Finish registration'); await waitFor("document.querySelector('[role=alert]')?.textContent.includes('do not match')");
-  await field('confirmPassword', 'test-password-123'); duplicateProfile = true; await click('Finish registration'); await waitFor("document.querySelector('[role=alert]')?.textContent.includes('already linked')");
+  await field('otp', '000000'); await click('Verify email and continue'); await waitFor("document.querySelector('[role=alert]')?.textContent.includes('Invalid or expired')");
+  await field('otp', '123456'); await click('Verify email and continue'); await profile('STUDENT'); await shot('student-profile-320');
+  await field('phone', '123'); await click('Finish registration'); await waitFor("document.querySelector('[role=alert]')?.textContent.includes('valid Nigerian')"); await field('phone', '08012345678'); duplicateProfile = true; await click('Finish registration'); await waitFor("document.querySelector('[role=alert]')?.textContent.includes('already linked')");
   assert.equal(await evaluate("document.querySelector('input[name=fullName]').value"), 'QA STUDENT');
   await click('Finish registration'); await waitFor("!document.querySelector('[role=dialog]')");
   assert(await evaluate("JSON.parse(localStorage.getItem('kampus_user')).student.matricNumber==='FUTMINNA/QA/001'"));
-  console.log('Student signup, incorrect code, password mismatch, duplicate email and full session refresh: PASS');
+  console.log('Student signup, incorrect code, phone validation, duplicate contact and full session refresh: PASS');
   await clear(); await signIn('STUDENT', 'wrong-password'); await waitFor("document.querySelector('[role=alert]')?.textContent==='Invalid credentials'");
   await field('password', 'test-password-123'); await click('Sign in with password'); await waitFor("!document.querySelector('[role=dialog]')");
   await size(1440); await click('List your lodge'); await waitFor("document.querySelector('[role=dialog]')?.textContent.includes('Student and landlord accounts are separate')");
   assert(!await evaluate("!!document.querySelector('input[name=bankName]')")); console.log('Password sign-in and separate account boundary: PASS');
   await clear(); await click('List your lodge'); await waitFor("document.querySelector('[role=dialog]')?.textContent.includes('Create your Kampus account')");
   assert.equal(await evaluate("[...document.querySelectorAll('[role=dialog] button')].find(e=>e.textContent==='Landlord').getAttribute('aria-pressed')"), 'true');
-  await field('phone', '+2348021234567'); await waitFor("![...document.querySelectorAll('button')].find(e=>e.textContent==='Send verification code').disabled"); await click('Send verification code'); await waitFor("!!document.querySelector('input[name=otp]')");
-  await field('otp', '123456'); await click('Verify phone and continue'); await profile('LANDLORD'); await size(360, 760); await shot('landlord-profile-360');
+  await signupFields('LANDLORD'); await waitFor("![...document.querySelectorAll('button')].find(e=>e.textContent==='Send verification email').disabled"); await click('Send verification email'); await waitFor("!!document.querySelector('input[name=otp]')");
+  await field('otp', '123456'); await click('Verify email and continue'); await profile('LANDLORD'); await size(360, 760); await shot('landlord-profile-360');
   assert(await evaluate("document.querySelector('[role=dialog]').scrollHeight > document.querySelector('[role=dialog]').clientHeight"), 'Long profile must scroll');
   await click('Finish registration'); await waitFor("location.pathname==='/host/dashboard' && !document.querySelector('[role=dialog]')");
   assert(await evaluate("JSON.parse(localStorage.getItem('kampus_user')).role==='LANDLORD' && !JSON.parse(localStorage.getItem('kampus_user')).landlord.isVerified"));
@@ -102,9 +109,9 @@ async function profile(role) {
   console.log('Interrupted registration resumes on login and from the profile banner: PASS');
   await clear(); await call('Page.navigate', { url: 'http://localhost:3000/host/dashboard?register=1' });
   await waitFor("!!document.querySelector('[role=dialog] input[name=emailOrPhone]')");
-  await click('Create account', '[role=dialog]'); await field('phone', '08031234567');
-  await waitFor("![...document.querySelectorAll('button')].find(e=>e.textContent==='Send verification code').disabled"); await click('Send verification code');
-  await waitFor("!!document.querySelector('input[name=otp]')"); await field('otp', '123456'); await click('Verify phone and continue');
+  await click('Create account', '[role=dialog]'); await signupFields('LANDLORD');
+  await waitFor("![...document.querySelectorAll('button')].find(e=>e.textContent==='Send verification email').disabled"); await click('Send verification email');
+  await waitFor("!!document.querySelector('input[name=otp]')"); await field('otp', '123456'); await click('Verify email and continue');
   await waitFor("!!document.querySelector('input[name=bankName]')");
   assert.equal(currentUser.role, 'LANDLORD'); console.log('Direct Host Hub signup keeps profile setup open: PASS');
   await clear(); await call('Page.navigate', { url: 'http://localhost:3000/bookings' });
@@ -112,9 +119,9 @@ async function profile(role) {
   await waitFor("document.readyState==='complete'"); await delay(800);
   await evaluate("[...document.querySelectorAll('main button')].find(e=>e.textContent.includes('Sign In')).click()");
   await waitFor("!!document.querySelector('[role=dialog] input[name=emailOrPhone]')");
-  await click('Create account', '[role=dialog]'); await field('phone', '08041234567');
-  await waitFor("![...document.querySelectorAll('button')].find(e=>e.textContent==='Send verification code').disabled"); await click('Send verification code');
-  await waitFor("!!document.querySelector('input[name=otp]')"); await field('otp', '123456'); await click('Verify phone and continue');
+  await click('Create account', '[role=dialog]'); await signupFields('STUDENT');
+  await waitFor("![...document.querySelectorAll('button')].find(e=>e.textContent==='Send verification email').disabled"); await click('Send verification email');
+  await waitFor("!!document.querySelector('input[name=otp]')"); await field('otp', '123456'); await click('Verify email and continue');
   await waitFor("!!document.querySelector('input[name=matricNumber]')"); console.log('Direct Bookings signup keeps profile setup open: PASS');
   assert.deepEqual(errors, []); console.log('Screenshots: ' + out);
 } finally { if (socket) { await call('Browser.close').catch(() => {}); socket.close(); } else browser.kill(); } })().catch(error => { console.error(error.message); console.error(errors); process.exitCode = 1; });

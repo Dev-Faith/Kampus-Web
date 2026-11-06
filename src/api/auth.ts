@@ -8,19 +8,21 @@ export interface LoginPayload {
 }
 
 export interface SendOtpPayload {
-  phone: string;
+  email: string;
+  password: string;
   userType?: UserRole;
   role?: UserRole;
 }
 
 export interface VerifyOtpPayload {
-  phone: string;
+  email: string;
   code: string;
-  requestId?: string;
+  requestId: string;
 }
 
 export interface UpdateProfilePayload {
   fullName: string;
+  phone?: string;
   email?: string;
   matricNumber?: string;
   department?: string;
@@ -31,6 +33,7 @@ export interface UpdateProfilePayload {
 
 export interface UpdateLandlordProfilePayload {
   fullName: string;
+  phone?: string;
   email?: string;
   businessName?: string;
   businessRegistration?: string;
@@ -44,7 +47,8 @@ export interface UpdateLandlordProfilePayload {
 
 export const authApi = {
   async registrationStatus(): Promise<{
-    phoneVerificationAvailable: boolean;
+    emailVerificationAvailable: boolean;
+    verificationMethod: 'email';
     expiresIn: number;
     resendAfterSeconds: number;
     message: string;
@@ -64,7 +68,7 @@ export const authApi = {
   },
 
   /**
-   * Request OTP code to phone number (supports userType per backend spec)
+   * Begin email registration; the backend stores only a hash of the password.
    */
   async sendOtp(payload: SendOtpPayload): Promise<{
     requestId: string;
@@ -78,10 +82,16 @@ export const authApi = {
         expiresIn: number;
         resendAfterSeconds?: number;
       }>
-    >("/auth/send-otp", {
-      phone: payload.phone,
+    >("/auth/email/send-otp", {
+      email: payload.email,
+      password: payload.password,
       userType,
     });
+    return response.data.data;
+  },
+
+  async resendOtp(email: string, requestId: string): Promise<{ requestId: string; expiresIn: number; resendAfterSeconds: number }> {
+    const response = await apiClient.post('/auth/email/resend-otp', { email, requestId });
     return response.data.data;
   },
 
@@ -90,7 +100,7 @@ export const authApi = {
    */
   async verifyOtp(payload: VerifyOtpPayload): Promise<AuthResponseData> {
     const response = await apiClient.post<ApiResponse<AuthResponseData>>(
-      "/auth/verify-otp",
+      "/auth/email/verify-otp",
       payload,
     );
     return response.data.data;

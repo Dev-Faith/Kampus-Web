@@ -5,6 +5,7 @@ import { authApi } from "@/api/auth";
 import { User } from "@/types/api";
 import { useAuthStore } from "@/lib/stores/useAuthStore";
 import { Button } from "@/components/ui/button";
+import { normalizePhone } from "@/lib/auth-errors";
 
 const inputClass =
   "mt-1 w-full min-h-11 rounded-xl border border-border bg-background px-3 py-2 text-base text-foreground";
@@ -65,6 +66,7 @@ function ProfileForm({
   const [values, setValues] = useState({
     fullName: profile.fullName || "",
     email: profile.email || "",
+    phone: profile.phone || "",
     password: "",
     confirmPassword: "",
     matricNumber: profile.student?.matricNumber || "",
@@ -100,6 +102,11 @@ function ProfileForm({
   );
   async function submit(event: React.FormEvent) {
     event.preventDefault();
+    const phone = normalizePhone(values.phone);
+    if (!/^\+234[789]\d{9}$/.test(phone)) {
+      setLocalError('Enter a valid Nigerian contact phone number.');
+      return;
+    }
     if (values.password !== values.confirmPassword) {
       setLocalError("The passwords do not match.");
       return;
@@ -107,6 +114,7 @@ function ProfileForm({
     const common = {
       fullName: values.fullName.trim(),
       email: values.email.trim().toLowerCase(),
+      phone,
       ...(values.password ? { password: values.password } : {}),
     };
     const payload = host
@@ -129,7 +137,7 @@ function ProfileForm({
   return (
     <form onSubmit={submit} className="space-y-4">
       <p className="text-sm text-muted-foreground">
-        Phone verified: {profile.phone}. Finish your{" "}
+        {profile.emailVerifiedAt ? `Email verified: ${profile.email}.` : 'Finish your account details.'} Complete your{" "}
         {host ? "landlord" : "student"} profile below.
       </p>
       <fieldset disabled={isLoading} className="space-y-4 disabled:opacity-60">
@@ -140,7 +148,11 @@ function ProfileForm({
         {field("email", "Email address", {
           type: "email",
           autoComplete: "email",
+          readOnly: Boolean(profile.emailVerifiedAt),
         })}
+        {field("phone", "Contact phone number", { type: 'tel', autoComplete: 'tel', placeholder: '0801 234 5678', maxLength: 24 })}
+        <p className="text-xs text-muted-foreground">For booking communication. Adding a number does not verify its ownership.</p>
+        {!profile.hasPassword && <>
         {field(
           "password",
           profile.hasPassword ? "New password (optional)" : "Create a password",
@@ -161,6 +173,7 @@ function ProfileForm({
           Use at least 6 characters. You can then sign in with your email or
           phone and password.
         </p>
+        </>}
         {host ? (
           <>
             {field("businessName", "Business or lodge name (optional)", {

@@ -54,10 +54,12 @@ export interface LandlordProfile {
 }
 
 export interface User {
+  emailVerifiedAt?: string | null;
+  phoneVerifiedAt?: string | null;
   hasPassword?: boolean;
   adminAccess?: boolean;
   id: string;
-  phone: string;
+  phone: string | null;
   email: string | null;
   fullName: string | null;
   role: UserRole;

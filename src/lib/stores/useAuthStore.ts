@@ -23,7 +23,8 @@ interface AuthState {
     role: UserRole,
   ) => Promise<boolean>;
   sendOtp: (
-    phone: string,
+    email: string,
+    password: string,
     role: UserRole,
   ) => Promise<{
     requestId: string;
@@ -31,10 +32,11 @@ interface AuthState {
     resendAfterSeconds?: number;
   } | null>;
   verifyOtp: (
-    phone: string,
+    email: string,
     code: string,
-    requestId?: string,
+    requestId: string,
   ) => Promise<boolean>;
+  resendOtp: (email: string, requestId: string) => Promise<{ requestId: string; expiresIn: number; resendAfterSeconds?: number } | null>;
   completeProfile: (
     payload: UpdateProfilePayload | UpdateLandlordProfilePayload,
   ) => Promise<boolean>;
@@ -106,10 +108,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       return false;
     }
   },
-  sendOtp: async (phone, role) => {
+  sendOtp: async (email, password, role) => {
     set({ isLoading: true, error: null });
     try {
-      const result = await authApi.sendOtp({ phone, role });
+      const result = await authApi.sendOtp({ email, password, role });
       set({ isLoading: false });
       return result;
     } catch (error) {
@@ -120,10 +122,21 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       return null;
     }
   },
-  verifyOtp: async (phone, code, requestId) => {
+  resendOtp: async (email, requestId) => {
     set({ isLoading: true, error: null });
     try {
-      set(persistSession(await authApi.verifyOtp({ phone, code, requestId })));
+      const result = await authApi.resendOtp(email, requestId);
+      set({ isLoading: false });
+      return result;
+    } catch (error) {
+      set({ isLoading: false, error: authError(error, 'Could not resend your verification email.') });
+      return null;
+    }
+  },
+  verifyOtp: async (email, code, requestId) => {
+    set({ isLoading: true, error: null });
+    try {
+      set(persistSession(await authApi.verifyOtp({ email, code, requestId })));
       return true;
     } catch (error) {
       set({

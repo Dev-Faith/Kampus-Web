@@ -33,7 +33,7 @@ apiClient.interceptors.response.use(
     };
 
     const publicAuthRequest =
-      /\/auth\/(login|send-otp|verify-otp|refresh|registration-status)$/.test(
+      /\/auth\/(login|send-otp|verify-otp|email\/(send-otp|resend-otp|verify-otp)|refresh|registration-status)$/.test(
         originalRequest?.url || "",
       );
     if (
