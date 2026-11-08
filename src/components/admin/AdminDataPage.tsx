@@ -699,7 +699,7 @@ export function AdminDataPage({ resource }: { resource: Resource }) {
                   </p>
                   <p>{row.bio}</p>
                   <p>
-                    Budget: {money(row.budgetMax)} ·{" "}
+                    Rent share: {money(row.annualShare ?? row.budgetMax)} / {row.annualShare != null ? "year" : "month"} ·{" "}
                     {row.isActive
                       ? "Owner has enabled this advert"
                       : "Owner has paused this advert"}

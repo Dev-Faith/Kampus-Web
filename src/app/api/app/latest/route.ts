@@ -6,6 +6,8 @@ export async function GET() {
     {
       appName: APP_DOWNLOAD_CONFIG.appName,
       version: APP_DOWNLOAD_CONFIG.version,
+      versionCode: APP_DOWNLOAD_CONFIG.versionCode,
+      packageName: APP_DOWNLOAD_CONFIG.packageName,
       versionTag: APP_DOWNLOAD_CONFIG.versionTag,
       fullName: APP_DOWNLOAD_CONFIG.fullName,
       fileSize: APP_DOWNLOAD_CONFIG.fileSize,

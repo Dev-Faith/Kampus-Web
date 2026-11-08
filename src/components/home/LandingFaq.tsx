@@ -37,7 +37,7 @@ const FAQS: FaqItem[] = [
   {
     question: "How does roommate matching work for flatshares in Minna?",
     answer:
-      "You can filter potential roommates by FUTMINNA department, academic level, sleeping habits, study preferences, and budget. Once you connect and both agree on a 2-bedroom flat, you can coordinate rent payments between yourselves.",
+      "Browse FUTMINNA posts by area, rent share and whether someone already has a room. Send a private introduction. If the other student accepts, you can discuss the room and your plans in Kampus.",
   },
   {
     question: "Can parents pay directly on behalf of their children?",

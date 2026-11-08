@@ -1,247 +1,799 @@
 "use client";
-
-import React, { useCallback, useEffect, useState } from "react";
-import Image from "next/image";
-import {
-  Users,
-  Moon,
-  MessageSquare,
-  ShieldCheck,
-  PlusCircle,
-  Inbox,
-  User as UserIcon,
-  Loader2,
-  RefreshCw,
-} from "lucide-react";
+import { useEffect, useState } from "react";
 import { Navbar } from "@/components/layout/Navbar";
-import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { useAuthStore } from "@/lib/stores/useAuthStore";
 import { AuthModal } from "@/components/auth/AuthModal";
-import { toast } from "@/lib/stores/useToastStore";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { useAuthStore } from "@/lib/stores/useAuthStore";
 import { apiClient } from "@/api/client";
+import {
+  CAMPUS_AREA_OPTIONS,
+  getCampusAreaLabel,
+} from "@/lib/constants/campus-areas";
+import {
+  INTENTS,
+  postLabel,
+  rentShare,
+  requestLabel,
+  type HousingIntent,
+  type Introduction,
+  type RoommateChatLine,
+  type RoommateListing,
+} from "@/api/roommate-types";
 
-interface RoommateProfile {
-  id: string;
-  name: string;
-  campus: string;
-  university: string;
-  department: string;
-  level: string;
-  budgetMax: number;
-  sleepSchedule: string;
-  cleanliness: string;
-  cookingHabits: string;
-  bio: string;
-  avatar?: string | null;
-  createdAt: string;
-}
-
-const CAMPUSES = [
-  { value: "FUTMINNA", label: "FUTMINNA", comingSoon: false },
-  { value: "UNILAG", label: "UNILAG", comingSoon: true },
-  { value: "FUTA", label: "FUTA", comingSoon: true },
-  { value: "UI", label: "UI", comingSoon: true },
-  { value: "UNIBEN", label: "UNIBEN", comingSoon: true },
-  { value: "OAU", label: "OAU", comingSoon: true },
-];
-const UNIVERSITIES = [
-  { value: "Federal University of Technology, Minna", label: "FUTMINNA", comingSoon: false },
-  { value: "University of Lagos", label: "UNILAG", comingSoon: true },
-  { value: "Federal University of Technology, Akure", label: "FUTA", comingSoon: true },
-  { value: "University of Ibadan", label: "UI", comingSoon: true },
-  { value: "University of Benin", label: "UNIBEN", comingSoon: true },
-  { value: "Obafemi Awolowo University", label: "OAU", comingSoon: true },
-];
-
-const getErrorMessage = (error: any) => error?.response?.data?.message || "Please try again.";
-
-export default function RoommatesPage() {
-  const { isAuthenticated } = useAuthStore();
-  const [roommates, setRoommates] = useState<RoommateProfile[]>([]);
-  const [myListing, setMyListing] = useState<RoommateProfile | null>(null);
-  const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const [isAuthOpen, setIsAuthOpen] = useState(false);
-  const [selectedCampus, setSelectedCampus] = useState("FUTMINNA");
-  const [isLoading, setIsLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
-  const [isConnecting, setIsConnecting] = useState<string | null>(null);
-  const [formError, setFormError] = useState("");
-
-  const [university, setUniversity] = useState(UNIVERSITIES[0].value);
-  const [department, setDepartment] = useState("");
-  const [level, setLevel] = useState("200 Level");
-  const [budgetMax, setBudgetMax] = useState<number | "">("");
-  const [sleepSchedule, setSleepSchedule] = useState("Night Owl (1am+)");
-  const [cleanliness, setCleanliness] = useState("Very Meticulous");
-  const [cookingHabits, setCookingHabits] = useState("Cooks Daily");
-  const [bio, setBio] = useState("");
-
-  const loadListings = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      const response = await apiClient.get("/roommates", {
-        params: { university: selectedCampus, page: 1, pageSize: 50 },
-      });
-      setRoommates(response.data?.data?.items ?? []);
-    } catch (error) {
-      toast.error("Couldn’t load roommate listings", { description: getErrorMessage(error) });
-      setRoommates([]);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [selectedCampus]);
-
-  useEffect(() => { void loadListings(); }, [loadListings]);
-
+const input =
+  "block mt-1 w-full bg-background border border-border rounded-xl px-3 py-2 text-foreground";
+const card = "rounded-2xl border border-border bg-card p-5 space-y-3";
+const areas = CAMPUS_AREA_OPTIONS.filter((a) => a.id !== "all");
+const apiError = (e: unknown) => {
+  const msg = (e as { response?: { data?: { message?: unknown } } })?.response
+    ?.data?.message;
+  return typeof msg === "string"
+    ? msg
+    : "Couldn’t complete the request. Please try again.";
+};
+function useResource<T>(path: string | null, revision: number) {
+  const [state, setState] = useState<{
+    path: string;
+    revision: number;
+    value?: T;
+    error?: string;
+  }>();
   useEffect(() => {
-    if (!isAuthenticated) {
-      setMyListing(null);
-      return;
-    }
-    apiClient.get("/roommates/me")
-      .then((response) => {
-        const listing = response.data?.data ?? null;
-        setMyListing(listing);
-        if (listing) {
-          setUniversity(listing.university);
-          setDepartment(listing.department);
-          setLevel(listing.level);
-          setBudgetMax(Number(listing.budgetMax));
-          setSleepSchedule(listing.sleepSchedule);
-          setCleanliness(listing.cleanliness);
-          setCookingHabits(listing.cookingHabits);
-          setBio(listing.bio || "");
-        }
+    if (!path) return;
+    const abort = new AbortController();
+    apiClient
+      .get(path, { signal: abort.signal })
+      .then((r) => {
+        if (!abort.signal.aborted)
+          setState({ path, revision, value: r.data.data });
       })
-      .catch(() => setMyListing(null));
-  }, [isAuthenticated]);
-
-  const openCreateForm = () => {
-    if (isAuthenticated) setIsCreateOpen(true);
-    else setIsAuthOpen(true);
-  };
-
-  const handleCreatePost = async (event: React.FormEvent) => {
-    event.preventDefault();
-    if (!department.trim() || !budgetMax || Number(budgetMax) <= 0) {
-      setFormError("Add your department and a valid budget to publish your listing.");
-      return;
-    }
-    setFormError("");
-    setIsSaving(true);
-    try {
-      const response = await apiClient.put("/roommates/me", {
-        university,
-        department: department.trim(),
-        level,
-        budgetMax: Number(budgetMax),
-        sleepSchedule,
-        cleanliness,
-        cookingHabits,
-        bio: bio.trim(),
+      .catch((e) => {
+        if (!abort.signal.aborted)
+          setState({ path, revision, error: apiError(e) });
       });
-      setMyListing(response.data?.data ?? null);
-      setIsCreateOpen(false);
-      await loadListings();
-      toast.success("Roommate listing published", { description: "Students at your campus can now find your listing." });
-    } catch (error) {
-      setFormError(getErrorMessage(error));
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const handleConnect = async (student: RoommateProfile) => {
-    if (!isAuthenticated) {
-      setIsAuthOpen(true);
-      return;
-    }
-    setIsConnecting(student.id);
-    try {
-      await apiClient.post(`/roommates/${student.id}/connect`, {});
-      toast.success("Interest sent", { description: `${student.name} has been notified.` });
-    } catch (error) {
-      toast.error("Couldn’t send your request", { description: getErrorMessage(error) });
-    } finally {
-      setIsConnecting(null);
-    }
-  };
-
-  const handleHideListing = async () => {
-    try {
-      await apiClient.delete("/roommates/me");
-      setMyListing(null);
-      await loadListings();
-      toast.success("Listing hidden");
-    } catch (error) {
-      toast.error("Couldn’t hide listing", { description: getErrorMessage(error) });
-    }
-  };
-
+    return () => abort.abort();
+  }, [path, revision]);
+  return state?.path === path ? state : undefined;
+}
+type Feed = {
+  items: RoommateListing[];
+  pagination: { totalPages: number; total: number };
+};
+export default function RoommatesPage() {
+  const user = useAuthStore((s) => s.user);
+  const [auth, setAuth] = useState(false);
   return (
-    <div className="editorial-page roommates-page min-h-screen flex flex-col bg-background text-foreground transition-colors duration-300">
+    <>
       <Navbar />
-      <main className="editorial-main flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-border pb-6">
-          <div>
-            <div className="flex items-center gap-2 mb-1.5"><Users className="h-4 w-4 text-brand" /><span className="editorial-eyebrow text-[11px] font-semibold uppercase tracking-widest text-brand-strong">Kampus community</span></div>
-            <h1 className="editorial-title text-2xl sm:text-3xl font-semibold text-foreground tracking-tight">Find your people.</h1>
-            <p className="text-xs sm:text-sm text-muted-foreground mt-1">Meet students who share your campus, budget and day-to-day habits.</p>
+      <Roommates
+        key={user?.id || "guest"}
+        role={user?.role}
+        department={user?.student?.department || ""}
+        openAuth={() => setAuth(true)}
+      />
+      <AuthModal isOpen={auth} onClose={() => setAuth(false)} />
+    </>
+  );
+}
+function Roommates({
+  role,
+  department,
+  openAuth,
+}: {
+  role?: string;
+  department: string;
+  openAuth: () => void;
+}) {
+  const student = role === "STUDENT";
+  const [tab, setTab] = useState<"browse" | "requests">("browse"),
+    [edit, setEdit] = useState(false);
+  const [intro, setIntro] = useState<RoommateListing | null>(null),
+    [note, setNote] = useState("");
+  const [intent, setIntent] = useState(""),
+    [area, setArea] = useState(""),
+    [budget, setBudget] = useState(""),
+    [limit, setLimit] = useState("");
+  const [page, setPage] = useState(1),
+    [rev, refresh] = useState(0),
+    [busy, setBusy] = useState(false),
+    [error, setError] = useState(""),
+    [notice, setNotice] = useState("");
+  const [inboxTick, setInboxTick] = useState(0);
+  useEffect(() => {
+    if (tab !== "requests" || !student) return;
+    const timer = setInterval(() => setInboxTick((v) => v + 1), 30000);
+    return () => clearInterval(timer);
+  }, [tab, student]);
+  const params = new URLSearchParams({
+    university: "FUTMINNA",
+    page: String(page),
+    pageSize: "12",
+  });
+  if (intent) params.set("housingIntent", intent);
+  if (area) params.set("area", area);
+  if (limit) params.set("maxAnnualShare", limit);
+  const feed = useResource<Feed>("/roommates?" + params, rev);
+  const own = useResource<RoommateListing | null>(
+    student ? "/roommates/me" : null,
+    rev,
+  );
+  const inbox = useResource<Introduction[]>(
+    student ? "/roommates/connections" : null,
+    rev + inboxTick,
+  );
+  const reload = () => refresh((v) => v + 1);
+  async function mutate(
+    work: () => Promise<unknown>,
+    success: string,
+    after?: () => void,
+  ) {
+    if (busy) return;
+    setBusy(true);
+    setError("");
+    setNotice("");
+    try {
+      await work();
+      after?.();
+      setNotice(success);
+      reload();
+    } catch (e) {
+      setError(apiError(e));
+    } finally {
+      setBusy(false);
+    }
+  }
+  function start(action: () => void) {
+    setError("");
+    if (!role) openAuth();
+    else if (student) action();
+  }
+  const ownPost = own?.value;
+  return (
+    <main className="editorial-page roommates-page min-h-screen bg-background text-foreground">
+      <div className="mx-auto max-w-6xl px-4 py-8 sm:px-8 space-y-6">
+        <header className="flex flex-wrap items-end justify-between gap-4 border-b border-border pb-6">
+          <div className="space-y-3">
+            <p className="editorial-eyebrow">FUTMINNA · Student housing</p>
+            <h1 className="editorial-title text-4xl">Find a roommate.</h1>
+            <p className="text-muted-foreground">
+              Share a room you already have, or find someone to house-hunt with.
+            </p>
           </div>
-          <div className="flex items-center gap-3">
-            <Button onClick={() => void loadListings()} variant="outline" aria-label="Refresh roommate listings" className="rounded-full h-9 w-9 p-0 border-border"><RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`} /></Button>
-            <Button onClick={openCreateForm} className="editorial-action bg-primary hover:bg-primary-hover text-primary-foreground font-bold text-xs rounded-full px-4 py-2 flex items-center gap-1.5"><PlusCircle className="h-4 w-4" /><span>{myListing ? "Edit Listing" : "Post Roommate Request"}</span></Button>
-          </div>
-        </div>
-
-        {myListing && <div className="flex items-center justify-between gap-3 rounded-2xl border border-success/25 bg-success-soft px-4 py-3 text-xs"><span>Your listing is visible to other students.</span><Button type="button" variant="link" onClick={() => void handleHideListing()} className="h-auto p-0 text-success">Hide listing</Button></div>}
-
-        <div className="flex flex-wrap items-center gap-2 text-xs">
-          {CAMPUSES.map((campus) => <button key={campus.value} type="button" onClick={() => { if (!campus.comingSoon) setSelectedCampus(campus.value); }} disabled={campus.comingSoon} aria-pressed={selectedCampus === campus.value} className={`editorial-filter px-3.5 py-1.5 rounded-full font-bold transition-all ${selectedCampus === campus.value ? "bg-primary text-primary-foreground" : "bg-card  text-foreground  border border-border "} ${campus.comingSoon ? "cursor-not-allowed opacity-60" : ""}`}>{campus.label}{campus.comingSoon ? " · Coming Soon" : ""}</button>)}
-        </div>
-
-        {isLoading ? (
-          <div className="rounded-3xl border border-border bg-card p-12 text-center"><Loader2 className="mx-auto h-7 w-7 animate-spin text-success" /><p className="mt-3 text-sm text-muted-foreground">Loading roommate listings…</p></div>
-        ) : roommates.length === 0 ? (
-          <div className="editorial-card rounded-3xl border border-border bg-card p-12 text-center space-y-3 shadow-sm"><Inbox className="mx-auto h-12 w-12 text-muted-foreground" /><h3 className="text-base font-bold text-foreground">No roommate requests yet</h3><p className="text-xs text-muted-foreground max-w-md mx-auto">Post your preferences to connect with students looking to share near your campus.</p><Button onClick={openCreateForm} className="editorial-action rounded-full bg-primary hover:bg-primary-hover text-primary-foreground font-bold text-xs px-5 py-2">Post a listing</Button></div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {roommates.filter((student) => student.id !== myListing?.id).map((student) => (
-              <div key={student.id} className="editorial-card rounded-3xl border border-border bg-card p-6 space-y-5 shadow-sm hover:shadow-sm transition-shadow flex flex-col justify-between">
-                <div className="space-y-4">
-                  <div className="flex items-start justify-between">
-                    <div className="roommate-avatar relative h-14 w-14 rounded-2xl overflow-hidden border border-border bg-muted flex items-center justify-center">{student.avatar ? <Image src={student.avatar} alt={student.name} fill className="object-cover" /> : <UserIcon className="h-6 w-6 text-brand" />}</div>
-                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-brand-soft text-brand-strong border border-brand/25"><ShieldCheck className="h-3 w-3" />Kampus student</span>
-                  </div>
-                  <div><h3 className="text-lg font-bold text-foreground">{student.name}</h3><p className="text-xs text-muted-foreground mt-0.5">{student.department} · {student.level}</p><p className="text-[11px] text-brand-strong font-semibold mt-0.5">{student.university}</p></div>
-                  {!!student.bio && <p className="text-xs text-muted-foreground line-clamp-3 leading-relaxed">{student.bio}</p>}
-                  <div className="grid grid-cols-2 gap-2 border-t border-border pt-3 text-[11px]"><div className="flex items-center gap-1.5 text-muted-foreground"><Moon className="h-3 w-3 text-warning shrink-0" /><span className="truncate">{student.sleepSchedule}</span></div><div className="flex items-center gap-1.5 text-muted-foreground"><span className="truncate">Cleanliness · {student.cleanliness}</span></div><div className="col-span-2 text-muted-foreground">Cooking · {student.cookingHabits}</div></div>
-                </div>
-                <div className="flex items-center justify-between border-t border-border pt-4"><div><span className="text-[10px] uppercase font-bold text-muted-foreground block">Monthly budget</span><span className="text-sm font-semibold text-foreground">Up to ₦{Number(student.budgetMax).toLocaleString()}</span></div><Button onClick={() => void handleConnect(student)} disabled={isConnecting === student.id} className="editorial-action bg-primary hover:bg-primary-hover text-primary-foreground font-bold text-xs rounded-full px-3.5 py-1.5"><MessageSquare className="h-3.5 w-3.5 mr-1" />{isConnecting === student.id ? "Sending…" : "Connect"}</Button></div>
-              </div>
-            ))}
+          {(!role || student) && (
+            <Button
+              disabled={
+                busy ||
+                (student &&
+                  !own?.value &&
+                  !own?.error &&
+                  own?.value !== null) ||
+                Boolean(own?.error)
+              }
+              onClick={() => start(() => setEdit(true))}
+            >
+              {ownPost ? "Edit my post" : "Create a post"}
+            </Button>
+          )}
+        </header>
+        {student && own?.error && (
+          <p role="alert">
+            Couldn’t load your post. <button onClick={reload}>Retry</button>
+          </p>
+        )}
+        {ownPost && (
+          <div className={card}>
+            <strong>
+              {ownPost.isHidden
+                ? "Your post is under moderation"
+                : ownPost.isActive
+                  ? "Your post is visible"
+                  : "Your post is paused"}
+            </strong>
+            {ownPost.isActive && !ownPost.isHidden && (
+              <Button
+                className="ml-3"
+                variant="outline"
+                disabled={busy}
+                onClick={() =>
+                  mutate(
+                    () => apiClient.delete("/roommates/me"),
+                    "Your post is paused.",
+                  )
+                }
+              >
+                Pause post
+              </Button>
+            )}
           </div>
         )}
-      </main>
-
-      <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-        <DialogContent className="editorial-dialog max-w-md bg-card border border-border text-foreground p-6 rounded-3xl shadow-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader><DialogTitle className="flex items-center gap-2 text-xl font-bold text-foreground"><Users className="h-5 w-5 text-success" />{myListing ? "Edit your roommate listing" : "Post your roommate listing"}</DialogTitle></DialogHeader>
-          <p className="text-xs text-muted-foreground">Your name and profile photo come from your Kampus account.</p>
-          <form onSubmit={handleCreatePost} className="space-y-4 mt-2">
-            <div className="space-y-1.5"><label className="text-xs font-semibold text-foreground">Campus / University</label><select value={university} onChange={(e) => setUniversity(e.target.value)} className="w-full px-3 py-2 rounded-xl bg-muted border border-border text-foreground text-xs">{!UNIVERSITIES.some((item) => item.value === university) && <option value={university} disabled>{university} · Coming Soon</option>}{UNIVERSITIES.map((item) => <option key={item.value} value={item.value} disabled={item.comingSoon}>{item.label}{item.comingSoon ? " · Coming Soon" : ""}</option>)}</select></div>
-            <div className="grid grid-cols-2 gap-3"><div className="space-y-1.5"><label className="text-xs font-semibold text-foreground">Department</label><input value={department} onChange={(e) => setDepartment(e.target.value)} placeholder="e.g. Computer Science" className="w-full px-3 py-2 rounded-xl bg-muted border border-border text-foreground text-xs" required /></div><div className="space-y-1.5"><label className="text-xs font-semibold text-foreground">Study level</label><select value={level} onChange={(e) => setLevel(e.target.value)} className="w-full px-3 py-2 rounded-xl bg-muted border border-border text-foreground text-xs">{[100, 200, 300, 400, 500, 600].map((item) => <option key={item} value={`${item} Level`}>{item} Level</option>)}</select></div></div>
-            <div className="space-y-1.5"><label className="text-xs font-semibold text-foreground">Max monthly budget (₦)</label><input type="number" min="1" value={budgetMax} onChange={(e) => setBudgetMax(e.target.value ? Number(e.target.value) : "")} placeholder="e.g. 250000" className="w-full px-3 py-2 rounded-xl bg-muted border border-border text-foreground text-xs" required /></div>
-            <div className="grid grid-cols-2 gap-3"><div className="space-y-1.5"><label className="text-xs font-semibold text-foreground">Sleep schedule</label><select value={sleepSchedule} onChange={(e) => setSleepSchedule(e.target.value)} className="w-full px-3 py-2 rounded-xl bg-muted border border-border text-foreground text-xs"><option>Night Owl (1am+)</option><option>Early Bird (10pm)</option><option>Flexible</option></select></div><div className="space-y-1.5"><label className="text-xs font-semibold text-foreground">Cleanliness</label><select value={cleanliness} onChange={(e) => setCleanliness(e.target.value)} className="w-full px-3 py-2 rounded-xl bg-muted border border-border text-foreground text-xs"><option>Very Meticulous</option><option>Moderate / Tidy</option><option>Relaxed</option></select></div></div>
-            <div className="space-y-1.5"><label className="text-xs font-semibold text-foreground">Cooking habits</label><select value={cookingHabits} onChange={(e) => setCookingHabits(e.target.value)} className="w-full px-3 py-2 rounded-xl bg-muted border border-border text-foreground text-xs"><option>Cooks Daily</option><option>Occasionally</option><option>Rarely</option></select></div>
-            <div className="space-y-1.5"><label className="text-xs font-semibold text-foreground">About your preferences</label><textarea rows={3} value={bio} onChange={(e) => setBio(e.target.value)} placeholder="Describe what matters in a shared home" className="w-full px-3 py-2 rounded-xl bg-muted border border-border text-foreground text-xs" /></div>
-            {formError && <p className="text-xs text-destructive" role="alert">{formError}</p>}
-            <div className="flex justify-end gap-2 pt-2 border-t border-border"><Button type="button" variant="outline" onClick={() => setIsCreateOpen(false)} className="rounded-full text-xs">Cancel</Button><Button type="submit" disabled={isSaving} className="editorial-action rounded-full bg-primary hover:bg-primary-hover text-primary-foreground font-bold text-xs">{isSaving ? "Saving…" : "Publish Listing"}</Button></div>
-          </form>
-        </DialogContent>
-      </Dialog>
-      <AuthModal isOpen={isAuthOpen} onClose={() => setIsAuthOpen(false)} />
-    </div>
+        <div className="flex gap-2">
+          <Button
+            variant={tab === "browse" ? "default" : "outline"}
+            onClick={() => setTab("browse")}
+          >
+            Browse posts
+          </Button>
+          {student && (
+            <Button
+              variant={tab === "requests" ? "default" : "outline"}
+              onClick={() => setTab("requests")}
+            >
+              My requests
+              {inbox?.value?.some(
+                (r) => r.direction === "RECEIVED" && r.status === "PENDING",
+              )
+                ? " · New"
+                : ""}
+            </Button>
+          )}
+          <Button variant="ghost" onClick={reload}>
+            Refresh
+          </Button>
+        </div>
+        {error && !edit && !intro && (
+          <p role="alert" className="text-destructive">
+            {error}
+          </p>
+        )}
+        {notice && <p role="status">{notice}</p>}
+        {tab === "browse" ? (
+          <>
+            <form
+              className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 items-end"
+              onSubmit={(e) => {
+                e.preventDefault();
+                setLimit(budget);
+                setPage(1);
+              }}
+            >
+              <label>
+                Show students who
+                <select
+                  className={input}
+                  value={intent}
+                  onChange={(e) => {
+                    setIntent(e.target.value);
+                    setPage(1);
+                  }}
+                >
+                  <option value="">Have either plan</option>
+                  <option value="HAS_ROOM">Have a room</option>
+                  <option value="SEARCH_TOGETHER">
+                    Want to search together
+                  </option>
+                </select>
+              </label>
+              <label>
+                Area
+                <select
+                  className={input}
+                  value={area}
+                  onChange={(e) => {
+                    setArea(e.target.value);
+                    setPage(1);
+                  }}
+                >
+                  <option value="">All FUTMINNA areas</option>
+                  {areas.map((a) => (
+                    <option key={a.id} value={a.id}>
+                      {a.campus} · {a.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                Maximum yearly share (₦)
+                <input
+                  className={input}
+                  type="number"
+                  min="1"
+                  max="9999999999999"
+                  value={budget}
+                  onChange={(e) => setBudget(e.target.value)}
+                  placeholder="Any amount"
+                />
+              </label>
+              <Button type="submit" variant="outline">Apply budget</Button>
+            </form>
+            {feed?.error ? (
+              <p role="alert">
+                {feed.error} <button onClick={reload}>Retry</button>
+              </p>
+            ) : !feed?.value ? (
+              <p role="status">Loading roommate posts…</p>
+            ) : (
+              <>
+                {!feed.value.items.length && (
+                  <div className={card}>
+                    <h2>No posts for this search</h2>
+                    <p>Try another area or publish what you’re looking for.</p>
+                    {(intent || area || limit) && (
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          setIntent("");
+                          setArea("");
+                          setBudget("");
+                          setLimit("");
+                          setPage(1);
+                        }}
+                      >
+                        Clear filters
+                      </Button>
+                    )}
+                  </div>
+                )}
+                <div className="grid gap-4 md:grid-cols-2">
+                  {feed.value.items.map((p) => {
+                    const mine = p.id === ownPost?.id,
+                      existing = inbox?.value?.find(
+                        (r) => r.listingId === p.id && r.direction === "SENT",
+                      );
+                    return (
+                      <article className={card} key={p.id}>
+                        <p className="text-sm text-brand-strong">
+                          {postLabel(p.housingIntent)}
+                        </p>
+                        <h2 className="text-xl font-semibold">{p.name}</h2>
+                        <p>
+                          {getCampusAreaLabel(p.area) || "Area not specified"} ·{" "}
+                          {p.university}
+                        </p>
+                        <p>
+                          <strong>{rentShare(p)}</strong>{" "}
+                          {p.housingIntent === "HAS_ROOM"
+                            ? "per roommate"
+                            : "personal budget"}
+                        </p>
+                        <p className="text-muted-foreground">
+                          {[
+                            p.department,
+                            p.level,
+                            p.sleepSchedule,
+                            p.cleanliness,
+                            p.cookingHabits,
+                          ]
+                            .filter(Boolean)
+                            .join(" · ")}
+                        </p>
+                        {p.bio && <p className="break-words">{p.bio}</p>}
+                        {mine ? (
+                          <span>Your post</span>
+                        ) : existing ? (
+                          <Button
+                            variant="outline"
+                            onClick={() => setTab("requests")}
+                          >
+                            {requestLabel(existing.status)} · View request
+                          </Button>
+                        ) : (
+                          (!role || student) && (
+                            <Button
+                              disabled={
+                                busy ||
+                                (student &&
+                                  (!own || !inbox?.value || !!own.error))
+                              }
+                              onClick={() =>
+                                start(() => {
+                                  setIntro(p);
+                                  setNote("");
+                                })
+                              }
+                            >
+                              Introduce myself
+                            </Button>
+                          )
+                        )}
+                      </article>
+                    );
+                  })}
+                </div>
+                {feed.value.pagination.totalPages > 1 && (
+                  <div className="flex gap-3 items-center">
+                    <Button
+                      variant="outline"
+                      disabled={page <= 1}
+                      onClick={() => setPage((v) => v - 1)}
+                    >
+                      Previous
+                    </Button>
+                    Page {page} of {feed.value.pagination.totalPages}
+                    <Button
+                      variant="outline"
+                      disabled={page >= feed.value.pagination.totalPages}
+                      onClick={() => setPage((v) => v + 1)}
+                    >
+                      Next
+                    </Button>
+                  </div>
+                )}
+              </>
+            )}
+          </>
+        ) : (
+          <section className="space-y-3">
+            {inbox?.error ? (
+              <p role="alert">
+                {inbox.error} <button onClick={reload}>Retry</button>
+              </p>
+            ) : !inbox?.value ? (
+              <p>Loading requests…</p>
+            ) : inbox.value.length === 0 ? (
+              <div className={card}>
+                Your introductions and replies will appear here.
+              </div>
+            ) : (
+              inbox.value.map((r) => (
+                <Request
+                  key={r.id}
+                  r={r}
+                  busy={busy}
+                  rev={rev}
+                  mutate={mutate}
+                />
+              ))
+            )}
+          </section>
+        )}
+        {student && tab === "browse" && inbox?.error && (
+          <p role="alert">
+            Couldn’t load request statuses.{" "}
+            <button onClick={reload}>Retry</button>
+          </p>
+        )}
+        <Dialog
+          open={!!intro}
+          onOpenChange={(open) => {
+            if (!open && !busy) setIntro(null);
+          }}
+        >
+          <DialogContent>
+            <DialogTitle>Introduce yourself to {intro?.name}</DialogTitle>
+            <form
+              className="space-y-4"
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (intro && note.trim())
+                  void mutate(
+                    () =>
+                      apiClient.post("/roommates/" + intro.id + "/connect", {
+                        message: note.trim(),
+                      }),
+                    "View your introduction in My requests.",
+                    () => setIntro(null),
+                  );
+              }}
+            >
+              <label>
+                Private introduction
+                <textarea
+                  className={input}
+                  autoFocus
+                  required
+                  maxLength={500}
+                  value={note}
+                  onChange={(e) => setNote(e.target.value)}
+                  placeholder="What do you have in mind for the room or the search?"
+                />
+              </label>
+              <p>They can accept to start a private conversation.</p>
+              {error && <p role="alert">{error}</p>}
+              <Button type="submit" disabled={busy || !note.trim()}>Send introduction</Button>
+            </form>
+          </DialogContent>
+        </Dialog>
+        {edit && (
+          <PostForm
+            post={ownPost}
+            department={department}
+            busy={busy}
+            error={error}
+            close={() => {
+              if (!busy) setEdit(false);
+            }}
+            save={(data) =>
+              mutate(
+                () => apiClient.put("/roommates/me", data),
+                ownPost?.isHidden
+                  ? "Changes saved for review."
+                  : "Your post is published.",
+                () => setEdit(false),
+              )
+            }
+          />
+        )}
+      </div>
+    </main>
+  );
+}
+type Mutate = (
+  fn: () => Promise<unknown>,
+  message: string,
+  after?: () => void,
+) => Promise<void>;
+function Request({
+  r,
+  busy,
+  rev,
+  mutate,
+}: {
+  r: Introduction;
+  busy: boolean;
+  rev: number;
+  mutate: Mutate;
+}) {
+  const [open, setOpen] = useState(false),
+    [text, setText] = useState("");
+  const [poll, setPoll] = useState(0);
+  useEffect(() => {
+    if (!open) return;
+    const timer = setInterval(() => setPoll((v) => v + 1), 30000);
+    return () => clearInterval(timer);
+  }, [open]);
+  const path = "/roommates/connections/" + r.id;
+  const chat = useResource<RoommateChatLine[]>(
+    open ? path + "/messages" : null,
+    rev + poll,
+  );
+  const decide = (status: string) =>
+    mutate(() => apiClient.put(path, { status }), "Request updated.");
+  return (
+    <article className={card}>
+      <h2 className="font-semibold">
+        {r.direction === "SENT" ? "To" : "From"} {r.otherName}
+      </h2>
+      <p>{requestLabel(r.status)}</p>
+      {r.status === "PENDING" && !r.listingActive && (
+        <p className="text-sm text-muted-foreground">
+          {r.direction === "RECEIVED"
+            ? "Your post is paused. Publish it again before accepting."
+            : "This post is paused. You can withdraw this request."}
+        </p>
+      )}
+      {r.message && <p className="break-words">{r.message}</p>}
+      <div className="flex flex-wrap gap-2">
+        {r.status === "PENDING" &&
+          (r.direction === "RECEIVED" ? (
+            <>
+              <Button
+                disabled={busy || !r.listingActive}
+                onClick={() => decide("ACCEPTED")}
+              >
+                Accept introduction
+              </Button>
+              <Button
+                disabled={busy}
+                variant="outline"
+                onClick={() => decide("DECLINED")}
+              >
+                Decline
+              </Button>
+            </>
+          ) : (
+            <Button
+              disabled={busy}
+              variant="outline"
+              onClick={() => decide("CLOSED")}
+            >
+              Withdraw
+            </Button>
+          ))}
+        {(r.status === "ACCEPTED" || r.status === "CLOSED") && (
+          <Button variant="outline" onClick={() => setOpen(!open)}>
+            {open ? "Hide conversation" : "View conversation"}
+          </Button>
+        )}
+        {r.status === "ACCEPTED" && (
+          <Button
+            variant="ghost"
+            disabled={busy}
+            onClick={() => {
+              if (window.confirm("Close this conversation for both students?"))
+                void decide("CLOSED");
+            }}
+          >
+            Close conversation
+          </Button>
+        )}
+      </div>
+      {open && (
+        <div className="space-y-2 border-t border-border pt-3">
+          <p className="text-sm">Latest 50 private messages</p>
+          {chat?.error ? (
+            <p role="alert">{chat.error}</p>
+          ) : !chat?.value ? (
+            <p>Loading…</p>
+          ) : chat.value.length ? (
+            chat.value.map((m) => (
+              <p className="break-words" key={m.id}>
+                <strong>{m.mine ? "You" : r.otherName}</strong> · {m.body}
+              </p>
+            ))
+          ) : (
+            <p>No messages yet.</p>
+          )}
+          {r.status === "ACCEPTED" && (
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (text.trim())
+                  void mutate(
+                    () =>
+                      apiClient.post(path + "/messages", { body: text.trim() }),
+                    "Message sent.",
+                    () => setText(""),
+                  );
+              }}
+            >
+              <label>
+                Message
+                <textarea
+                  className={input}
+                  maxLength={1000}
+                  value={text}
+                  onChange={(e) => setText(e.target.value)}
+                />
+              </label>
+              <Button type="submit" disabled={busy || !text.trim()}>Send message</Button>
+            </form>
+          )}
+        </div>
+      )}
+    </article>
+  );
+}
+function PostForm({
+  post,
+  department,
+  busy,
+  error,
+  close,
+  save,
+}: {
+  post?: RoommateListing | null;
+  department: string;
+  busy: boolean;
+  error: string;
+  close: () => void;
+  save: (x: unknown) => Promise<void>;
+}) {
+  const [intent, setIntent] = useState(post?.housingIntent || ""),
+    [area, setArea] = useState(post?.area || ""),
+    [amount, setAmount] = useState(post?.annualShare?.toString() || ""),
+    [bio, setBio] = useState(post?.bio || "");
+  const [extras, setExtras] = useState({
+    department: post?.department || department,
+    level: post?.level || "",
+    sleepSchedule: post?.sleepSchedule || "",
+    cleanliness: post?.cleanliness || "",
+    cookingHabits: post?.cookingHabits || "",
+  });
+  const labels = {
+    department: "Department",
+    level: "Study level",
+    sleepSchedule: "Sleep schedule",
+    cleanliness: "Cleaning routine",
+    cookingHabits: "Cooking habits",
+  };
+  return (
+    <Dialog
+      open
+      onOpenChange={(v) => {
+        if (!v) close();
+      }}
+    >
+      <DialogContent className="max-h-[88vh] overflow-auto">
+        <DialogTitle>
+          {post ? "Edit your roommate post" : "Create a roommate post"}
+        </DialogTitle>
+        <form
+          className="space-y-4"
+          onSubmit={(e) => {
+            e.preventDefault();
+            void save({
+              university: "FUTMINNA",
+              housingIntent: intent,
+              area,
+              annualShare: Number(amount),
+              bio,
+              ...extras,
+            });
+          }}
+        >
+          <label className="block">
+            What’s your situation?
+            <select
+              className={input}
+              required
+              value={intent}
+              onChange={(e) => setIntent(e.target.value as HousingIntent)}
+            >
+              <option value="">Choose one</option>
+              {Object.entries(INTENTS).map(([k, v]) => (
+                <option key={k} value={k}>
+                  {v}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="block">
+            {intent === "HAS_ROOM"
+              ? "Where is the room?"
+              : "Where would you like to live?"}
+            <select
+              className={input}
+              value={area}
+              required
+              onChange={(e) => setArea(e.target.value)}
+            >
+              <option value="">Choose a FUTMINNA area</option>
+              {areas.map((a) => (
+                <option key={a.id} value={a.id}>
+                  {a.campus} · {a.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="block">
+            {intent === "HAS_ROOM"
+              ? "Roommate’s yearly rent share"
+              : "Your maximum yearly rent share"}{" "}
+            (₦)
+            <input
+              className={input}
+              required
+              type="number"
+              min="1"
+              max="9999999999999"
+              step="0.01"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+            />
+          </label>
+          {post && post.annualShare == null && (
+            <p>
+              Your old post lists {rentShare(post)}. Enter the yearly amount you
+              want to publish.
+            </p>
+          )}
+          <label className="block">
+            What should a roommate know?
+            <textarea
+              className={input}
+              maxLength={1000}
+              value={bio}
+              onChange={(e) => setBio(e.target.value)}
+              placeholder="For example, your move-in plans or how you share bills. Leave out private contact details."
+            />
+          </label>
+          <details>
+            <summary>Optional study and living preferences</summary>
+            {(Object.keys(labels) as (keyof typeof labels)[]).map((k) => (
+              <label className="block my-2" key={k}>
+                {labels[k]}
+                <input
+                  className={input}
+                  maxLength={k === "department" ? 255 : 100}
+                  value={extras[k]}
+                  onChange={(e) =>
+                    setExtras({ ...extras, [k]: e.target.value })
+                  }
+                />
+              </label>
+            ))}
+          </details>
+          {error && <p role="alert">{error}</p>}
+          <Button type="submit" disabled={busy}>
+            {post?.isHidden
+              ? "Save changes"
+              : post && !post.isActive
+                ? "Publish again"
+                : "Publish post"}
+          </Button>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }

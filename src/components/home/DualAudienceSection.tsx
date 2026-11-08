@@ -94,11 +94,11 @@ export function DualAudienceSection() {
               <Users className="h-5 w-5" />
             </div>
             <h4 className="text-base font-bold text-slate-900 dark:text-white">
-              Roommate Matching & Flatshares
+              Roommates & Flatshares
             </h4>
             <p className="text-xs text-slate-600 dark:text-[#93A89D] leading-relaxed">
-              Connect with fellow course-mates by department, sleeping habits, and
-              budget to split 2-bedroom flats affordably.
+              Find students by area, housing plans and rent share, then send a
+              private introduction to discuss living together.
             </p>
           </div>
         </div>

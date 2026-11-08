@@ -44,7 +44,7 @@ const COMPARISON_ROWS: ComparisonRow[] = [
   {
     feature: "Roommate Matching",
     streetAgent: "Zero support. You bear full cost alone if you have no partner",
-    kampusWay: "Faculty & lifestyle matching to split 2-bed flats safely",
+    kampusWay: "Browse by area and rent share, then introduce yourself",
   },
 ];
 

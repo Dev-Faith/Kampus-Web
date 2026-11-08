@@ -46,6 +46,7 @@ export interface AdminRow {
   bio?: string;
   department?: string;
   budgetMax?: string | number;
+  annualShare?: string | number | null;
   moveInDate?: string;
   totalAmount?: string | number;
   lodge?: {

@@ -38,17 +38,6 @@ const TESTIMONIALS: Testimonial[] = [
       "The escrow held my rent until I physically travelled down from Abuja, tested the light and running water, and collected keys. Total peace of mind for both me and my parents.",
     rating: 5,
   },
-  {
-    id: "rev-3",
-    name: "Chinedu Eze",
-    department: "Architecture (SAAT)",
-    level: "200 Level",
-    lodge: "Bosso Horizon Flatshare, Bosso Campus",
-    avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80",
-    quote:
-      "Roommate matching paired me with another architecture coursemate who has the same studio study routine. We split a neat flat off Bosso campus and halved our living costs.",
-    rating: 5,
-  },
 ];
 
 export function StudentTestimonials() {
