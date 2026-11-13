@@ -13,6 +13,7 @@ import {
   type ApiPage,
 } from "@/components/account/ui";
 import { useApiResource } from "@/lib/use-api-resource";
+import { getUnitAvailability } from "@/lib/lodge-availability";
 import type { BackendLodge } from "@/types/api";
 export default function Page() {
   return (
@@ -83,9 +84,9 @@ function Units() {
                 </p>
                 <p>
                   {money(l.rent)} / year ·{" "}
-                  {l.status.toUpperCase() === "BOOKED"
+                  {getUnitAvailability(l) === "BOOKED"
                     ? "Reserved / booked"
-                    : l.status.toLowerCase()}
+                    : getUnitAvailability(l)?.toLowerCase() ?? "Check availability"}
                 </p>
                 <Link
                   href={`/host/properties/${l.id}`}

@@ -20,6 +20,7 @@ import type {
   LodgeBuildingSummary,
 } from "@/types/api";
 type EditableUnit = Omit<BackendLodge, "amenities"> & {
+  status: NonNullable<BackendLodge["status"]>;
   amenities: (LodgeAmenity | string)[];
 };
 export function PropertyEditor({ id }: { id?: string }) {

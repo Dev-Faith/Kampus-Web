@@ -27,6 +27,7 @@ import { toast } from "@/lib/stores/useToastStore";
 import { getAccommodationTypeLabel } from "@/lib/constants/accommodation-types";
 import { getCampusAreaLabel } from "@/lib/constants/campus-areas";
 import { listingUrl } from "@/lib/constants/site";
+import { getUnitAvailability } from "@/lib/lodge-availability";
 import type { BackendLodge, Booking } from "@/types/api";
 export default function Page() {
   const { id } = useParams<{ id: string }>();
@@ -128,6 +129,7 @@ function Unit({ id }: { id: string }) {
       ? `${l.latitude},${l.longitude}`
       : [l.address, l.city, l.state].filter(Boolean).join(", ");
   const existing = reservation.data?.items[0];
+  const availability = getUnitAvailability(l);
   const today = new Intl.DateTimeFormat("en-CA", {
     timeZone: "Africa/Lagos",
     year: "numeric",
@@ -312,7 +314,12 @@ function Unit({ id }: { id: string }) {
               <Link className="text-brand-strong underline" href="/settings">
                 Complete your profile before booking
               </Link>
-            ) : l.status.toUpperCase() !== "AVAILABLE" ? (
+            ) : availability === null ? (
+              <ErrorNotice
+                error="We couldn’t confirm this unit’s availability. Please refresh to check again."
+                retry={reload}
+              />
+            ) : availability !== "AVAILABLE" ? (
               <p>This unit is currently unavailable.</p>
             ) : (
               <form className="space-y-4" onSubmit={reserve}>

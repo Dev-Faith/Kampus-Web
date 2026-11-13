@@ -2,6 +2,7 @@ import { apiClient } from "@/api/client";
 import { ApiResponse, BackendLodge } from "@/types/api";
 import { Property } from "@/types/property";
 import { getAccommodationTypeLabel } from "@/lib/constants/accommodation-types";
+import { getUnitAvailability } from "@/lib/lodge-availability";
 
 export interface GetLodgesParams {
   page?: number;
@@ -32,7 +33,7 @@ export function backendLodgeToProperty(lodge: BackendLodge): Property {
           },
         ]
       : [];
-  const status = String(lodge.status).toLowerCase();
+  const status = getUnitAvailability(lodge);
   const host = lodge.landlord
     ? {
         name: lodge.landlord.fullName || "",
@@ -57,11 +58,15 @@ export function backendLodgeToProperty(lodge: BackendLodge): Property {
     period: "year",
     propertyType: getAccommodationTypeLabel(lodge.category),
     status:
-      status === "booked" || status === "occupied"
+      status === "BOOKED" || status === "OCCUPIED"
         ? "occupied"
-        : status === "maintenance"
+        : status === "MAINTENANCE"
           ? "maintenance"
-          : "available",
+          : status === "AVAILABLE"
+            ? "available"
+            : status === "OFFLINE"
+              ? "offline"
+              : "unknown",
     campus:
       lodge.university ||
       [lodge.city, lodge.state].filter(Boolean).join(", ") ||
@@ -139,17 +144,16 @@ export const lodgesApi = {
   },
 
   async getAmenities() {
-    const response =
-      await apiClient.get<
-        ApiResponse<
-          Array<{
-            id: string;
-            name: string;
-            icon: string | null;
-            category?: string | null;
-          }>
-        >
-      >("/amenities");
+    const response = await apiClient.get<
+      ApiResponse<
+        Array<{
+          id: string;
+          name: string;
+          icon: string | null;
+          category?: string | null;
+        }>
+      >
+    >("/amenities");
     return response.data?.data || [];
   },
 

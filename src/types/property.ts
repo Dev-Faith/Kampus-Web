@@ -2,7 +2,12 @@ export type CampusCode = string;
 
 export type RoomType = string;
 
-export type LodgeStatus = "available" | "occupied" | "maintenance" | "offline";
+export type LodgeStatus =
+  | "available"
+  | "occupied"
+  | "maintenance"
+  | "offline"
+  | "unknown";
 
 export interface PropertyMedia {
   id: string;

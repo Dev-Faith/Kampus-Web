@@ -85,7 +85,7 @@ export function PropertyCard({
             <span
               className={`rounded-full px-2.5 py-0.5 text-[10px] font-medium uppercase tracking-wider ${statusBadgeColor}`}
             >
-              {property.status}
+              {property.status === "unknown" ? "Check availability" : property.status}
             </span>
 
             <span className="rounded-full bg-ink-solid/80 backdrop-blur-md px-2.5 py-0.5 text-[10px] font-medium uppercase tracking-wider text-white border border-white/20">

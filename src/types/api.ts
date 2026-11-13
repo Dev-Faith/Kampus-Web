@@ -123,7 +123,8 @@ export interface BackendLodge {
   numberOfRooms: number | null;
   capacity: number | null;
   category: string | null;
-  status: "available" | "booked" | "maintenance" | "occupied" | "AVAILABLE" | "BOOKED" | "MAINTENANCE";
+  status?: "available" | "booked" | "maintenance" | "occupied" | "AVAILABLE" | "BOOKED" | "MAINTENANCE";
+  occupancyStatus?: BackendLodge["status"];
   distanceToCampus: number | null;
   saved?: boolean;
   primaryImage?: LodgeImage | null;
