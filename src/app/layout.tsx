@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { WEBSITE_URL } from "@/lib/constants/site";
 import { Geist, Geist_Mono } from "next/font/google";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 import "maplibre-gl/dist/maplibre-gl.css";
@@ -20,6 +21,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(WEBSITE_URL),
   title: "Kampus | Student Accommodation Platform",
   description:
     "Find verified off-campus student lodges near FUTMINNA and track your booking, payment, and move-in inspection in Kampus.",

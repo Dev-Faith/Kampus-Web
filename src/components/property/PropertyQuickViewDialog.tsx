@@ -12,6 +12,7 @@ import { copyText } from "@/components/account/ui";
 import { toast } from "@/lib/stores/useToastStore";
 import type { Property } from "@/types/property";
 import { getCampusAreaLabel } from "@/lib/constants/campus-areas";
+import { listingUrl } from "@/lib/constants/site";
 export function PropertyQuickViewDialog({
   property: p,
   isOpen,
@@ -75,7 +76,7 @@ export function PropertyQuickViewDialog({
               className="w-full"
               variant="outline"
               onClick={() =>
-                void copyText(window.location.origin + "/lodges/" + p.id).then(
+                void copyText(listingUrl(p.id)).then(
                   (ok) => ok && toast.success("Listing link copied"),
                 )
               }

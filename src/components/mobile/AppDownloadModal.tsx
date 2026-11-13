@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { APP_DOWNLOAD_CONFIG } from "@/lib/constants/app-download";
 import { toast } from "@/lib/stores/useToastStore";
 import { KampusLogo } from "@/components/brand/KampusLogo";
+import { WEBSITE_URL } from "@/lib/constants/site";
+import { copyText } from "@/components/account/ui";
 
 interface AppDownloadModalProps {
   isOpen: boolean;
@@ -16,9 +18,9 @@ interface AppDownloadModalProps {
 export function AppDownloadModal({ isOpen, onClose }: AppDownloadModalProps) {
   const [copied, setCopied] = useState(false);
 
-  const handleCopyLink = () => {
-    const fullUrl = window.location.origin + APP_DOWNLOAD_CONFIG.apkDownloadUrl;
-    navigator.clipboard.writeText(fullUrl);
+  const handleCopyLink = async () => {
+    const fullUrl = WEBSITE_URL + APP_DOWNLOAD_CONFIG.apkDownloadUrl;
+    if (!(await copyText(fullUrl))) return;
     setCopied(true);
     toast.success("Download link copied to clipboard");
     setTimeout(() => setCopied(false), 2000);
@@ -45,12 +47,14 @@ export function AppDownloadModal({ isOpen, onClose }: AppDownloadModalProps) {
               </span>
             </h3>
             <p className="text-xs text-muted-foreground">
-              {APP_DOWNLOAD_CONFIG.fileSize} &bull; {APP_DOWNLOAD_CONFIG.platform}
+              {APP_DOWNLOAD_CONFIG.fileSize} &bull;{" "}
+              {APP_DOWNLOAD_CONFIG.platform}
             </p>
           </div>
 
           <p className="text-xs text-muted-foreground leading-relaxed max-w-[280px]">
-            Search verified lodges, keep your inspection details handy, and manage booking updates on the go.
+            Search verified lodges, keep your inspection details handy, and
+            manage booking updates on the go.
           </p>
 
           {/* Actions */}
@@ -62,7 +66,11 @@ export function AppDownloadModal({ isOpen, onClose }: AppDownloadModalProps) {
             >
               <Button className="editorial-action w-full h-11 font-semibold text-xs flex items-center justify-center gap-2">
                 <Download className="h-4 w-4 stroke-[2.5]" />
-                <span>Download {APP_DOWNLOAD_CONFIG.appName} {APP_DOWNLOAD_CONFIG.versionTag} ({APP_DOWNLOAD_CONFIG.fileSize})</span>
+                <span>
+                  Download {APP_DOWNLOAD_CONFIG.appName}{" "}
+                  {APP_DOWNLOAD_CONFIG.versionTag} (
+                  {APP_DOWNLOAD_CONFIG.fileSize})
+                </span>
               </Button>
             </a>
 
@@ -88,7 +96,8 @@ export function AppDownloadModal({ isOpen, onClose }: AppDownloadModalProps) {
 
           {/* Helper Note */}
           <p className="text-[11px] text-muted-foreground pt-1">
-            Tap the downloaded file in your browser to install. Requires Android 8.0+.
+            Tap the downloaded file in your browser to install. Requires Android
+            8.0+.
           </p>
         </div>
       </DialogContent>

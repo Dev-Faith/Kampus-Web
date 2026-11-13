@@ -1,0 +1,75 @@
+"use client";
+
+import React, { Suspense, useState } from "react";
+import { Navbar } from "@/components/layout/Navbar";
+import { Footer } from "@/components/layout/Footer";
+import { HeroArchitecturalShowcase } from "@/components/home/HeroArchitecturalShowcase";
+import { ArchitecturalBentoPurpose } from "@/components/home/ArchitecturalBentoPurpose";
+import { FeaturedAccommodations } from "@/components/home/FeaturedAccommodations";
+import { MinnaNeighborhoods } from "@/components/home/MinnaNeighborhoods";
+import { EscrowVisualizer } from "@/components/home/EscrowVisualizer";
+import { HostCtaBanner } from "@/components/home/HostCtaBanner";
+import { LandingFaq } from "@/components/home/LandingFaq";
+import { ScrollReveal } from "@/components/home/ScrollReveal";
+import { LandingAtmosphere } from "@/components/home/LandingAtmosphere";
+
+function LandingPageContent() {
+  const [motionPaused, setMotionPaused] = useState(false);
+
+  return (
+    <div
+      className="landing-page min-h-screen flex flex-col bg-background text-foreground transition-colors duration-200"
+      data-motion={motionPaused ? "paused" : "playing"}
+    >
+      <LandingAtmosphere />
+      <Navbar />
+
+      <main className="landing-main flex-1">
+        <HeroArchitecturalShowcase
+          motionPaused={motionPaused}
+          onToggleMotion={() => setMotionPaused((paused) => !paused)}
+        />
+
+        <ScrollReveal className="landing-block">
+          <ArchitecturalBentoPurpose />
+        </ScrollReveal>
+
+        <ScrollReveal className="landing-block" delay={0.04}>
+          <FeaturedAccommodations />
+        </ScrollReveal>
+
+        <ScrollReveal className="landing-block" delay={0.04}>
+          <MinnaNeighborhoods />
+        </ScrollReveal>
+
+        <ScrollReveal className="landing-block" delay={0.04}>
+          <EscrowVisualizer />
+        </ScrollReveal>
+
+        <ScrollReveal className="landing-block">
+          <HostCtaBanner />
+        </ScrollReveal>
+
+        <ScrollReveal className="landing-block">
+          <LandingFaq />
+        </ScrollReveal>
+      </main>
+
+      <Footer />
+    </div>
+  );
+}
+
+export default function HomePage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-background text-foreground">
+          Loading Kampus...
+        </div>
+      }
+    >
+      <LandingPageContent />
+    </Suspense>
+  );
+}

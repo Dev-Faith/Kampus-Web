@@ -26,6 +26,7 @@ import { bookingsApi } from "@/api/bookings";
 import { toast } from "@/lib/stores/useToastStore";
 import { getAccommodationTypeLabel } from "@/lib/constants/accommodation-types";
 import { getCampusAreaLabel } from "@/lib/constants/campus-areas";
+import { listingUrl } from "@/lib/constants/site";
 import type { BackendLodge, Booking } from "@/types/api";
 export default function Page() {
   const { id } = useParams<{ id: string }>();
@@ -167,7 +168,7 @@ function Unit({ id }: { id: string }) {
         <Button
           variant="outline"
           onClick={() =>
-            void copyText(window.location.href.split("?")[0]).then(
+            void copyText(listingUrl(l.id)).then(
               (ok) => ok && toast.success("Listing link copied"),
             )
           }
