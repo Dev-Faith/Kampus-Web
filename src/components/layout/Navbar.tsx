@@ -3,10 +3,9 @@
 import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   Building2,
-  Sparkles,
   GraduationCap,
   ShieldCheck,
   User as UserIcon,
@@ -18,12 +17,6 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -31,25 +24,35 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ImageUploadDropzone } from "@/components/media/ImageUploadDropzone";
+import { NotificationBell } from "@/components/account/NotificationBell";
 import { AuthModal } from "@/components/auth/AuthModal";
 import { HostRegistrationModal } from "@/components/auth/HostRegistrationModal";
 import { AppDownloadModal } from "@/components/mobile/AppDownloadModal";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
+import { useSavedUnits } from "@/lib/stores/useSavedUnits";
 import { useAuthStore } from "@/lib/stores/useAuthStore";
 import { KampusLogo } from "@/components/brand/KampusLogo";
 
 function KampusBrandMark() {
   return (
-    <Link href="/" className="group flex h-11 w-11 shrink-0 items-center justify-center" aria-label="Kampus Home">
-      <KampusLogo variant="mark" size={36} className="transition-transform duration-200 group-hover:scale-[1.04]" markClassName="text-foreground" />
+    <Link
+      href="/"
+      className="group flex h-11 w-11 shrink-0 items-center justify-center"
+      aria-label="Kampus Home"
+    >
+      <KampusLogo
+        variant="mark"
+        size={36}
+        className="transition-transform duration-200 group-hover:scale-[1.04]"
+        markClassName="text-foreground"
+      />
     </Link>
   );
 }
 
 export function Navbar() {
   const pathname = usePathname();
-  const [isUploadOpen, setIsUploadOpen] = useState(false);
+  const router = useRouter();
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [authRole, setAuthRole] = useState<"STUDENT" | "LANDLORD">("STUDENT");
   const [authMode, setAuthMode] = useState<"signin" | "signup">("signin");
@@ -60,6 +63,12 @@ export function Navbar() {
 
   const { user, role, isAuthenticated, logout, checkAuth } = useAuthStore();
   const isHost = user?.role === "LANDLORD";
+  useEffect(() => {
+    const refresh=()=>void useSavedUnits.getState().load(true);
+    refresh();
+    window.addEventListener("focus",refresh);
+    return ()=>window.removeEventListener("focus",refresh);
+  }, [user?.id, user?.role]);
 
   useEffect(() => {
     checkAuth();
@@ -86,7 +95,7 @@ export function Navbar() {
     } else if (!isHost || user?.profileStatus !== "COMPLETED") {
       setIsHostRegistrationOpen(true);
     } else {
-      window.location.href = "/host/dashboard";
+      router.push("/host/properties/new");
     }
   };
 
@@ -97,7 +106,9 @@ export function Navbar() {
     { label: "About", href: "/#about" },
     { label: "Lodges", href: "/explore" },
     { label: "Roommates", href: "/roommates" },
-    ...(user?.role === "ADMIN" || user?.adminAccess ? [{ label: "Administration", href: "/admin" }] : []),
+    ...(user?.role === "ADMIN" || user?.adminAccess
+      ? [{ label: "Administration", href: "/admin" }]
+      : []),
   ];
 
   return (
@@ -111,15 +122,24 @@ export function Navbar() {
               ref={mobileMenuTrigger}
               onClick={() => setIsMobileMenuOpen((open) => !open)}
               className="xl:hidden flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-foreground hover:bg-muted"
-              aria-label={isMobileMenuOpen ? "Close navigation" : "Open navigation"}
+              aria-label={
+                isMobileMenuOpen ? "Close navigation" : "Open navigation"
+              }
               aria-expanded={isMobileMenuOpen}
               aria-controls="kampus-mobile-navigation"
             >
-              {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+              {isMobileMenuOpen ? (
+                <X className="h-5 w-5" />
+              ) : (
+                <Menu className="h-5 w-5" />
+              )}
             </button>
 
             {/* Desktop Navigation Links */}
-            <nav aria-label="Primary navigation" className="hidden xl:flex items-center gap-7 text-[13px] font-medium tracking-tight whitespace-nowrap">
+            <nav
+              aria-label="Primary navigation"
+              className="hidden xl:flex items-center gap-7 text-[13px] font-medium tracking-tight whitespace-nowrap"
+            >
               {NAV_LINKS.map((link) => {
                 const isActive = pathname === link.href;
                 return (
@@ -176,7 +196,10 @@ export function Navbar() {
                 </Button>
               </Link>
             ) : (
-              <Link href="/host/dashboard" className="hidden xl:inline-block shrink-0">
+              <Link
+                href="/host/dashboard"
+                className="hidden xl:inline-block shrink-0"
+              >
                 <Button
                   variant="outline"
                   size="sm"
@@ -195,10 +218,14 @@ export function Navbar() {
               List your lodge
             </Button>
 
+            <NotificationBell />
             {/* User Account Dropdown */}
             {isAuthenticated && user ? (
               <DropdownMenu>
-                <DropdownMenuTrigger aria-label="Open account menu" className="flex min-h-11 shrink-0 items-center gap-2 pl-2 pr-3 py-1 rounded-full border border-border bg-card hover:border-brand/40 transition-colors cursor-pointer">
+                <DropdownMenuTrigger
+                  aria-label="Open account menu"
+                  className="flex min-h-11 shrink-0 items-center gap-2 pl-2 pr-3 py-1 rounded-full border border-border bg-card hover:border-brand/40 transition-colors cursor-pointer"
+                >
                   <div className="relative h-7 w-7 rounded-full overflow-hidden bg-brand-soft border border-brand/30">
                     {user.profilePicture ? (
                       <Image
@@ -219,20 +246,45 @@ export function Navbar() {
                   className="w-56 bg-card border border-border text-foreground rounded-[1.35rem] p-1.5 shadow-md"
                 >
                   <DropdownMenuLabel className="px-3 py-2">
-                    <div className="text-xs font-semibold text-foreground">{user.fullName || "Kampus Member"}</div>
-                    <div className="text-[10px] text-muted-foreground truncate">{user.email || user.phone}</div>
+                    <div className="text-xs font-semibold text-foreground">
+                      {user.fullName || "Kampus Member"}
+                    </div>
+                    <div className="text-[10px] text-muted-foreground truncate">
+                      {user.email || user.phone}
+                    </div>
                     <div className="mt-1.5 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium uppercase tracking-wider bg-brand-soft text-brand-strong border border-brand/25">
                       <ShieldCheck className="h-3 w-3" />
-                      {user.role === "ADMIN" ? "Administrator" : user.role === "STUDENT" ? "Student Account" : "Landlord Account"}
+                      {user.role === "ADMIN"
+                        ? "Administrator"
+                        : user.role === "STUDENT"
+                          ? "Student Account"
+                          : "Landlord Account"}
                     </div>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator className="bg-border" />
+                  <DropdownMenuItem
+                    onClick={() => {
+                      router.push("/settings");
+                    }}
+                    className="text-xs hover:bg-brand-soft cursor-pointer rounded-xl flex items-center gap-2"
+                  >
+                    <UserIcon className="h-3.5 w-3.5" />
+                    <span>Profile settings</span>
+                  </DropdownMenuItem>
                   {isHost ? (
                     <DropdownMenuItem
-                      onClick={() => { window.location.href = isHostView ? "/explore" : "/host/dashboard"; }}
+                      onClick={() => {
+                        window.location.href = isHostView
+                          ? "/explore"
+                          : "/host/dashboard";
+                      }}
                       className="text-xs hover:bg-brand-soft cursor-pointer rounded-xl flex items-center justify-between"
                     >
-                      <span>{isHostView ? "Browse accommodation" : "Open host dashboard"}</span>
+                      <span>
+                        {isHostView
+                          ? "Browse accommodation"
+                          : "Open host dashboard"}
+                      </span>
                       {role === "STUDENT" ? (
                         <Building2 className="h-3.5 w-3.5 text-brand-strong" />
                       ) : (
@@ -253,13 +305,40 @@ export function Navbar() {
                   <DropdownMenuItem
                     onClick={() => {
                       if (typeof window !== "undefined") {
-                        window.location.href = isHost && role === "LANDLORD" ? "/host/dashboard" : "/bookings";
+                        window.location.href =
+                          isHost && role === "LANDLORD"
+                            ? "/host/dashboard"
+                            : "/bookings";
                       }
                     }}
                     className="text-xs hover:bg-brand-soft cursor-pointer rounded-xl flex items-center justify-between"
                   >
-                    <span>{isHost && role === "LANDLORD" ? "Host Dashboard" : "My Bookings"}</span>
+                    <span>
+                      {isHost && role === "LANDLORD"
+                        ? "Host Dashboard"
+                        : "My Bookings"}
+                    </span>
                   </DropdownMenuItem>
+                  {(user.role === "LANDLORD"
+                    ? [
+                        ["Units", "/host/properties"],
+                        ["Student bookings", "/host/bookings"],
+                        ["Payout details", "/host/payouts"],
+                      ]
+                    : user.role === "STUDENT"
+                      ? [["Saved units", "/saved-lodges"]]
+                      : []
+                  )
+                    .concat([["Notifications", "/notifications"]])
+                    .map(([label, href]) => (
+                      <DropdownMenuItem
+                        key={href}
+                        onClick={() => router.push(href)}
+                        className="cursor-pointer rounded-xl text-xs"
+                      >
+                        {label}
+                      </DropdownMenuItem>
+                    ))}
                   <DropdownMenuSeparator className="bg-border" />
                   <DropdownMenuItem
                     onClick={logout}
@@ -272,7 +351,12 @@ export function Navbar() {
               </DropdownMenu>
             ) : (
               <Button
-                onClick={() => { setIsMobileMenuOpen(false); setAuthRole("STUDENT"); setAuthMode("signin"); setIsAuthOpen(true); }}
+                onClick={() => {
+                  setIsMobileMenuOpen(false);
+                  setAuthRole("STUDENT");
+                  setAuthMode("signin");
+                  setIsAuthOpen(true);
+                }}
                 variant="ghost"
                 size="sm"
                 className="landing-nav__signin shrink-0 text-xs font-medium bg-primary text-primary-foreground hover:bg-primary-hover px-3"
@@ -285,9 +369,25 @@ export function Navbar() {
 
         {/* Mobile dropdown menu */}
         {isMobileMenuOpen && (
-          <div id="kampus-mobile-navigation" className="landing-nav__mobile xl:hidden overflow-y-auto border-t border-border bg-background p-4 space-y-4">
+          <div
+            id="kampus-mobile-navigation"
+            className="landing-nav__mobile xl:hidden overflow-y-auto border-t border-border bg-background p-4 space-y-4"
+          >
             <nav aria-label="Mobile navigation" className="space-y-1">
-              {!isAuthenticated && <Button variant="outline" className="w-full min-h-11" onClick={() => { setIsMobileMenuOpen(false); setAuthRole("STUDENT"); setAuthMode("signup"); setIsAuthOpen(true); }}>Create account</Button>}
+              {!isAuthenticated && (
+                <Button
+                  variant="outline"
+                  className="w-full min-h-11"
+                  onClick={() => {
+                    setIsMobileMenuOpen(false);
+                    setAuthRole("STUDENT");
+                    setAuthMode("signup");
+                    setIsAuthOpen(true);
+                  }}
+                >
+                  Create account
+                </Button>
+              )}
               {NAV_LINKS.map((link) => (
                 <Link
                   key={link.label}
@@ -300,54 +400,68 @@ export function Navbar() {
               ))}
             </nav>
             <div className="space-y-2 border-t border-border pt-4">
-              <Link href={isHostView ? "/explore" : "/host/dashboard"} onClick={() => setIsMobileMenuOpen(false)} className="flex min-h-11 items-center rounded-xl px-3 py-2 text-sm font-medium text-foreground hover:bg-muted">
+              <Link
+                href={isHostView ? "/explore" : "/host/dashboard"}
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="flex min-h-11 items-center rounded-xl px-3 py-2 text-sm font-medium text-foreground hover:bg-muted"
+              >
                 {isHostView ? "Student View" : "Host Hub"}
               </Link>
-              <Button variant="ghost" onClick={() => { setIsMobileMenuOpen(false); setIsAppDownloadOpen(true); }} className="min-h-11 w-full justify-start px-3 text-sm">
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  setIsMobileMenuOpen(false);
+                  setIsAppDownloadOpen(true);
+                }}
+                className="min-h-11 w-full justify-start px-3 text-sm"
+              >
                 <Smartphone className="h-4 w-4" />
                 Get the app
               </Button>
               <div className="flex sm:hidden items-center justify-between gap-3 px-3 py-1">
                 <span className="text-sm font-medium">Appearance</span>
-                <div className="landing-nav__theme shrink-0"><ThemeToggle /></div>
+                <div className="landing-nav__theme shrink-0">
+                  <ThemeToggle />
+                </div>
               </div>
-              <Button onClick={handleListLodge} className="landing-nav__primary lg:hidden w-full">
+              <Button
+                onClick={handleListLodge}
+                className="landing-nav__primary lg:hidden w-full"
+              >
                 List your lodge
               </Button>
             </div>
           </div>
         )}
       </header>
-      {isAuthenticated && user && user.role !== "ADMIN" && (user.profileStatus !== "COMPLETED" || user.hasPassword === false) && (
-        <div className="flex flex-wrap items-center justify-center gap-3 border-b border-border bg-muted px-4 py-3 text-sm">
-          <span>Finish setting up your {user.role === "LANDLORD" ? "landlord" : "student"} account.</span>
-          <Button size="sm" onClick={() => { setAuthRole(user.role === "LANDLORD" ? "LANDLORD" : "STUDENT"); setIsAuthOpen(true); }}>Complete profile</Button>
-        </div>
-      )}
-
-      {/* Ingestion Pipeline Modal */}
-      <Dialog open={isUploadOpen} onOpenChange={setIsUploadOpen}>
-        <DialogContent className="max-w-2xl p-6">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-xl font-medium text-foreground">
-              <Sparkles className="h-5 w-5 text-brand-strong" />
-              Landlord Photo Ingestion & Retina Compression
-            </DialogTitle>
-          </DialogHeader>
-
-          <p className="text-xs text-muted-foreground -mt-2">
-            Interception dropzone adhering to <code>.agents/rules/image-pipeline.md</code>.
-            Forces 16:10 crop framing and client-side compression below 400KB WebP before cloud storage dispatch.
-          </p>
-
-          <div className="mt-2">
-            <ImageUploadDropzone />
+      {isAuthenticated &&
+        user &&
+        user.role !== "ADMIN" &&
+        (user.profileStatus !== "COMPLETED" || user.hasPassword === false) && (
+          <div className="flex flex-wrap items-center justify-center gap-3 border-b border-border bg-muted px-4 py-3 text-sm">
+            <span>
+              Finish setting up your{" "}
+              {user.role === "LANDLORD" ? "landlord" : "student"} account.
+            </span>
+            <Button
+              size="sm"
+              onClick={() => {
+                setAuthRole(user.role === "LANDLORD" ? "LANDLORD" : "STUDENT");
+                setIsAuthOpen(true);
+              }}
+            >
+              Complete profile
+            </Button>
           </div>
-        </DialogContent>
-      </Dialog>
+        )}
 
       {/* Interactive Auth Modal */}
-      <AuthModal isOpen={isAuthOpen} onClose={() => setIsAuthOpen(false)} defaultRole={authRole} defaultMode={authMode} />
+      <AuthModal
+        isOpen={isAuthOpen}
+        onClose={() => setIsAuthOpen(false)}
+        defaultRole={authRole}
+        defaultMode={authMode}
+      />
 
       {/* Host Registration Modal for Students */}
       <HostRegistrationModal
@@ -355,7 +469,7 @@ export function Navbar() {
         onClose={() => setIsHostRegistrationOpen(false)}
         onSuccess={() => {
           if (typeof window !== "undefined") {
-            window.location.href = "/host/dashboard";
+            router.push("/host/dashboard");
           }
         }}
       />

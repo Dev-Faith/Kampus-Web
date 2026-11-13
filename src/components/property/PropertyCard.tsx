@@ -2,17 +2,16 @@
 
 import React, { useState } from "react";
 import { motion } from "motion/react";
-import {
-  MapPin,
-  Heart,
-  ArrowUpRight,
-} from "lucide-react";
+import { MapPin, Heart, ArrowUpRight } from "lucide-react";
 import { Property } from "@/types/property";
 import { getCampusAreaLabel } from "@/lib/constants/campus-areas";
 import { usePropertyInteractionStore } from "@/lib/stores/usePropertyInteractionStore";
 import { PropertyCardCarousel } from "@/components/property/PropertyCardCarousel";
 import { PropertyQuickViewDialog } from "@/components/property/PropertyQuickViewDialog";
-import { lodgesApi } from "@/api/lodges";
+import { useSavedUnits } from "@/lib/stores/useSavedUnits";
+import { useAuthStore } from "@/lib/stores/useAuthStore";
+import { AuthModal } from "@/components/auth/AuthModal";
+import { authError } from "@/lib/auth-errors";
 import { toast } from "@/lib/stores/useToastStore";
 
 interface PropertyCardProps {
@@ -27,7 +26,11 @@ export function PropertyCard({
   const { hoveredPropertyId, setHoveredPropertyId } =
     usePropertyInteractionStore();
   const [isQuickViewOpen, setIsQuickViewOpen] = useState(false);
-  const [isFavorite, setIsFavorite] = useState(Boolean(property.saved));
+  const user = useAuthStore((s) => s.user);
+  const [auth, setAuth] = useState(false);
+  const saved = useSavedUnits();
+  const isFavorite =
+    user?.id === saved.owner && Boolean(saved.ids?.includes(property.id));
 
   const isHovered = hoveredPropertyId === property.id;
 
@@ -43,8 +46,8 @@ export function PropertyCard({
     property.status === "available"
       ? "bg-success text-white dark:bg-success-soft"
       : property.status === "occupied"
-      ? "bg-destructive text-white dark:bg-destructive-soft"
-      : "bg-warning text-white dark:bg-warning-soft";
+        ? "bg-destructive text-white dark:bg-destructive-soft"
+        : "bg-warning text-white dark:bg-warning-soft";
 
   return (
     <>
@@ -93,25 +96,21 @@ export function PropertyCard({
           {/* Top Right Action: Favorite */}
           <button
             type="button"
-            aria-label="Save to favorites"
+            aria-label={isFavorite ? "Remove from saved units" : "Save unit"}
+            aria-pressed={isFavorite}
+            disabled={Boolean(saved.busy[property.id]) || (user?.role==="STUDENT" && saved.loading)}
             onClick={async (e) => {
               e.stopPropagation();
-              const nextFav = !isFavorite;
-              const result = nextFav
-                ? await lodgesApi.saveLodge(property.id)
-                : await lodgesApi.unsaveLodge(property.id);
-              if (!result.success) {
-                toast.error("Could not update saved lodges", {
-                  description: "Please sign in and try again.",
-                });
+              if (!user) {
+                setAuth(true);
                 return;
               }
-              setIsFavorite(nextFav);
-              toast.success(nextFav ? "Lodge saved" : "Lodge removed", {
-                description: nextFav
-                  ? `${property.title} was added to your saved lodges.`
-                  : `${property.title} was removed from your saved lodges.`,
-              });
+              try {
+                const value = await saved.toggle(property.id);
+                toast.success(value ? "Unit saved" : "Unit removed from saved");
+              } catch (e) {
+                toast.error(authError(e, "Couldn’t update saved units."));
+              }
             }}
             className={`absolute top-3 right-3 z-20 flex h-8 w-8 items-center justify-center rounded-full backdrop-blur-md transition-all duration-200 ${
               isFavorite
@@ -121,7 +120,6 @@ export function PropertyCard({
           >
             <Heart className={`h-4 w-4 ${isFavorite ? "fill-white" : ""}`} />
           </button>
-
         </div>
 
         {/* Card Body Details */}
@@ -133,7 +131,11 @@ export function PropertyCard({
                 {property.currency}
                 {property.price.toLocaleString()}
               </span>
-              {property.period && <span className="text-xs font-medium text-muted-foreground">/ {property.period}</span>}
+              {property.period && (
+                <span className="text-xs font-medium text-muted-foreground">
+                  / {property.period}
+                </span>
+              )}
             </div>
 
             {/* Title & Neighborhood */}
@@ -143,14 +145,27 @@ export function PropertyCard({
 
             <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1 truncate">
               <MapPin className="h-3.5 w-3.5 text-brand-strong shrink-0" />
-              <span>{[property.building?.name, property.unitLabel, getCampusAreaLabel(property.campusArea), property.address.street, property.address.city, property.address.state].filter(Boolean).join(", ") || "Location not provided"}</span>
+              <span>
+                {[
+                  property.building?.name,
+                  property.unitLabel,
+                  getCampusAreaLabel(property.campusArea),
+                  property.address.street,
+                  property.address.city,
+                  property.address.state,
+                ]
+                  .filter(Boolean)
+                  .join(", ") || "Location not provided"}
+              </span>
             </p>
           </div>
 
           {/* Quick-View Action Callout */}
           <div className="pt-1 flex items-center justify-between text-xs text-muted-foreground">
             <span className="text-[11px] text-muted-foreground truncate">
-              {property.host?.name ? `Listed by ${property.host.name}` : property.campus}
+              {property.host?.name
+                ? `Listed by ${property.host.name}`
+                : property.campus}
             </span>
             <button
               type="button"
@@ -168,6 +183,7 @@ export function PropertyCard({
       </motion.div>
 
       {/* Embedded MorphingDialog Quick View */}
+      <AuthModal isOpen={auth} onClose={() => setAuth(false)} />
       <PropertyQuickViewDialog
         property={property}
         isOpen={isQuickViewOpen}

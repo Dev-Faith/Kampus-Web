@@ -115,9 +115,9 @@ async function profile(role) {
   await waitFor("!!document.querySelector('input[name=bankName]')");
   assert.equal(currentUser.role, 'LANDLORD'); console.log('Direct Host Hub signup keeps profile setup open: PASS');
   await clear(); await call('Page.navigate', { url: 'http://localhost:3000/bookings' });
-  await waitFor("[...document.querySelectorAll('button')].some(e=>e.textContent.includes('Sign In'))");
+  await waitFor("[...document.querySelectorAll('button')].some(e=>e.textContent.toLowerCase().includes('sign in'))");
   await waitFor("document.readyState==='complete'"); await delay(800);
-  await evaluate("[...document.querySelectorAll('main button')].find(e=>e.textContent.includes('Sign In')).click()");
+  await evaluate("[...document.querySelectorAll('main button')].find(e=>e.textContent.toLowerCase().includes('sign in')).click()");
   await waitFor("!!document.querySelector('[role=dialog] input[name=emailOrPhone]')");
   await click('Create account', '[role=dialog]'); await signupFields('STUDENT');
   await waitFor("![...document.querySelectorAll('button')].find(e=>e.textContent==='Send verification email').disabled"); await click('Send verification email');

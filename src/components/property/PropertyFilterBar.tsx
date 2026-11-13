@@ -28,22 +28,54 @@ const ROOM_TYPE_CONFIG: Record<
   { label: string; icon: React.ElementType }
 > = {
   all: { label: "All accommodation", icon: Home },
-  single_room_shared: { label: "Single room (toilet outside the room, no kitchen)", icon: Home },
+  single_room_shared: {
+    label: "Single room (toilet outside the room, no kitchen)",
+    icon: Home,
+  },
   self_contained: { label: "Self-contained apartment", icon: Building },
-  one_bedroom_flat: { label: "One-bedroom flat (room and parlour)", icon: Users },
+  one_bedroom_flat: {
+    label: "One-bedroom flat (room and parlour)",
+    icon: Users,
+  },
   two_bedroom_flat: { label: "Two-bedroom flat", icon: Sparkles },
 };
 
 export function PropertyFilterBar() {
-  const [q, setQ] = useQueryState("q", { defaultValue: "" });
-  const [campus, setCampus] = useQueryState("campus", { defaultValue: "FUTMINNA" });
-  const [area, setArea] = useQueryState("area", { defaultValue: "all" });
-  const [type, setType] = useQueryState("type", { defaultValue: "all" });
-  const [view, setView] = useQueryState("view", { defaultValue: "split" });
-  const [sort, setSort] = useQueryState("sort", { defaultValue: "featured" });
+  const [q, updateQ] = useQueryState("q", { defaultValue: "" });
+  const [campus, updateCampus] = useQueryState("campus", {
+    defaultValue: "FUTMINNA",
+  });
+  const [area, updateArea] = useQueryState("area", { defaultValue: "all" });
+  const [type, updateType] = useQueryState("type", { defaultValue: "all" });
+  const [view, setView] = useQueryState("view", { defaultValue: "grid" });
+  const [sort, updateSort] = useQueryState("sort", {
+    defaultValue: "featured",
+  });
 
+  const [, setPage] = useQueryState("page");
+  const [minPrice, setMinPrice] = useQueryState("minPrice");
+  const [maxPrice, setMaxPrice] = useQueryState("maxPrice");
+  const [amenities, setAmenities] = useQueryState("amenities");
+  const [distance, setDistance] = useQueryState("distance");
+  const change = (fn: () => unknown) => {
+    void setPage(null);
+    return fn();
+  };
+  const setQ = (v: string | null) => change(() => updateQ(v));
+  const setCampus = (v: string) => change(() => updateCampus(v));
+  const setArea = (v: string) => change(() => updateArea(v));
+  const setType = (v: string) => change(() => updateType(v));
+  const setSort = (v: string) => change(() => updateSort(v));
   const hasActiveFilters =
-    q || campus !== "FUTMINNA" || area !== "all" || type !== "all" || sort !== "featured";
+    minPrice ||
+    maxPrice ||
+    amenities ||
+    distance ||
+    q ||
+    campus !== "FUTMINNA" ||
+    area !== "all" ||
+    type !== "all" ||
+    sort !== "featured";
 
   const resetFilters = () => {
     setQ("");
@@ -51,6 +83,10 @@ export function PropertyFilterBar() {
     setArea("all");
     setType("all");
     setSort("featured");
+    void setMinPrice(null);
+    void setMaxPrice(null);
+    void setAmenities(null);
+    void setDistance(null);
   };
 
   return (
@@ -65,7 +101,7 @@ export function PropertyFilterBar() {
             type="text"
             value={q}
             onChange={(e) => setQ(e.target.value || null)}
-          placeholder="Search lodge name, area, or campus (e.g. FUTMINNA, Gidankwano, Bosso)..."
+            placeholder="Search lodge name, area, or campus (e.g. FUTMINNA, Gidankwano, Bosso)..."
             className="explore-filter-search w-full rounded-full border border-border bg-card py-2.5 pl-10 pr-10 text-xs sm:text-sm text-foreground placeholder:text-muted-foreground focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring/30 transition-colors"
           />
           {q && (
@@ -82,12 +118,12 @@ export function PropertyFilterBar() {
         {/* View Mode & Reset Controls */}
         <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0">
           {/* Desktop View Switcher */}
-          <div className="explore-view-toggle hidden lg:flex items-center rounded-full border border-border bg-card p-1">
+          <div className="explore-view-toggle flex items-center rounded-full border border-border bg-card p-1">
             <button
               type="button"
               onClick={() => setView("split")}
               aria-pressed={view === "split"}
-              className={`flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium transition-colors ${
+              className={`hidden md:flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium transition-colors ${
                 view === "split"
                   ? "bg-primary text-primary-foreground"
                   : "text-muted-foreground hover:text-foreground"
@@ -160,7 +196,8 @@ export function PropertyFilterBar() {
                 type="button"
                 onClick={() => {
                   toast.info(`${campusCode} Coming Soon`, {
-                    description: "Kampus is currently active in FUTMINNA. Onboarding verified student lodges here soon!",
+                    description:
+                      "Kampus is currently active in FUTMINNA. Onboarding verified student lodges here soon!",
                   });
                 }}
                 className="relative flex items-center gap-1.5 shrink-0 rounded-full border border-border bg-muted px-3 py-1 text-xs font-medium text-muted-foreground cursor-default"
@@ -201,7 +238,9 @@ export function PropertyFilterBar() {
           Area:
         </span>
         {campusAreaCodes.map((areaCode) => {
-          const option = CAMPUS_AREA_OPTIONS.find((item) => item.id === areaCode);
+          const option = CAMPUS_AREA_OPTIONS.find(
+            (item) => item.id === areaCode,
+          );
           const isSelected = area === areaCode;
           return (
             <button
@@ -209,9 +248,10 @@ export function PropertyFilterBar() {
               type="button"
               onClick={() => setArea(areaCode)}
               aria-pressed={isSelected}
-              className={`shrink-0 rounded-full border px-3 py-1 text-xs font-medium transition-colors ${isSelected
-                ? "border-brand/35 bg-brand-soft text-brand-strong"
-                : "border-border bg-card text-muted-foreground hover:border-brand/40 hover:text-foreground"
+              className={`shrink-0 rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
+                isSelected
+                  ? "border-brand/35 bg-brand-soft text-brand-strong"
+                  : "border-border bg-card text-muted-foreground hover:border-brand/40 hover:text-foreground"
               }`}
             >
               {option?.label ?? areaCode}
@@ -259,7 +299,11 @@ export function PropertyFilterBar() {
                     : "text-muted-foreground group-hover:text-brand-strong"
                 }`}
               />
-              <span className={`relative z-10 ${isSelected ? "text-brand-strong" : ""}`}>{config.label}</span>
+              <span
+                className={`relative z-10 ${isSelected ? "text-brand-strong" : ""}`}
+              >
+                {config.label}
+              </span>
             </button>
           );
         })}

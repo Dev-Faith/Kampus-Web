@@ -24,7 +24,13 @@ export function backendLodgeToProperty(lodge: BackendLodge): Property {
         title: lodge.title,
       }))
     : lodge.primaryImage
-      ? [{ id: lodge.primaryImage.id, url: lodge.primaryImage.url, title: lodge.title }]
+      ? [
+          {
+            id: lodge.primaryImage.id,
+            url: lodge.primaryImage.url,
+            title: lodge.title,
+          },
+        ]
       : [];
   const status = String(lodge.status).toLowerCase();
   const host = lodge.landlord
@@ -48,10 +54,18 @@ export function backendLodgeToProperty(lodge: BackendLodge): Property {
     description: lodge.description || "",
     price: Number(lodge.rent ?? 0),
     currency: "₦",
-    period: "session",
+    period: "year",
     propertyType: getAccommodationTypeLabel(lodge.category),
-    status: status === "booked" || status === "occupied" ? "occupied" : status === "maintenance" ? "maintenance" : "available",
-    campus: lodge.university || [lodge.city, lodge.state].filter(Boolean).join(", ") || "Campus not specified",
+    status:
+      status === "booked" || status === "occupied"
+        ? "occupied"
+        : status === "maintenance"
+          ? "maintenance"
+          : "available",
+    campus:
+      lodge.university ||
+      [lodge.city, lodge.state].filter(Boolean).join(", ") ||
+      "Campus not specified",
     university: lodge.university ?? null,
     campusArea: lodge.campusArea ?? null,
     address: {
@@ -63,8 +77,10 @@ export function backendLodgeToProperty(lodge: BackendLodge): Property {
           ? { lat: Number(lodge.latitude), lng: Number(lodge.longitude) }
           : null,
     },
-    distanceToCampus: lodge.distanceToCampus == null ? null : Number(lodge.distanceToCampus),
-    numberOfRooms: lodge.numberOfRooms == null ? null : Number(lodge.numberOfRooms),
+    distanceToCampus:
+      lodge.distanceToCampus == null ? null : Number(lodge.distanceToCampus),
+    numberOfRooms:
+      lodge.numberOfRooms == null ? null : Number(lodge.numberOfRooms),
     serviceFee: lodge.serviceFee == null ? null : Number(lodge.serviceFee),
     verifiedHost: lodge.landlord ? Boolean(lodge.landlord.isVerified) : null,
     saved: Boolean(lodge.saved),
@@ -80,7 +96,9 @@ type LodgeListResponse = {
 };
 
 async function getLodgeList(path: string, params: GetLodgesParams = {}) {
-  const response = await apiClient.get<ApiResponse<LodgeListResponse>>(path, { params });
+  const response = await apiClient.get<ApiResponse<LodgeListResponse>>(path, {
+    params,
+  });
   const data = response.data.data;
   const items = (data?.items || []).map(backendLodgeToProperty);
   return {
@@ -95,22 +113,43 @@ export const lodgesApi = {
   getLodges: (params: GetLodgesParams = {}) => getLodgeList("/lodges", params),
 
   async getLodgeById(id: string): Promise<Property | null> {
-    const response = await apiClient.get<ApiResponse<BackendLodge>>(`/lodges/${id}`);
-    return response.data?.data ? backendLodgeToProperty(response.data.data) : null;
+    const response = await apiClient.get<ApiResponse<BackendLodge>>(
+      `/lodges/${id}`,
+    );
+    return response.data?.data
+      ? backendLodgeToProperty(response.data.data)
+      : null;
   },
 
   async saveLodge(id: string): Promise<{ success: boolean; message?: string }> {
-    const response = await apiClient.post<ApiResponse<{ message?: string }>>(`/lodges/${id}/save`);
-    return { success: response.data?.success ?? true, message: response.data?.message };
+    const response = await apiClient.post<ApiResponse<{ message?: string }>>(
+      `/lodges/${id}/save`,
+    );
+    return {
+      success: response.data?.success ?? true,
+      message: response.data?.message,
+    };
   },
 
   async unsaveLodge(id: string): Promise<{ success: boolean }> {
-    const response = await apiClient.delete<ApiResponse<unknown>>(`/lodges/${id}/save`);
+    const response = await apiClient.delete<ApiResponse<unknown>>(
+      `/lodges/${id}/save`,
+    );
     return { success: response.data?.success ?? true };
   },
 
   async getAmenities() {
-    const response = await apiClient.get<ApiResponse<Array<{ id: string; name: string; icon: string | null; category?: string | null }>>>("/amenities");
+    const response =
+      await apiClient.get<
+        ApiResponse<
+          Array<{
+            id: string;
+            name: string;
+            icon: string | null;
+            category?: string | null;
+          }>
+        >
+      >("/amenities");
     return response.data?.data || [];
   },
 

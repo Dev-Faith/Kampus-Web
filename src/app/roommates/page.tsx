@@ -1,5 +1,6 @@
 "use client";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { Navbar } from "@/components/layout/Navbar";
 import { AuthModal } from "@/components/auth/AuthModal";
 import { Button } from "@/components/ui/button";
@@ -66,12 +67,14 @@ export default function RoommatesPage() {
   return (
     <>
       <Navbar />
-      <Roommates
-        key={user?.id || "guest"}
-        role={user?.role}
-        department={user?.student?.department || ""}
-        openAuth={() => setAuth(true)}
-      />
+      <Suspense fallback={<p>Loading roommate requests…</p>}>
+        <Roommates
+          key={user?.id || "guest"}
+          role={user?.role}
+          department={user?.student?.department || ""}
+          openAuth={() => setAuth(true)}
+        />
+      </Suspense>
       <AuthModal isOpen={auth} onClose={() => setAuth(false)} />
     </>
   );
@@ -85,8 +88,11 @@ function Roommates({
   department: string;
   openAuth: () => void;
 }) {
+  const connectionId = useSearchParams().get("connectionId");
   const student = role === "STUDENT";
-  const [tab, setTab] = useState<"browse" | "requests">("browse"),
+  const [tab, setTab] = useState<"browse" | "requests">(
+      connectionId ? "requests" : "browse",
+    ),
     [edit, setEdit] = useState(false);
   const [intro, setIntro] = useState<RoommateListing | null>(null),
     [note, setNote] = useState("");
@@ -294,7 +300,9 @@ function Roommates({
                   placeholder="Any amount"
                 />
               </label>
-              <Button type="submit" variant="outline">Apply budget</Button>
+              <Button type="submit" variant="outline">
+                Apply budget
+              </Button>
             </form>
             {feed?.error ? (
               <p role="alert">
@@ -425,15 +433,24 @@ function Roommates({
                 Your introductions and replies will appear here.
               </div>
             ) : (
-              inbox.value.map((r) => (
-                <Request
-                  key={r.id}
-                  r={r}
-                  busy={busy}
-                  rev={rev}
-                  mutate={mutate}
-                />
-              ))
+              [...inbox.value]
+                .sort(
+                  (a, b) =>
+                    Number(b.id === connectionId) -
+                    Number(a.id === connectionId),
+                )
+                .map((r) => (
+                  <Request
+                    key={r.id}
+                    r={r}
+                    initialOpen={
+                      r.id === connectionId && r.status === "ACCEPTED"
+                    }
+                    busy={busy}
+                    rev={rev}
+                    mutate={mutate}
+                  />
+                ))
             )}
           </section>
         )}
@@ -480,7 +497,9 @@ function Roommates({
               </label>
               <p>They can accept to start a private conversation.</p>
               {error && <p role="alert">{error}</p>}
-              <Button type="submit" disabled={busy || !note.trim()}>Send introduction</Button>
+              <Button type="submit" disabled={busy || !note.trim()}>
+                Send introduction
+              </Button>
             </form>
           </DialogContent>
         </Dialog>
@@ -515,16 +534,18 @@ type Mutate = (
 ) => Promise<void>;
 function Request({
   r,
+  initialOpen = false,
   busy,
   rev,
   mutate,
 }: {
   r: Introduction;
+  initialOpen?: boolean;
   busy: boolean;
   rev: number;
   mutate: Mutate;
 }) {
-  const [open, setOpen] = useState(false),
+  const [open, setOpen] = useState(initialOpen),
     [text, setText] = useState("");
   const [poll, setPoll] = useState(0);
   useEffect(() => {
@@ -636,7 +657,9 @@ function Request({
                   onChange={(e) => setText(e.target.value)}
                 />
               </label>
-              <Button type="submit" disabled={busy || !text.trim()}>Send message</Button>
+              <Button type="submit" disabled={busy || !text.trim()}>
+                Send message
+              </Button>
             </form>
           )}
         </div>
