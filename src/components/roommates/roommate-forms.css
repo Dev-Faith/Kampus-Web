@@ -1,0 +1,515 @@
+.roommate-form-dialog {
+  max-width: 900px;
+  max-height: min(90dvh, 880px);
+  gap: 0;
+  overflow: hidden;
+  border-radius: 28px;
+  background: var(--background);
+}
+.roommate-form-introduction {
+  max-width: 630px;
+}
+.roommate-form-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 28px 30px 24px;
+  flex-shrink: 0;
+}
+.roommate-form-eyebrow {
+  color: var(--brand-strong);
+  font-size: 10px;
+  font-weight: 650;
+  letter-spacing: 0.15em;
+  line-height: 1.6;
+  margin: 0 0 10px;
+}
+.roommate-form-title {
+  font-size: clamp(22px, 3vw, 30px);
+  font-weight: 500;
+  letter-spacing: -0.045em;
+  line-height: 1.15;
+}
+.roommate-form-description {
+  margin-top: 10px;
+  line-height: 1.6;
+}
+.roommate-form-close {
+  flex: 0 0 44px;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  background: var(--card);
+}
+.roommate-form-steps {
+  display: flex;
+  gap: 20px;
+  padding: 0 30px 22px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  list-style: none;
+}
+.roommate-form-steps li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--muted-foreground);
+}
+.roommate-form-steps li > span:first-child {
+  display: grid;
+  place-items: center;
+  width: 25px;
+  height: 25px;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  font-size: 11px;
+}
+.roommate-form-steps li[aria-current] {
+  color: var(--foreground);
+  font-weight: 650;
+}
+.roommate-form-steps li[aria-current] > span:first-child {
+  background: var(--brand);
+  border-color: var(--brand);
+  color: var(--background);
+}
+.roommate-form-steps li[data-complete="true"] > span:first-child {
+  color: var(--brand-strong);
+  background: var(--brand-soft);
+  border-color: transparent;
+}
+.roommate-form-form {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.roommate-form-scroll {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  min-height: 0;
+  scrollbar-gutter: stable;
+}
+.roommate-form-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 230px;
+  border: 0;
+  padding: 26px 30px 32px;
+  gap: 28px;
+  min-width: 0;
+}
+.roommate-form-content {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  min-width: 0;
+}
+.roommate-form-introduction .roommate-form-content {
+  padding: 0 30px 28px;
+}
+.roommate-form-sectionTitle {
+  font-size: 22px;
+  font-weight: 550;
+  letter-spacing: -0.035em;
+  line-height: 1.3;
+  outline: none;
+}
+.roommate-form-hint {
+  color: var(--muted-foreground);
+  margin-top: 8px;
+  font-size: 13px;
+  line-height: 1.65;
+}
+.roommate-form-choices {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.roommate-form-choice {
+  position: relative;
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  padding: 20px 16px;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: var(--card);
+  cursor: pointer;
+  transition:
+    border-color 0.15s,
+    background 0.15s;
+}
+.roommate-form-choice[data-selected="true"] {
+  background: var(--brand-soft);
+  border-color: var(--brand);
+}
+.roommate-form-choice:focus-within {
+  outline: 2px solid var(--brand);
+  outline-offset: 3px;
+}
+.roommate-form-choice input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+.roommate-form-choice strong {
+  display: block;
+  font-size: 14px;
+  line-height: 1.5;
+  font-weight: 600;
+}
+.roommate-form-choice small {
+  display: block;
+  margin-top: 5px;
+  color: var(--muted-foreground);
+  line-height: 1.6;
+  font-size: 12px;
+}
+.roommate-form-choiceIcon {
+  display: grid;
+  place-items: center;
+  width: 45px;
+  height: 45px;
+  flex-shrink: 0;
+  background: var(--background);
+  border-radius: 14px;
+  color: var(--brand-strong);
+}
+.roommate-form-radio {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  margin-left: auto;
+}
+.roommate-form-choice[data-selected="true"] .roommate-form-radio {
+  background: var(--brand);
+  border-color: var(--brand);
+  color: var(--background);
+}
+.roommate-form-privacy {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 14px 16px;
+  color: var(--muted-foreground);
+  background: var(--muted);
+  border-radius: 14px;
+  font-size: 12px;
+  line-height: 1.7;
+}
+.roommate-form-privacy svg {
+  color: var(--brand-strong);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.roommate-form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  font-size: 13px;
+  line-height: 1.5;
+  font-weight: 550;
+  min-width: 0;
+}
+.roommate-form-field input,
+.roommate-form-field select,
+.roommate-form-field textarea {
+  width: 100%;
+  min-width: 0;
+  min-height: 48px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  color: var(--foreground);
+  background: var(--card);
+  font-size: 15px;
+  line-height: 1.55;
+  font-weight: 400;
+}
+.roommate-form-field textarea {
+  resize: vertical;
+  min-height: 120px;
+}
+.roommate-form-field :is(input, select, textarea):focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+.roommate-form-field small {
+  color: var(--muted-foreground);
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 1.65;
+}
+.roommate-form-controlIcon {
+  position: relative;
+}
+.roommate-form-controlIcon svg {
+  position: absolute;
+  left: 13px;
+  top: 16px;
+  color: var(--muted-foreground);
+  pointer-events: none;
+}
+.roommate-form-controlIcon select {
+  padding-left: 40px;
+}
+.roommate-form-money {
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--border);
+  background: var(--card);
+  border-radius: 12px;
+  padding: 0 14px;
+  gap: 10px;
+}
+.roommate-form-money input {
+  border: 0;
+  border-radius: 0;
+  padding-inline: 0;
+  font-size: 22px;
+  letter-spacing: -0.03em;
+}
+.roommate-form-money span:last-child {
+  white-space: nowrap;
+  color: var(--muted-foreground);
+  font-size: 12px;
+}
+.roommate-form-money:focus-within {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+.roommate-form-money input:focus-visible {
+  outline: none;
+}
+.roommate-form-counter {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+}
+.roommate-form-counter span {
+  white-space: nowrap;
+}
+.roommate-form-optionalTitle {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  font-weight: 600;
+  padding-top: 4px;
+}
+.roommate-form-optionalTitle span:last-child {
+  color: var(--muted-foreground);
+  font-size: 11px;
+  font-weight: 400;
+}
+.roommate-form-fieldGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px 16px;
+}
+.roommate-form-fieldGrid .roommate-form-field:last-child {
+  grid-column: 1/-1;
+}
+.roommate-form-preview {
+  align-self: start;
+  padding: 22px;
+  border-radius: 20px;
+  background: var(--brand-soft);
+  min-width: 0;
+}
+.roommate-form-previewIcon {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 16px;
+  color: var(--brand-strong);
+  background: var(--background);
+  margin-bottom: 22px;
+}
+.roommate-form-preview h3 {
+  font-size: 22px;
+  line-height: 1.25;
+  letter-spacing: -0.04em;
+  margin-bottom: 24px;
+}
+.roommate-form-preview dl {
+  display: flex;
+  flex-direction: column;
+  gap: 17px;
+}
+.roommate-form-preview dt {
+  color: var(--muted-foreground);
+  font-size: 11px;
+  margin-bottom: 4px;
+}
+.roommate-form-preview dd {
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+.roommate-form-preview > p:last-child {
+  border-top: 1px solid color-mix(in srgb, var(--brand) 20%, transparent);
+  padding-top: 18px;
+  margin-top: 24px;
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--muted-foreground);
+}
+.roommate-form-footer {
+  padding: 18px 30px;
+  border-top: 1px solid var(--border);
+  background: var(--background);
+  flex-shrink: 0;
+}
+.roommate-form-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  align-items: center;
+}
+.roommate-form-actions button {
+  min-height: 46px;
+  padding-inline: 22px;
+}
+.roommate-form-footerNote {
+  font-size: 11px;
+  color: var(--muted-foreground);
+  text-align: center;
+}
+.roommate-form-error {
+  padding: 10px 13px;
+  border-radius: 10px;
+  background: var(--destructive-soft);
+  color: var(--destructive);
+  font-size: 12px;
+  line-height: 1.6;
+  margin-bottom: 12px;
+}
+.roommate-form-person {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  padding: 16px;
+  border-radius: 16px;
+  background: var(--muted);
+}
+.roommate-form-avatar {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  color: var(--brand-strong);
+  background: var(--brand-soft);
+  font-size: 20px;
+}
+.roommate-form-person strong {
+  font-size: 16px;
+  font-weight: 600;
+}
+.roommate-form-person p {
+  font-size: 12px;
+  color: var(--muted-foreground);
+  line-height: 1.5;
+  margin: 3px 0 5px;
+}
+.roommate-form-person div > span {
+  font-size: 12px;
+}
+@media (max-width: 700px) {
+  .roommate-form-dialog {
+    max-height: 94dvh;
+    border-radius: 22px;
+  }
+  .roommate-form-header {
+    padding: 22px 20px 18px;
+    gap: 10px;
+  }
+  .roommate-form-description {
+    font-size: 12px;
+  }
+  .roommate-form-close {
+    flex-basis: 40px;
+    width: 40px;
+    height: 40px;
+  }
+  .roommate-form-steps {
+    padding: 0 20px 18px;
+    gap: 14px;
+    justify-content: space-between;
+  }
+  .roommate-form-steps li {
+    gap: 5px;
+    font-size: 10px;
+  }
+  .roommate-form-steps li > span:first-child {
+    width: 22px;
+    height: 22px;
+  }
+  .roommate-form-layout {
+    grid-template-columns: 1fr;
+    padding: 22px 20px 28px;
+    gap: 24px;
+  }
+  .roommate-form-preview {
+    display: none;
+  }
+  .roommate-form-content {
+    gap: 21px;
+  }
+  .roommate-form-sectionTitle {
+    font-size: 21px;
+  }
+  .roommate-form-footer {
+    padding: 15px 20px max(15px, env(safe-area-inset-bottom));
+  }
+  .roommate-form-footerNote {
+    display: none;
+  }
+  .roommate-form-actions button:last-child {
+    flex: 1;
+  }
+  .roommate-form-introduction .roommate-form-content {
+    padding: 0 20px 24px;
+  }
+  .roommate-form-field input,
+  .roommate-form-field select,
+  .roommate-form-field textarea {
+    font-size: 16px;
+  }
+}
+@media (max-width: 380px) {
+  .roommate-form-fieldGrid {
+    grid-template-columns: 1fr;
+  }
+  .roommate-form-choice {
+    padding: 16px 12px;
+    gap: 10px;
+  }
+  .roommate-form-choiceIcon {
+    width: 36px;
+    height: 40px;
+  }
+  .roommate-form-steps {
+    gap: 8px;
+  }
+  .roommate-form-header,
+  .roommate-form-layout,
+  .roommate-form-footer {
+    padding-inline: 16px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .roommate-form-choice {
+    transition: none;
+  }
+}

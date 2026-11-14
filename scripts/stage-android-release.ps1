@@ -40,6 +40,12 @@ if ($certificate -ne $current.signingCertificateSha256) {
   if (!$ReplaceLegacyTestApk -or $current.versionCode -ne 1 -or $current.signingCertificateSha256 -ne $legacyDebug) {
     throw 'Signing certificate differs. Only the original 1.0.0 debug baseline can be replaced, using -ReplaceLegacyTestApk.'
   }
+  # Some testers already installed the signed EAS 1.0.1 / build 2 APK.
+  # Preserve that identity during the website's one-time move off the debug key.
+  $signedBuild2 = 'c113c6990af5f8a392c4ca2e1a66482d0fbc6e3edc8e8ac74f8decfdf707c5d0'
+  if ($certificate -ne $signedBuild2) {
+    throw 'Use the same signing certificate as the signed 1.0.1 build 2 APK so existing signed installs can update.'
+  }
   Write-Warning 'Existing 1.0.0 testers must reinstall once to switch to this signing key.'
 }
 if ($AssetUrl) {

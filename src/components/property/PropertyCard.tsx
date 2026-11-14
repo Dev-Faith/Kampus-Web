@@ -52,8 +52,9 @@ export function PropertyCard({
   return (
     <>
       <motion.div
+        // Responsive copies must animate independently; a shared layoutId lets
+        // the hidden mobile card take over and fade out the visible desktop card.
         layout
-        layoutId={`property-card-${property.id}`}
         initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95 }}

@@ -4,7 +4,10 @@ import { useSearchParams } from "next/navigation";
 import { Navbar } from "@/components/layout/Navbar";
 import { AuthModal } from "@/components/auth/AuthModal";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import {
+  RoommatePostForm,
+  RoommateIntroduction,
+} from "@/components/roommates/RoommateForms";
 import { useAuthStore } from "@/lib/stores/useAuthStore";
 import { apiClient } from "@/api/client";
 import {
@@ -12,19 +15,18 @@ import {
   getCampusAreaLabel,
 } from "@/lib/constants/campus-areas";
 import {
-  INTENTS,
   postLabel,
   rentShare,
   requestLabel,
-  type HousingIntent,
   type Introduction,
   type RoommateChatLine,
   type RoommateListing,
 } from "@/api/roommate-types";
 
 const input =
-  "block mt-1 w-full bg-background border border-border rounded-xl px-3 py-2 text-foreground";
-const card = "rounded-2xl border border-border bg-card p-5 space-y-3";
+  "block mt-2 min-h-12 w-full bg-card border border-border rounded-xl px-4 py-3 text-foreground text-sm focus-visible:outline-2 focus-visible:outline-brand focus-visible:outline-offset-2";
+const card =
+  "rounded-3xl border border-border bg-card p-6 space-y-4 leading-relaxed";
 const areas = CAMPUS_AREA_OPTIONS.filter((a) => a.id !== "all");
 const apiError = (e: unknown) => {
   const msg = (e as { response?: { data?: { message?: unknown } } })?.response
@@ -246,7 +248,7 @@ function Roommates({
         {tab === "browse" ? (
           <>
             <form
-              className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 items-end"
+              className="grid gap-5 rounded-3xl border border-border bg-muted/40 p-5 sm:grid-cols-2 lg:grid-cols-4 items-end text-sm"
               onSubmit={(e) => {
                 e.preventDefault();
                 setLimit(budget);
@@ -343,7 +345,17 @@ function Roommates({
                         <p className="text-sm text-brand-strong">
                           {postLabel(p.housingIntent)}
                         </p>
-                        <h2 className="text-xl font-semibold">{p.name}</h2>
+                        <div className="flex items-center gap-3">
+                          <span
+                            className="roommate-avatar grid size-11 shrink-0 place-items-center rounded-full text-lg"
+                            aria-hidden="true"
+                          >
+                            {p.name.trim().slice(0, 1).toUpperCase()}
+                          </span>
+                          <h2 className="text-xl font-semibold tracking-tight">
+                            {p.name}
+                          </h2>
+                        </div>
                         <p>
                           {getCampusAreaLabel(p.area) || "Area not specified"} ·{" "}
                           {p.university}
@@ -460,51 +472,33 @@ function Roommates({
             <button onClick={reload}>Retry</button>
           </p>
         )}
-        <Dialog
-          open={!!intro}
-          onOpenChange={(open) => {
-            if (!open && !busy) setIntro(null);
-          }}
-        >
-          <DialogContent>
-            <DialogTitle>Introduce yourself to {intro?.name}</DialogTitle>
-            <form
-              className="space-y-4"
-              onSubmit={(e) => {
-                e.preventDefault();
-                if (intro && note.trim())
-                  void mutate(
-                    () =>
-                      apiClient.post("/roommates/" + intro.id + "/connect", {
-                        message: note.trim(),
-                      }),
-                    "View your introduction in My requests.",
-                    () => setIntro(null),
-                  );
-              }}
-            >
-              <label>
-                Private introduction
-                <textarea
-                  className={input}
-                  autoFocus
-                  required
-                  maxLength={500}
-                  value={note}
-                  onChange={(e) => setNote(e.target.value)}
-                  placeholder="What do you have in mind for the room or the search?"
-                />
-              </label>
-              <p>They can accept to start a private conversation.</p>
-              {error && <p role="alert">{error}</p>}
-              <Button type="submit" disabled={busy || !note.trim()}>
-                Send introduction
-              </Button>
-            </form>
-          </DialogContent>
-        </Dialog>
+        {intro && (
+          <RoommateIntroduction
+            post={intro}
+            note={note}
+            setNote={setNote}
+            busy={busy}
+            error={error}
+            close={() => {
+              if (!busy) setIntro(null);
+            }}
+            send={() => {
+              void mutate(
+                () =>
+                  apiClient.post("/roommates/" + intro.id + "/connect", {
+                    message: note.trim(),
+                  }),
+                "View your introduction in My requests.",
+                () => {
+                  setIntro(null);
+                  setTab("requests");
+                },
+              );
+            }}
+          />
+        )}
         {edit && (
-          <PostForm
+          <RoommatePostForm
             post={ownPost}
             department={department}
             busy={busy}
@@ -628,7 +622,10 @@ function Request({
             <p>Loading…</p>
           ) : chat.value.length ? (
             chat.value.map((m) => (
-              <p className="break-words" key={m.id}>
+              <p
+                className={`w-fit max-w-[90%] break-words rounded-2xl px-4 py-3 text-sm leading-relaxed ${m.mine ? "ml-auto bg-brand-soft" : "bg-muted"}`}
+                key={m.id}
+              >
                 <strong>{m.mine ? "You" : r.otherName}</strong> · {m.body}
               </p>
             ))
@@ -665,158 +662,5 @@ function Request({
         </div>
       )}
     </article>
-  );
-}
-function PostForm({
-  post,
-  department,
-  busy,
-  error,
-  close,
-  save,
-}: {
-  post?: RoommateListing | null;
-  department: string;
-  busy: boolean;
-  error: string;
-  close: () => void;
-  save: (x: unknown) => Promise<void>;
-}) {
-  const [intent, setIntent] = useState(post?.housingIntent || ""),
-    [area, setArea] = useState(post?.area || ""),
-    [amount, setAmount] = useState(post?.annualShare?.toString() || ""),
-    [bio, setBio] = useState(post?.bio || "");
-  const [extras, setExtras] = useState({
-    department: post?.department || department,
-    level: post?.level || "",
-    sleepSchedule: post?.sleepSchedule || "",
-    cleanliness: post?.cleanliness || "",
-    cookingHabits: post?.cookingHabits || "",
-  });
-  const labels = {
-    department: "Department",
-    level: "Study level",
-    sleepSchedule: "Sleep schedule",
-    cleanliness: "Cleaning routine",
-    cookingHabits: "Cooking habits",
-  };
-  return (
-    <Dialog
-      open
-      onOpenChange={(v) => {
-        if (!v) close();
-      }}
-    >
-      <DialogContent className="max-h-[88vh] overflow-auto">
-        <DialogTitle>
-          {post ? "Edit your roommate post" : "Create a roommate post"}
-        </DialogTitle>
-        <form
-          className="space-y-4"
-          onSubmit={(e) => {
-            e.preventDefault();
-            void save({
-              university: "FUTMINNA",
-              housingIntent: intent,
-              area,
-              annualShare: Number(amount),
-              bio,
-              ...extras,
-            });
-          }}
-        >
-          <label className="block">
-            What’s your situation?
-            <select
-              className={input}
-              required
-              value={intent}
-              onChange={(e) => setIntent(e.target.value as HousingIntent)}
-            >
-              <option value="">Choose one</option>
-              {Object.entries(INTENTS).map(([k, v]) => (
-                <option key={k} value={k}>
-                  {v}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="block">
-            {intent === "HAS_ROOM"
-              ? "Where is the room?"
-              : "Where would you like to live?"}
-            <select
-              className={input}
-              value={area}
-              required
-              onChange={(e) => setArea(e.target.value)}
-            >
-              <option value="">Choose a FUTMINNA area</option>
-              {areas.map((a) => (
-                <option key={a.id} value={a.id}>
-                  {a.campus} · {a.label}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="block">
-            {intent === "HAS_ROOM"
-              ? "Roommate’s yearly rent share"
-              : "Your maximum yearly rent share"}{" "}
-            (₦)
-            <input
-              className={input}
-              required
-              type="number"
-              min="1"
-              max="9999999999999"
-              step="0.01"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-            />
-          </label>
-          {post && post.annualShare == null && (
-            <p>
-              Your old post lists {rentShare(post)}. Enter the yearly amount you
-              want to publish.
-            </p>
-          )}
-          <label className="block">
-            What should a roommate know?
-            <textarea
-              className={input}
-              maxLength={1000}
-              value={bio}
-              onChange={(e) => setBio(e.target.value)}
-              placeholder="For example, your move-in plans or how you share bills. Leave out private contact details."
-            />
-          </label>
-          <details>
-            <summary>Optional study and living preferences</summary>
-            {(Object.keys(labels) as (keyof typeof labels)[]).map((k) => (
-              <label className="block my-2" key={k}>
-                {labels[k]}
-                <input
-                  className={input}
-                  maxLength={k === "department" ? 255 : 100}
-                  value={extras[k]}
-                  onChange={(e) =>
-                    setExtras({ ...extras, [k]: e.target.value })
-                  }
-                />
-              </label>
-            ))}
-          </details>
-          {error && <p role="alert">{error}</p>}
-          <Button type="submit" disabled={busy}>
-            {post?.isHidden
-              ? "Save changes"
-              : post && !post.isActive
-                ? "Publish again"
-                : "Publish post"}
-          </Button>
-        </form>
-      </DialogContent>
-    </Dialog>
   );
 }
