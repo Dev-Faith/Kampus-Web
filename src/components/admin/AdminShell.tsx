@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useAuthStore } from "@/lib/stores/useAuthStore";
 import { ArrowUpRight, LogOut } from "lucide-react";
 import { KampusLogo } from "@/components/brand/KampusLogo";
+import { PasswordInput } from "@/components/ui/password-input";
 
 export const adminLinks = [
   ["/admin", "Overview"],
@@ -84,9 +85,8 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
             </label>
             <label>
               Password
-              <input
+              <PasswordInput
                 autoComplete="current-password"
-                type="password"
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}

@@ -10,6 +10,7 @@ import {
 import { useApiResource } from "@/lib/use-api-resource";
 import { apiClient } from "@/api/client";
 import { Button } from "@/components/ui/button";
+import { PasswordInput } from "@/components/ui/password-input";
 import { authError } from "@/lib/auth-errors";
 import type { LandlordProfile } from "@/types/api";
 export default function Page() {
@@ -137,15 +138,15 @@ function BankForm({
             </label>
             <label>
               BVN (optional, 11 digits)
-              <input
+              <PasswordInput
                 name="bvn"
-                type="password"
+                visibilityLabel="BVN"
                 inputMode="numeric"
                 autoComplete="new-password"
                 pattern="[0-9]{11}"
                 minLength={11}
                 maxLength={11}
-                className={inputClass}
+                wrapperClassName="mt-1"
               />
             </label>
             <label>

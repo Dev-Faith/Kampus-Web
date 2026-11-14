@@ -59,9 +59,11 @@ async function mock(p){const u=new URL(p.request.url),route=u.pathname.replace('
  await until("document.body.textContent.includes('View your introduction in My requests.')");
  // Sending an introduction opens My requests automatically.
 await until("document.body.textContent.includes('Could we discuss sharing?')");
+ await ev("document.querySelector('[aria-label=\"Back to conversations\"]').click()");
+ await ev("document.querySelector('[aria-label=\"Open conversation with Interested student\"]').click()");
  await click('Accept introduction');await until("document.body.textContent.includes('Accepted')");
- await click('View conversation');await until("document.body.textContent.includes('No messages yet.')");
- await field('Message','Let’s compare our move-in plans.');await click('Send message');
+ await until("document.body.textContent.includes('No messages yet.')");
+ await field('Message','Let’s compare our move-in plans.');await ev("document.querySelector('[aria-label=\"Send message\"]').click()");
  await until("document.body.textContent.includes('You')&&document.body.textContent.includes('Let’s compare our move-in plans.')");
  const screenshot=await call('Page.captureScreenshot',{format:'png'});fs.writeFileSync(path.join(out,'requests-mobile.png'),Buffer.from(screenshot.data,'base64'));
  await call('Emulation.setDeviceMetricsOverride',{width:1440,height:1000,deviceScaleFactor:1,mobile:false});

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { ProfileSetup } from "./ProfileSetup";
 import { useAuthStore } from "@/lib/stores/useAuthStore";
@@ -128,12 +129,12 @@ function AuthFlow({ onClose, defaultRole, defaultMode }: Required<Omit<AuthModal
               </div>
             </> : <>
               <label className="block text-sm font-medium">Email address<input name="email" type="email" autoComplete="email" placeholder="you@example.com" className={inputClass} required maxLength={255} value={email} onChange={(e) => { setEmail(e.target.value); clearError(); }} /></label>
-              <label className="block text-sm font-medium">Create a password<input name="password" type="password" autoComplete="new-password" minLength={8} maxLength={72} required className={inputClass} value={password} onChange={(e) => setPassword(e.target.value)} /></label>
-              <label className="block text-sm font-medium">Confirm password<input name="confirmPassword" type="password" autoComplete="new-password" minLength={8} maxLength={72} required className={inputClass} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} /></label>
+              <label className="block text-sm font-medium">Create a password<PasswordInput key={`${role}-${mode}-password`} name="password" autoComplete="new-password" minLength={8} maxLength={72} required wrapperClassName="mt-1" value={password} onChange={(e) => setPassword(e.target.value)} /></label>
+              <label className="block text-sm font-medium">Confirm password<PasswordInput key={`${role}-${mode}-confirm`} name="confirmPassword" visibilityLabel="confirmation password" autoComplete="new-password" minLength={8} maxLength={72} required wrapperClassName="mt-1" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} /></label>
               <p className="text-xs text-muted-foreground">Use at least 8 characters. You’ll use this password to sign in after registration.</p>
             </> : <>
               <label className="block text-sm font-medium">Email or phone number<input name="emailOrPhone" autoComplete="username" required className={inputClass} value={emailOrPhone} onChange={(e) => setEmailOrPhone(e.target.value)} /></label>
-              <label className="block text-sm font-medium">Password<input name="password" type="password" autoComplete="current-password" required className={inputClass} value={password} onChange={(e) => setPassword(e.target.value)} /></label>
+              <label className="block text-sm font-medium">Password<PasswordInput key={`${role}-${mode}-password`} name="password" autoComplete="current-password" required wrapperClassName="mt-1" value={password} onChange={(e) => setPassword(e.target.value)} /></label>
             </>}
           </fieldset>
           {(error || localError) && <p role="alert" className="rounded-xl bg-destructive/10 p-3 text-sm text-destructive">{localError || error}</p>}

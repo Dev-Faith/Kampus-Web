@@ -5,6 +5,7 @@ import { authApi } from "@/api/auth";
 import { User } from "@/types/api";
 import { useAuthStore } from "@/lib/stores/useAuthStore";
 import { Button } from "@/components/ui/button";
+import { PasswordInput } from "@/components/ui/password-input";
 import { authError, normalizePhone } from "@/lib/auth-errors";
 import {
   ProfilePhotoField,
@@ -110,25 +111,37 @@ function ProfileForm({
     name: keyof typeof values,
     label: string,
     props: React.InputHTMLAttributes<HTMLInputElement> = {},
-  ) => (
-    <label className="block text-sm font-medium" key={name}>
-      {label}
-      <input
-        name={name}
-        className={inputClass}
-        value={values[name]}
-        required
-        maxLength={255}
-        onChange={(event) => {
-          onEdit?.();
-          setValues({ ...values, [name]: event.target.value });
-          setLocalError("");
-          clearError();
-        }}
-        {...props}
-      />
-    </label>
-  );
+  ) => {
+    const { type, ...inputProps } = props;
+    const Field = type === "password" ? PasswordInput : "input";
+    return (
+      <label className="block text-sm font-medium" key={name}>
+        {label}
+        <Field
+          name={name}
+          {...(type === "password"
+            ? {
+                wrapperClassName: "mt-1",
+                visibilityLabel:
+                  name === "confirmPassword"
+                    ? "confirmation password"
+                    : "password",
+              }
+            : { type, className: inputClass })}
+          value={values[name]}
+          required
+          maxLength={255}
+          onChange={(event) => {
+            onEdit?.();
+            setValues({ ...values, [name]: event.target.value });
+            setLocalError("");
+            clearError();
+          }}
+          {...inputProps}
+        />
+      </label>
+    );
+  };
   async function submit(event: React.FormEvent) {
     event.preventDefault();
     if (busy) return;

@@ -4,6 +4,7 @@ import { useSearchParams } from "next/navigation";
 import { Navbar } from "@/components/layout/Navbar";
 import { AuthModal } from "@/components/auth/AuthModal";
 import { Button } from "@/components/ui/button";
+import { RoommateInbox } from "@/components/roommates/RoommateInbox";
 import {
   RoommatePostForm,
   RoommateIntroduction,
@@ -19,7 +20,6 @@ import {
   rentShare,
   requestLabel,
   type Introduction,
-  type RoommateChatLine,
   type RoommateListing,
 } from "@/api/roommate-types";
 
@@ -53,7 +53,12 @@ function useResource<T>(path: string | null, revision: number) {
       })
       .catch((e) => {
         if (!abort.signal.aborted)
-          setState({ path, revision, error: apiError(e) });
+          setState((current) => ({
+            path,
+            revision,
+            value: current?.path === path ? current.value : undefined,
+            error: apiError(e),
+          }));
       });
     return () => abort.abort();
   }, [path, revision]);
@@ -91,6 +96,7 @@ function Roommates({
   openAuth: () => void;
 }) {
   const connectionId = useSearchParams().get("connectionId");
+  const [focusedConnection, setFocusedConnection] = useState(connectionId);
   const student = role === "STUDENT";
   const [tab, setTab] = useState<"browse" | "requests">(
       connectionId ? "requests" : "browse",
@@ -110,8 +116,15 @@ function Roommates({
   const [inboxTick, setInboxTick] = useState(0);
   useEffect(() => {
     if (tab !== "requests" || !student) return;
-    const timer = setInterval(() => setInboxTick((v) => v + 1), 30000);
-    return () => clearInterval(timer);
+    const update = () => {
+      if (document.visibilityState === "visible") setInboxTick((v) => v + 1);
+    };
+    const timer = setInterval(update, 30000);
+    window.addEventListener("focus", update);
+    return () => {
+      clearInterval(timer);
+      window.removeEventListener("focus", update);
+    };
   }, [tab, student]);
   const params = new URLSearchParams({
     university: "FUTMINNA",
@@ -159,16 +172,24 @@ function Roommates({
   const ownPost = own?.value;
   return (
     <main className="editorial-page roommates-page min-h-screen bg-background text-foreground">
-      <div className="mx-auto max-w-6xl px-4 py-8 sm:px-8 space-y-6">
+      <div
+        className={`mx-auto ${tab === "requests" ? "max-w-7xl" : "max-w-6xl"} px-4 py-8 sm:px-8 space-y-6`}
+      >
         <header className="flex flex-wrap items-end justify-between gap-4 border-b border-border pb-6">
           <div className="space-y-3">
             <p className="editorial-eyebrow">FUTMINNA · Student housing</p>
-            <h1 className="editorial-title text-4xl">Find a roommate.</h1>
+            <h1 className="editorial-title text-4xl">
+              {tab === "requests"
+                ? "Good company starts here."
+                : "Find a roommate."}
+            </h1>
             <p className="text-muted-foreground">
-              Share a room you already have, or find someone to house-hunt with.
+              {tab === "requests"
+                ? "Your introductions, conversations, and plans for a place to call home."
+                : "Share a room you already have, or find someone to house-hunt with."}
             </p>
           </div>
-          {(!role || student) && (
+          {tab === "browse" && (!role || student) && (
             <Button
               disabled={
                 busy ||
@@ -189,7 +210,7 @@ function Roommates({
             Couldn’t load your post. <button onClick={reload}>Retry</button>
           </p>
         )}
-        {ownPost && (
+        {ownPost && tab === "browse" && (
           <div className={card}>
             <strong>
               {ownPost.isHidden
@@ -383,7 +404,10 @@ function Roommates({
                         ) : existing ? (
                           <Button
                             variant="outline"
-                            onClick={() => setTab("requests")}
+                            onClick={() => {
+                              setFocusedConnection(existing.id);
+                              setTab("requests");
+                            }}
                           >
                             {requestLabel(existing.status)} · View request
                           </Button>
@@ -433,38 +457,14 @@ function Roommates({
             )}
           </>
         ) : (
-          <section className="space-y-3">
-            {inbox?.error ? (
-              <p role="alert">
-                {inbox.error} <button onClick={reload}>Retry</button>
-              </p>
-            ) : !inbox?.value ? (
-              <p>Loading requests…</p>
-            ) : inbox.value.length === 0 ? (
-              <div className={card}>
-                Your introductions and replies will appear here.
-              </div>
-            ) : (
-              [...inbox.value]
-                .sort(
-                  (a, b) =>
-                    Number(b.id === connectionId) -
-                    Number(a.id === connectionId),
-                )
-                .map((r) => (
-                  <Request
-                    key={r.id}
-                    r={r}
-                    initialOpen={
-                      r.id === connectionId && r.status === "ACCEPTED"
-                    }
-                    busy={busy}
-                    rev={rev}
-                    mutate={mutate}
-                  />
-                ))
-            )}
-          </section>
+          <RoommateInbox
+            key={focusedConnection || connectionId || "inbox"}
+            requests={inbox?.value}
+            error={inbox?.error}
+            reload={reload}
+            initialConnectionId={focusedConnection || connectionId}
+            browse={() => setTab("browse")}
+          />
         )}
         {student && tab === "browse" && inbox?.error && (
           <p role="alert">
@@ -485,9 +485,13 @@ function Roommates({
             send={() => {
               void mutate(
                 () =>
-                  apiClient.post("/roommates/" + intro.id + "/connect", {
-                    message: note.trim(),
-                  }),
+                  apiClient
+                    .post("/roommates/" + intro.id + "/connect", {
+                      message: note.trim(),
+                    })
+                    .then((response) =>
+                      setFocusedConnection(response.data.data.id),
+                    ),
                 "View your introduction in My requests.",
                 () => {
                   setIntro(null);
@@ -519,148 +523,5 @@ function Roommates({
         )}
       </div>
     </main>
-  );
-}
-type Mutate = (
-  fn: () => Promise<unknown>,
-  message: string,
-  after?: () => void,
-) => Promise<void>;
-function Request({
-  r,
-  initialOpen = false,
-  busy,
-  rev,
-  mutate,
-}: {
-  r: Introduction;
-  initialOpen?: boolean;
-  busy: boolean;
-  rev: number;
-  mutate: Mutate;
-}) {
-  const [open, setOpen] = useState(initialOpen),
-    [text, setText] = useState("");
-  const [poll, setPoll] = useState(0);
-  useEffect(() => {
-    if (!open) return;
-    const timer = setInterval(() => setPoll((v) => v + 1), 30000);
-    return () => clearInterval(timer);
-  }, [open]);
-  const path = "/roommates/connections/" + r.id;
-  const chat = useResource<RoommateChatLine[]>(
-    open ? path + "/messages" : null,
-    rev + poll,
-  );
-  const decide = (status: string) =>
-    mutate(() => apiClient.put(path, { status }), "Request updated.");
-  return (
-    <article className={card}>
-      <h2 className="font-semibold">
-        {r.direction === "SENT" ? "To" : "From"} {r.otherName}
-      </h2>
-      <p>{requestLabel(r.status)}</p>
-      {r.status === "PENDING" && !r.listingActive && (
-        <p className="text-sm text-muted-foreground">
-          {r.direction === "RECEIVED"
-            ? "Your post is paused. Publish it again before accepting."
-            : "This post is paused. You can withdraw this request."}
-        </p>
-      )}
-      {r.message && <p className="break-words">{r.message}</p>}
-      <div className="flex flex-wrap gap-2">
-        {r.status === "PENDING" &&
-          (r.direction === "RECEIVED" ? (
-            <>
-              <Button
-                disabled={busy || !r.listingActive}
-                onClick={() => decide("ACCEPTED")}
-              >
-                Accept introduction
-              </Button>
-              <Button
-                disabled={busy}
-                variant="outline"
-                onClick={() => decide("DECLINED")}
-              >
-                Decline
-              </Button>
-            </>
-          ) : (
-            <Button
-              disabled={busy}
-              variant="outline"
-              onClick={() => decide("CLOSED")}
-            >
-              Withdraw
-            </Button>
-          ))}
-        {(r.status === "ACCEPTED" || r.status === "CLOSED") && (
-          <Button variant="outline" onClick={() => setOpen(!open)}>
-            {open ? "Hide conversation" : "View conversation"}
-          </Button>
-        )}
-        {r.status === "ACCEPTED" && (
-          <Button
-            variant="ghost"
-            disabled={busy}
-            onClick={() => {
-              if (window.confirm("Close this conversation for both students?"))
-                void decide("CLOSED");
-            }}
-          >
-            Close conversation
-          </Button>
-        )}
-      </div>
-      {open && (
-        <div className="space-y-2 border-t border-border pt-3">
-          <p className="text-sm">Latest 50 private messages</p>
-          {chat?.error ? (
-            <p role="alert">{chat.error}</p>
-          ) : !chat?.value ? (
-            <p>Loading…</p>
-          ) : chat.value.length ? (
-            chat.value.map((m) => (
-              <p
-                className={`w-fit max-w-[90%] break-words rounded-2xl px-4 py-3 text-sm leading-relaxed ${m.mine ? "ml-auto bg-brand-soft" : "bg-muted"}`}
-                key={m.id}
-              >
-                <strong>{m.mine ? "You" : r.otherName}</strong> · {m.body}
-              </p>
-            ))
-          ) : (
-            <p>No messages yet.</p>
-          )}
-          {r.status === "ACCEPTED" && (
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                if (text.trim())
-                  void mutate(
-                    () =>
-                      apiClient.post(path + "/messages", { body: text.trim() }),
-                    "Message sent.",
-                    () => setText(""),
-                  );
-              }}
-            >
-              <label>
-                Message
-                <textarea
-                  className={input}
-                  maxLength={1000}
-                  value={text}
-                  onChange={(e) => setText(e.target.value)}
-                />
-              </label>
-              <Button type="submit" disabled={busy || !text.trim()}>
-                Send message
-              </Button>
-            </form>
-          )}
-        </div>
-      )}
-    </article>
   );
 }
