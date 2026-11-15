@@ -44,6 +44,7 @@ interface AuthState {
     payload: UpdateLandlordProfilePayload,
   ) => Promise<boolean>;
   logout: () => void;
+  clearSession: () => void;
   switchRole: (role: UserRole) => boolean;
   isRegisteredHost: () => boolean;
   setUser: (user: User) => void;
@@ -201,9 +202,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
   logout: () => {
     void authApi.logout();
-    set(clearSession());
+    get().clearSession();
     toast.info("Signed out");
   },
+  clearSession: () => set(clearSession()),
   checkAuth: async () => {
     if (typeof window === "undefined") return;
     const token = localStorage.getItem("kampus_access_token");

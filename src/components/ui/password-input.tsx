@@ -35,7 +35,7 @@ export function PasswordInput({
         type={visible ? "text" : "password"}
         disabled={disabled}
         className={cn(
-          "block min-h-11 w-full min-w-0 rounded-xl border border-border bg-background px-3 py-2 text-base text-foreground",
+          "block min-h-11 w-full min-w-0 rounded-xl border border-border bg-background px-3 py-2 text-base text-foreground [&::-ms-reveal]:hidden",
           className,
         )}
         // Reserve room for the control even inside forms with their own input CSS.

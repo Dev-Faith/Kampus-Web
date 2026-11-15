@@ -46,6 +46,20 @@ export interface UpdateLandlordProfilePayload {
 }
 
 export const authApi = {
+  async accountDeletionPreview(): Promise<{
+    canDelete: boolean;
+    blockers: string[];
+    bookingCount: number;
+    listingCount: number;
+  }> {
+    const response = await apiClient.get('/auth/account/deletion');
+    return response.data.data;
+  },
+
+  async deleteAccount(password: string, confirmation: string): Promise<void> {
+    await apiClient.delete('/auth/account', { data: { password, confirmation } });
+  },
+
   async registrationStatus(): Promise<{
     emailVerificationAvailable: boolean;
     verificationMethod: 'email';

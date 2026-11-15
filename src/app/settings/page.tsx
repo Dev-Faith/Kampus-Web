@@ -9,6 +9,7 @@ import { ProfileSetup } from "@/components/auth/ProfileSetup";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/lib/stores/useAuthStore";
+import { DeleteAccountSection } from "@/components/account/DeleteAccountSection";
 
 export default function SettingsPage() {
   const user = useAuthStore((s) => s.user);
@@ -107,6 +108,9 @@ export default function SettingsPage() {
                   )}
                 </section>
               </aside>
+              <div className="md:col-span-2">
+                <DeleteAccountSection key={user.id} />
+              </div>
             </div>
           )}
         </div>
